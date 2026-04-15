@@ -296,13 +296,13 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
   const reviewCount = Math.floor(Math.random() * 2000) + 100;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 flex flex-col h-full">
-      {/* Image */}
-      <div className="h-56 w-full relative overflow-hidden rounded-md bg-gray-50 dark:bg-gray-700">
-        <Link to={`/products/${product.id}`}>
+    <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 flex flex-col overflow-hidden" style={{width:260,height:460,flexShrink:0}}>
+      {/* Image — fixed 224px height, fully fills width, no padding */}
+      <div className="w-full relative overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0" style={{height:180}}>
+        <Link to={`/products/${product.id}`} className="block h-full w-full">
           {imageUrl ? (
             <img
-              className="mx-auto h-full w-full object-contain p-2 transition-transform duration-300 hover:scale-105"
+              className="h-full w-full object-cover object-center transition-transform duration-300 hover:scale-105"
               src={imageUrl}
               alt={product.name}
               loading="lazy"
@@ -321,9 +321,9 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
       </div>
 
       {/* Content */}
-      <div className="pt-6 flex flex-col flex-1">
+      <div className="px-4 py-3 flex flex-col flex-1 overflow-hidden">
         {/* Badges + action icons row */}
-        <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="mb-2 flex items-center justify-between gap-4">
           {hasDiscount ? (
             <span className="me-2 rounded bg-primary-100 px-2.5 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-900 dark:text-primary-300">
               Up to {product.discountPercentage}% off
@@ -380,7 +380,7 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
         <StarRating rating={parseFloat(rating.toFixed(1))} count={reviewCount} />
 
         {/* Delivery badges */}
-        <ul className="mt-2 flex items-center gap-4">
+        <ul className="mt-1 flex items-center gap-3">
           <li className="flex items-center gap-2">
             <svg className="h-4 w-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h6l2 4m-8-4v8m0-8V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v9h2m8 0H9m4 0h2m4 0h2v-4m0 0h-5m3.5 5.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm-10 0a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z" />
@@ -396,7 +396,7 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
         </ul>
 
         {/* Price + Add to cart — pinned to bottom */}
-        <div className="mt-auto pt-4 flex items-center justify-between gap-4">
+        <div className="mt-auto pt-2 flex items-center justify-between gap-3">
           <div className="flex flex-col">
             <p className="text-2xl font-extrabold leading-tight text-gray-900 dark:text-white">
               GHS {Number(displayPrice).toLocaleString()}
@@ -468,7 +468,7 @@ function FlowbiteGridSection({
       </div>
 
       {/* 4-col grid — mirrors Flowbite */}
-      <div className="mb-4 grid gap-4 sm:grid-cols-2 md:mb-8 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="mb-4 md:mb-8 flex flex-wrap gap-4">
         {items.slice(0, 8).map((item, i) => (
           <motion.div
             key={item.id}
@@ -476,7 +476,7 @@ function FlowbiteGridSection({
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.45, delay: Math.min(i * 0.06, 0.45), ease: [0.22, 1, 0.36, 1] }}
             whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
-            className="h-full"
+            style={{ width: 260, flexShrink: 0 }}
           >
             <FlowbiteProductCard product={item} />
           </motion.div>
@@ -863,7 +863,7 @@ const MOBILE_STYLES = `
   @media (min-width: 640px) { .hs-card { width: 200px; } }
 
   .hs-img { width: 100%; height: 152px; position: relative; overflow: hidden; background: #f5f4f2; flex-shrink: 0; }
-  .hs-img-el { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: transform 0.35s ease; }
+  .hs-img-el { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; width: 100%; height: 100%; transition: transform 0.35s ease; }
   .hs-card:hover .hs-img-el { transform: scale(1.05); }
   .hs-img-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #c8c5c0; }
   .hs-disc-badge { position: absolute; top: 8px; left: 8px; background: #ef4444; color: #fff; font-size: 9.5px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
@@ -1279,7 +1279,7 @@ const Index = () => {
 
         {/* ── NEW ARRIVALS — Flowbite 4-col grid ── */}
         {newArrivalsCarousel.length > 0 && (
-          <section className="bg-gray-50 dark:bg-gray-900 py-8 antialiased md:py-10">
+          <section className="py-6">
             <div className="pg">
               <FlowbiteGridSection
                 title="New Arrivals"
@@ -1322,7 +1322,7 @@ const Index = () => {
 
         {/* ── JUST DROPPED — Flowbite 4-col grid ── */}
         {newArrivals.length > 0 && (
-          <section className="bg-gray-50 dark:bg-gray-900 py-8 antialiased md:py-10">
+          <section className="py-6">
             <div className="pg">
               <FlowbiteGridSection
                 title="Just Dropped"
