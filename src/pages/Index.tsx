@@ -135,11 +135,6 @@ const IconEye = ({ size = 16 }: { size?: number }) => (
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
-const IconHeart = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-  </svg>
-);
 
 // ─── Logo Mark ────────────────────────────────────────────────────────────────
 function OnettLogoMark({ size = 36 }: { size?: number }) {
@@ -212,7 +207,6 @@ const aiFeatures = [
   { icon: IconSearch, title: "Smart Search", desc: "Natural language that understands what you mean", color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
 ];
 
-// ── Updated hero image: vibrant online shopping / tech lifestyle ──
 const HERO_BG_DESKTOP = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=85";
 const HERO_BG_MOBILE  = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=85";
 
@@ -251,24 +245,7 @@ function useCountdown(productId: string, days: number | null | undefined) {
   return t;
 }
 
-// ─── Star Rating Component ────────────────────────────────────────────────────
-function StarRating({ rating = 4.5, count = 42 }: { rating?: number; count?: number }) {
-  return (
-    <div className="flex items-center gap-1 mt-2">
-      <div className="flex items-center">
-        {[1,2,3,4,5].map(s => (
-          <svg key={s} className={`h-4 w-4 ${s <= Math.round(rating) ? "text-yellow-400" : "text-gray-300 dark:text-gray-600"}`} aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M13.8 4.2a2 2 0 0 0-3.6 0L8.4 8.4l-4.6.3a2 2 0 0 0-1.1 3.5l3.5 3-1 4.4c-.5 1.7 1.4 3 2.9 2.1l3.9-2.3 3.9 2.3c1.5 1 3.4-.4 3-2.1l-1-4.4 3.4-3a2 2 0 0 0-1.1-3.5l-4.6-.3-1.8-4.2Z" />
-          </svg>
-        ))}
-      </div>
-      <p className="text-sm font-medium text-gray-900 dark:text-white">{rating}</p>
-      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">({count.toLocaleString()})</p>
-    </div>
-  );
-}
-
-// ─── Unified Product Card — responsive via CSS var --card-w / --card-h ────────
+// ─── Unified Product Card — NO ratings, clean layout ─────────────────────────
 function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCardData }) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -292,29 +269,22 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
     finally { setCartLoading(false); }
   };
 
-  // stable rating per product id (no Math.random on every render)
-  const seed = product.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const rating = (4.5 + (seed % 10) * 0.05).toFixed(1);
-  const reviewCount = 100 + (seed % 1900);
-
   return (
     <div className="fb-product-card" style={{ height: "100%" }}>
-      {/* ── IMAGE — fills full card width, fixed height via CSS var ── */}
+      {/* IMAGE */}
       <div className="fb-product-img">
         <Link to={`/products/${product.id}`} style={{ display: "block", width: "100%", height: "100%" }}>
           {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={product.name}
-              loading="lazy"
-              className="fb-product-img-el"
-            />
+            <img src={imageUrl} alt={product.name} loading="lazy" className="fb-product-img-el" />
           ) : (
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#d1d5db" }}>
               <IconPackage size={36} />
             </div>
           )}
         </Link>
+        {hasDiscount && (
+          <div className="fb-disc-pill">-{product.discountPercentage}%</div>
+        )}
         {!inStock && (
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>Out of stock</span>
@@ -322,34 +292,19 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
         )}
       </div>
 
-      {/* ── BODY ── */}
+      {/* BODY */}
       <div className="fb-product-body">
-
-        {/* Badge + icons */}
-        <div className="fb-product-top">
-          {hasDiscount ? (
-            <span className="fb-badge fb-badge-blue">Up to {product.discountPercentage}% off</span>
-          ) : (product as CarouselProduct).stockStatus === "PRE_ORDER" ? (
-            <span className="fb-badge fb-badge-orange">Pre-order</span>
-          ) : (product as CarouselProduct).stockStatus === "COMING_SOON" ? (
-            <span className="fb-badge fb-badge-blue">Coming Soon</span>
-          ) : (
-            <span className="fb-badge fb-badge-green">In Stock</span>
-          )}
-          <div style={{ display: "flex", gap: 3 }}>
-            <button className="fb-icon-btn" title="Quick look" onClick={() => navigate(`/products/${product.id}`)}>
-              <IconEye size={13} />
-            </button>
-            <button
-              className={`fb-icon-btn${wishlisted ? " fb-icon-btn-fav" : ""}`}
-              title="Favourite"
-              onClick={() => setWishlisted(w => !w)}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-            </button>
-          </div>
+        {/* Wishlist icon top-right */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+          <button
+            className={`fb-icon-btn${wishlisted ? " fb-icon-btn-fav" : ""}`}
+            title="Favourite"
+            onClick={() => setWishlisted(w => !w)}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
         </div>
 
         {/* Brand */}
@@ -362,27 +317,17 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
           {product.name}
         </Link>
 
-        {/* Stars */}
-        <div className="fb-product-stars">
-          {[1,2,3,4,5].map(s => (
-            <svg key={s} className={`fb-star${s <= Math.round(Number(rating)) ? "" : " fb-star-empty"}`} viewBox="0 0 24 24">
-              <path d="M13.8 4.2a2 2 0 0 0-3.6 0L8.4 8.4l-4.6.3a2 2 0 0 0-1.1 3.5l3.5 3-1 4.4c-.5 1.7 1.4 3 2.9 2.1l3.9-2.3 3.9 2.3c1.5 1 3.4-.4 3-2.1l-1-4.4 3.4-3a2 2 0 0 0-1.1-3.5l-4.6-.3-1.8-4.2Z" />
-            </svg>
-          ))}
-          <span className="fb-rating-val">{rating}</span>
-          <span className="fb-rating-ct">({reviewCount})</span>
-        </div>
-
-        {/* Meta */}
-        <div className="fb-product-meta">
-          <div className="fb-meta-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 7h6l2 4m-8-4v8m0-8V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v9h2m8 0H9m4 0h2m4 0h2v-4m0 0h-5m3.5 5.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm-10 0a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z"/></svg>
-            Fast Delivery
-          </div>
-          <div className="fb-meta-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 7V6c0-.6.4-1 1-1h11c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1h-1M3 18v-7c0-.6.4-1 1-1h11c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1H4a1 1 0 0 1-1-1Zm8-3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>
-            Best Price
-          </div>
+        {/* Status badge */}
+        <div style={{ marginBottom: 6 }}>
+          {hasDiscount ? (
+            <span className="fb-badge fb-badge-red">Sale</span>
+          ) : (product as CarouselProduct).stockStatus === "PRE_ORDER" ? (
+            <span className="fb-badge fb-badge-orange">Pre-order</span>
+          ) : (product as CarouselProduct).stockStatus === "COMING_SOON" ? (
+            <span className="fb-badge fb-badge-blue">Coming Soon</span>
+          ) : (
+            <span className="fb-badge fb-badge-green">In Stock</span>
+          )}
         </div>
 
         {/* Price + Cart */}
@@ -403,7 +348,7 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
               <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
             </svg>
-            {!inStock ? "Sold out" : cartLoading ? "Adding…" : "Add to cart"}
+            {!inStock ? "Sold out" : cartLoading ? "Adding…" : "Add"}
           </button>
         </div>
       </div>
@@ -411,7 +356,7 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
   );
 }
 
-// ─── Scrollable Product Section (same style as flash sale) ───────────────────
+// ─── Scrollable Product Section ───────────────────────────────────────────────
 function FlowbiteGridSection({
   title, subtitle, accent, icon: Icon,
   items, seeAllLink
@@ -426,35 +371,33 @@ function FlowbiteGridSection({
 
   return (
     <div ref={sectionRef}>
-      {/* Header — stacks on mobile, row on sm+ */}
+      {/* Section Header — mobile-first, clean */}
       <div className="fb-sec-header">
-        {/* Title row */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: `${accent}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: `${accent}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Icon size={17} style={{ color: accent }} />
           </div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#111827", letterSpacing: "-0.3px" }}>{title}</div>
-            <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 1 }}>{subtitle}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#111827", letterSpacing: "-0.3px", lineHeight: 1.2 }}>{title}</div>
+            <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 2 }}>{subtitle}</div>
           </div>
         </div>
-        {/* Nav row */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {seeAllLink && (
-            <Link to={seeAllLink} style={{ fontSize: 12.5, fontWeight: 700, color: "#E6640A", textDecoration: "none" }}>
-              View all →
+            <Link to={seeAllLink} style={{ fontSize: 12.5, fontWeight: 700, color: "#E6640A", textDecoration: "none", whiteSpace: "nowrap" }}>
+              See all →
             </Link>
           )}
-          <button onClick={() => scroll(-1)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#f3f4f6", border: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151" }}>
+          <button onClick={() => scroll(-1)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#f3f4f6", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151", flexShrink: 0 }}>
             <IconChevronLeft size={13} />
           </button>
-          <button onClick={() => scroll(1)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#f3f4f6", border: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151" }}>
+          <button onClick={() => scroll(1)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#f3f4f6", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151", flexShrink: 0 }}>
             <IconChevronRight size={13} />
           </button>
         </div>
       </div>
 
-      {/* Horizontal scroll track — stretch makes all cards same height in a row */}
+      {/* Horizontal scroll track */}
       <div
         ref={trackRef}
         className="fb-prod-track"
@@ -477,7 +420,7 @@ function FlowbiteGridSection({
   );
 }
 
-// ─── HScroll Card (kept for flash sale / upcoming sections) ──────────────────
+// ─── HScroll Card (upcoming / flash-style cards) ──────────────────────────────
 function HScrollCard({ product, showTimer }: { product: CarouselProduct; showTimer?: boolean }) {
   const navigate = useNavigate();
   const { days, hours, minutes, seconds } = useCountdown(product.id, product.availableInDays);
@@ -505,11 +448,30 @@ function HScrollCard({ product, showTimer }: { product: CarouselProduct; showTim
           {hasDiscount && !showTimer && (
             <div className="hs-disc-badge">-{product.discountPercentage}%</div>
           )}
+          {/* ── FIXED TIMER — always visible on mobile, clear layout ── */}
           {showTimer && hasStatus && (
-            <div className={`hs-timer-badge${isPreOrder ? " tb-orange" : " tb-blue"}`}>
-              <IconClock size={9} />
-              {String(days).padStart(2, "0")}d:{String(hours).padStart(2, "0")}h:
-              {String(minutes).padStart(2, "0")}m:{String(seconds).padStart(2, "0")}s
+            <div className={`hs-timer-wrap${isPreOrder ? " tb-orange" : " tb-blue"}`}>
+              <div className="hs-timer-inner">
+                <div className="hs-timer-unit">
+                  <span className="hs-timer-num">{String(days).padStart(2, "0")}</span>
+                  <span className="hs-timer-lbl">d</span>
+                </div>
+                <span className="hs-timer-sep">:</span>
+                <div className="hs-timer-unit">
+                  <span className="hs-timer-num">{String(hours).padStart(2, "0")}</span>
+                  <span className="hs-timer-lbl">h</span>
+                </div>
+                <span className="hs-timer-sep">:</span>
+                <div className="hs-timer-unit">
+                  <span className="hs-timer-num">{String(minutes).padStart(2, "0")}</span>
+                  <span className="hs-timer-lbl">m</span>
+                </div>
+                <span className="hs-timer-sep">:</span>
+                <div className="hs-timer-unit">
+                  <span className="hs-timer-num">{String(seconds).padStart(2, "0")}</span>
+                  <span className="hs-timer-lbl">s</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -522,14 +484,6 @@ function HScrollCard({ product, showTimer }: { product: CarouselProduct; showTim
           )}
           <div className="hs-brand">{product.brand}</div>
           <div className="hs-name">{product.name}</div>
-          <div className="hs-stars">
-            {[1,2,3,4,5].map(s => (
-              <span key={s} style={{ color: s <= 4 ? "#f59e0b" : "#e2e0dc" }}>
-                <IconStar size={9} filled={s <= 4} />
-              </span>
-            ))}
-            <span className="hs-rating-count">(42)</span>
-          </div>
           <div className="hs-price-row">
             {hasDiscount ? (
               <>
@@ -579,7 +533,7 @@ function HScrollSection({ title, subtitle, accent, icon: Icon, items, showTimer,
           </motion.div>
           <div>
             <motion.div
-              style={{ display: "flex", alignItems: "center", gap: 8 }}
+              style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
               initial={{ opacity: 0, x: -10 }}
               animate={isInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.4, delay: 0.05 }}
@@ -752,40 +706,42 @@ const MOBILE_STYLES = `
   * { box-sizing: border-box; }
   button, a { -webkit-tap-highlight-color: transparent; }
 
-  .onett-page { background: #f9fafb; }
-  @media (prefers-color-scheme: dark) { .onett-page { background: #111827; } }
+  /* ── PAGE BACKGROUND — soft warm off-white ── */
+  .onett-page { background: #f5f5f0; }
+  @media (prefers-color-scheme: dark) { .onett-page { background: #0f1117; } }
 
-  .sdiv { height: 12px; }
-  @media (min-width: 640px) { .sdiv { height: 16px; } }
+  /* ── SECTION DIVIDER — generous spacing ── */
+  .sdiv { height: 20px; }
+  @media (min-width: 640px) { .sdiv { height: 28px; } }
 
+  /* ── PAGE GUTTERS ── */
   .pg {
-    padding-left: max(14px, env(safe-area-inset-left));
-    padding-right: max(14px, env(safe-area-inset-right));
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
     max-width: 1280px; margin: 0 auto; width: 100%;
   }
   @media (min-width: 640px)  { .pg { padding-left: 24px; padding-right: 24px; } }
   @media (min-width: 1024px) { .pg { padding-left: 40px; padding-right: 40px; } }
 
-  /* ── SECTION CARD WRAPPER ── */
+  /* ── SECTION CARD — no border, soft shadow only ── */
   .section-card {
     background: #fff;
     border-radius: 20px;
-    border: 1px solid rgba(0,0,0,0.07);
-    padding: 24px 16px 28px;
-    margin: 0 12px;
+    padding: 20px 16px 24px;
+    margin: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   }
-  @media (prefers-color-scheme: dark) { .section-card { background: #1f2937; border-color: rgba(255,255,255,0.07); } }
-  @media (min-width: 640px) { .section-card { border-radius: 24px; padding: 28px 24px 32px; margin: 0 16px; } }
-  @media (min-width: 1024px) { .section-card { margin: 0; } }
+  @media (prefers-color-scheme: dark) { .section-card { background: #1a1d27; box-shadow: 0 2px 12px rgba(0,0,0,0.3); } }
+  @media (min-width: 640px) { .section-card { border-radius: 24px; padding: 24px 24px 28px; } }
 
   /* ── CATEGORIES ── */
-  .cats-wrap { padding: 8px 0; }
+  .cats-wrap { padding: 0; }
   .cats-scroll {
-    display: flex; gap: 10px;
+    display: flex; gap: 12px;
     overflow-x: auto; -webkit-overflow-scrolling: touch;
     scrollbar-width: none; padding-bottom: 4px;
-    margin-left: -14px; padding-left: 14px;
-    margin-right: -14px; padding-right: 14px;
+    margin-left: -16px; padding-left: 16px;
+    margin-right: -16px; padding-right: 16px;
   }
   @media (min-width: 640px) {
     .cats-scroll { margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; flex-wrap: wrap; overflow-x: visible; }
@@ -793,69 +749,70 @@ const MOBILE_STYLES = `
   .cats-scroll::-webkit-scrollbar { display: none; }
   .cat-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; min-width: 64px; text-decoration: none; }
   .cat-icon-box {
-    width: 58px; height: 58px; border-radius: 16px;
-    background: #fff; border: 1px solid rgba(0,0,0,0.08);
+    width: 60px; height: 60px; border-radius: 16px;
+    background: #fff;
     display: flex; align-items: center; justify-content: center;
     overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
   .cat-item:active .cat-icon-box { transform: scale(0.93); }
   @media (min-width: 640px) { .cat-icon-box { width: 66px; height: 66px; } }
   .cat-icon-img { width: 100%; height: 100%; object-fit: cover; }
-  .cat-lbl { font-size: 10.5px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 66px; color: #111; }
-  @media (prefers-color-scheme: dark) { .cat-lbl { color: #f3f4f6; } }
+  .cat-lbl { font-size: 10.5px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 68px; color: #374151; }
+  @media (prefers-color-scheme: dark) { .cat-lbl { color: #d1d5db; } }
 
-  /* ── HSCROLL ── */
-  .hs-section { width: 100%; padding: 8px 0; }
+  /* ── HSCROLL SECTION ── */
+  .hs-section { width: 100%; padding: 0; }
   .hs-section-inner { width: 100%; }
-  .hs-header { display: flex; align-items: center; justify-content: space-between; padding: 0 0 14px; }
-  .hs-header-left { display: flex; align-items: center; gap: 10px; }
+  .hs-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 0 14px; gap: 8px;
+  }
+  .hs-header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
   .hs-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .hs-title { font-family: 'Satoshi', sans-serif; font-size: 15px; font-weight: 800; color: #111; letter-spacing: -0.3px; }
   @media (prefers-color-scheme: dark) { .hs-title { color: #f9fafb; } }
-  .hs-sub { font-size: 11.5px; color: #888; margin-top: 1px; }
-  .hs-nav-btns { display: flex; gap: 6px; }
-  .hs-nav-btn { width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6; border: 1px solid rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #111; transition: background 0.15s; }
+  .hs-sub { font-size: 11.5px; color: #888; margin-top: 2px; }
+  .hs-nav-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .hs-nav-btn { width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #111; transition: background 0.15s; }
   .hs-nav-btn:hover { background: rgba(0,0,0,0.08); }
+
   .hs-track {
     display: flex; gap: 10px; align-items: stretch;
     overflow-x: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; padding-bottom: 4px;
-    margin-left: -14px; padding-left: 14px;
-    margin-right: -14px; padding-right: 14px;
+    scrollbar-width: none; padding-bottom: 6px;
+    margin-left: -16px; padding-left: 16px;
+    margin-right: -16px; padding-right: 16px;
   }
   @media (min-width: 640px) { .hs-track { margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; gap: 12px; } }
   .hs-track::-webkit-scrollbar { display: none; }
   #flash-track::-webkit-scrollbar { display: none; }
-  .prod-track::-webkit-scrollbar { display: none; }
   .fb-prod-track::-webkit-scrollbar { display: none; }
 
-  /* ════════════════════════════════════════════════
-     UNIFIED PRODUCT CARD — responsive sizing
-     Mobile  (<480): 155×390
-     Small   (480+): 200×430
-     Tablet  (768+): 240×460
-     Desktop (1024+):260×470
-  ════════════════════════════════════════════════ */
+  /* ══════════════════════════════════════════
+     PRODUCT CARD — no ratings, clean
+  ══════════════════════════════════════════ */
   .fb-product-card {
-    width: 155px;
+    width: 152px;
     flex-shrink: 0; display: flex; flex-direction: column;
-    border-radius: 12px; border: 1px solid #e5e7eb;
-    background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
     overflow: hidden; transition: box-shadow 0.2s, transform 0.2s;
   }
-  @media (min-width: 480px)  { .fb-product-card { width: 200px; } }
-  @media (min-width: 768px)  { .fb-product-card { width: 240px; } }
-  @media (min-width: 1024px) { .fb-product-card { width: 260px; } }
-  .fb-product-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.10); transform: translateY(-3px); }
+  @media (prefers-color-scheme: dark) { .fb-product-card { background: #1a1d27; } }
+  @media (min-width: 480px)  { .fb-product-card { width: 185px; } }
+  @media (min-width: 768px)  { .fb-product-card { width: 220px; } }
+  @media (min-width: 1024px) { .fb-product-card { width: 245px; } }
+  .fb-product-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.12); transform: translateY(-3px); }
 
   .fb-product-img {
-    width: 100%; height: 130px; flex-shrink: 0;
+    width: 100%; height: 128px; flex-shrink: 0;
     position: relative; overflow: hidden; background: #f3f4f6;
   }
-  @media (min-width: 480px)  { .fb-product-img { height: 155px; } }
-  @media (min-width: 768px)  { .fb-product-img { height: 175px; } }
-  @media (min-width: 1024px) { .fb-product-img { height: 190px; } }
+  @media (min-width: 480px)  { .fb-product-img { height: 148px; } }
+  @media (min-width: 768px)  { .fb-product-img { height: 168px; } }
+  @media (min-width: 1024px) { .fb-product-img { height: 185px; } }
   .fb-product-img-el {
     width: 100%; height: 100%;
     object-fit: cover; object-position: center;
@@ -863,36 +820,40 @@ const MOBILE_STYLES = `
   }
   .fb-product-card:hover .fb-product-img-el { transform: scale(1.05); }
 
+  /* discount pill on image */
+  .fb-disc-pill {
+    position: absolute; top: 8px; left: 8px;
+    background: #ef4444; color: #fff;
+    font-size: 9px; font-weight: 800;
+    padding: 3px 7px; border-radius: 20px;
+  }
+
   .fb-product-body {
     padding: 8px 10px 10px;
-    display: flex; flex-direction: column; flex: 1; gap: 0;
+    display: flex; flex-direction: column; flex: 1;
   }
   @media (min-width: 480px)  { .fb-product-body { padding: 10px 12px 12px; } }
   @media (min-width: 1024px) { .fb-product-body { padding: 12px 14px 14px; } }
 
-  .fb-product-top {
-    display: flex; align-items: center;
-    justify-content: space-between; margin-bottom: 5px;
-  }
-  .fb-badge { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
-  @media (min-width: 480px) { .fb-badge { font-size: 10px; padding: 2px 7px; } }
+  .fb-badge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; display: inline-block; }
+  @media (min-width: 480px) { .fb-badge { font-size: 10px; } }
+  .fb-badge-red    { background: #fee2e2; color: #b91c1c; }
   .fb-badge-blue   { background: #dbeafe; color: #1e40af; }
   .fb-badge-orange { background: #ffedd5; color: #9a3412; }
   .fb-badge-green  { background: #dcfce7; color: #166534; }
 
   .fb-icon-btn {
-    width: 24px; height: 24px; border-radius: 6px;
-    background: #f3f4f6; border: none; cursor: pointer;
+    width: 26px; height: 26px; border-radius: 7px;
+    background: #f9fafb; border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    color: #6b7280; transition: background 0.15s;
+    color: #9ca3af; transition: all 0.15s;
   }
-  @media (min-width: 480px) { .fb-icon-btn { width: 27px; height: 27px; } }
-  .fb-icon-btn:hover { background: #e5e7eb; }
+  .fb-icon-btn:hover { background: #f3f4f6; color: #6b7280; }
   .fb-icon-btn-fav { background: #fee2e2 !important; color: #ef4444 !important; }
 
   .fb-product-brand {
     font-size: 8.5px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.5px; color: #9ca3af; margin-bottom: 3px;
+    letter-spacing: 0.6px; color: #9ca3af; margin-bottom: 3px;
   }
   @media (min-width: 480px) { .fb-product-brand { font-size: 9.5px; } }
 
@@ -901,124 +862,136 @@ const MOBILE_STYLES = `
     line-height: 1.35; text-decoration: none;
     display: -webkit-box; -webkit-line-clamp: 2;
     -webkit-box-orient: vertical; overflow: hidden;
-    margin-bottom: 4px;
+    margin-bottom: 6px; flex: 1;
   }
   @media (min-width: 480px)  { .fb-product-name { font-size: 12.5px; } }
   @media (min-width: 1024px) { .fb-product-name { font-size: 13.5px; } }
   .fb-product-name:hover { text-decoration: underline; }
-
-  .fb-product-stars { display: flex; align-items: center; gap: 2px; margin-bottom: 4px; }
-  .fb-star { width: 10px; height: 10px; fill: #fbbf24; flex-shrink: 0; }
-  @media (min-width: 480px) { .fb-star { width: 12px; height: 12px; } }
-  .fb-star-empty { fill: #e5e7eb; }
-  .fb-rating-val { font-size: 10px; font-weight: 600; color: #111; margin-left: 3px; }
-  .fb-rating-ct  { font-size: 10px; color: #9ca3af; }
-
-  .fb-product-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-  .fb-meta-item { display: flex; align-items: center; gap: 3px; font-size: 10px; color: #6b7280; }
-  .fb-meta-item svg { flex-shrink: 0; }
+  @media (prefers-color-scheme: dark) { .fb-product-name { color: #f3f4f6; } }
 
   .fb-product-footer {
     margin-top: auto; padding-top: 8px; display: flex; align-items: center;
-    justify-content: space-between; gap: 6px;
+    justify-content: space-between; gap: 6px; border-top: 1px solid #f3f4f6;
   }
+  @media (prefers-color-scheme: dark) { .fb-product-footer { border-top-color: rgba(255,255,255,0.06); } }
   .fb-product-price {
-    font-size: 14px; font-weight: 800;
-    color: #111827; letter-spacing: -0.4px; line-height: 1;
+    font-size: 13px; font-weight: 800;
+    color: #111827; letter-spacing: -0.3px; line-height: 1;
   }
-  @media (min-width: 480px)  { .fb-product-price { font-size: 16px; } }
-  @media (min-width: 1024px) { .fb-product-price { font-size: 18px; } }
-  .fb-product-price-old { font-size: 9.5px; color: #d1d5db; text-decoration: line-through; margin-top: 2px; }
+  @media (min-width: 480px)  { .fb-product-price { font-size: 15px; } }
+  @media (min-width: 1024px) { .fb-product-price { font-size: 17px; } }
+  @media (prefers-color-scheme: dark) { .fb-product-price { color: #f9fafb; } }
+  .fb-product-price-old { font-size: 9px; color: #d1d5db; text-decoration: line-through; margin-top: 2px; }
 
   .fb-cart-btn {
     display: inline-flex; align-items: center; gap: 4px;
-    background: #1d4ed8; color: #fff; border: none;
-    border-radius: 7px; padding: 6px 8px;
+    background: #E6640A; color: #fff; border: none;
+    border-radius: 8px; padding: 6px 8px;
     font-size: 9.5px; font-weight: 700;
     cursor: pointer; white-space: nowrap; flex-shrink: 0;
     transition: background 0.15s;
   }
-  @media (min-width: 480px)  { .fb-cart-btn { padding: 7px 10px; font-size: 10.5px; border-radius: 8px; } }
+  @media (min-width: 480px)  { .fb-cart-btn { padding: 7px 10px; font-size: 10.5px; } }
   @media (min-width: 1024px) { .fb-cart-btn { padding: 9px 13px; font-size: 12px; } }
-  .fb-cart-btn:hover { background: #1e40af; }
+  .fb-cart-btn:hover { background: #d45a09; }
   .fb-cart-btn:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; }
 
-  /* ── PRODUCT SCROLL TRACK (shared by all card rows) ── */
+  /* ── PRODUCT SCROLL TRACK ── */
   .fb-prod-track {
     display: flex; gap: 10px;
     overflow-x: auto; -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding-bottom: 6px;
-    padding-left: 2px;
-    padding-right: 2px;
-    align-items: stretch; /* all cards same height as tallest */
+    align-items: stretch;
   }
   @media (min-width: 640px)  { .fb-prod-track { gap: 12px; } }
   @media (min-width: 1024px) { .fb-prod-track { gap: 14px; } }
 
-  /* ── SECTION HEADER — stacks on mobile, row on sm+ ── */
+  /* ── SECTION HEADER — row on all sizes, wraps on tiny phones ── */
   .fb-sec-header {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     gap: 10px;
     margin-bottom: 14px;
+    flex-wrap: nowrap;
+  }
+  .fb-sec-header > div:first-child {
+    min-width: 0;
+    flex: 1;
   }
   @media (min-width: 540px) {
-    .fb-sec-header {
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
+    .fb-sec-header { margin-bottom: 16px; }
   }
 
-
-
+  /* ── HSCROLL CARD ── */
   .hs-card {
-    width: 168px; flex-shrink: 0;
-    background: #fff; border: 1px solid rgba(0,0,0,0.09);
+    width: 162px; flex-shrink: 0;
+    background: #fff;
     border-radius: 16px; overflow: hidden;
     text-decoration: none;
     display: flex; flex-direction: column;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
     transition: box-shadow 0.2s;
   }
-  @media (prefers-color-scheme: dark) { .hs-card { background: #1f2937; border-color: rgba(255,255,255,0.07); } }
-  .hs-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.10); }
-  @media (max-width: 374px) { .hs-card { width: 152px; } }
-  @media (min-width: 640px) { .hs-card { width: 200px; } }
+  @media (prefers-color-scheme: dark) { .hs-card { background: #1a1d27; } }
+  .hs-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+  @media (max-width: 374px) { .hs-card { width: 148px; } }
+  @media (min-width: 640px) { .hs-card { width: 195px; } }
 
-  .hs-img { width: 100%; height: 152px; position: relative; overflow: hidden; background: #f5f4f2; flex-shrink: 0; }
-  .hs-img-el { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; width: 100%; height: 100%; transition: transform 0.35s ease; }
+  .hs-img { width: 100%; height: 150px; position: relative; overflow: hidden; background: #f5f4f2; flex-shrink: 0; }
+  .hs-img-el { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: transform 0.35s ease; }
   .hs-card:hover .hs-img-el { transform: scale(1.05); }
   .hs-img-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #c8c5c0; }
-  .hs-disc-badge { position: absolute; top: 8px; left: 8px; background: #ef4444; color: #fff; font-size: 9.5px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
-  .hs-timer-badge { position: absolute; bottom: 7px; left: 7px; background: rgba(0,0,0,0.72); color: #fff; font-size: 9px; font-weight: 700; padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
-  .tb-orange { background: rgba(230,100,10,0.92) !important; }
-  .tb-blue   { background: rgba(59,130,246,0.92) !important; }
+  .hs-disc-badge { position: absolute; top: 8px; left: 8px; background: #ef4444; color: #fff; font-size: 9.5px; font-weight: 800; padding: 3px 7px; border-radius: 20px; }
+
+  /* ── FIXED LIVE TIMER — block layout, always readable ── */
+  .hs-timer-wrap {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 6px 8px 7px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tb-orange { background: linear-gradient(to top, rgba(180,70,5,0.95), rgba(230,100,10,0.85)); }
+  .tb-blue   { background: linear-gradient(to top, rgba(29,78,216,0.95), rgba(59,130,246,0.85)); }
+  .hs-timer-inner {
+    display: flex; align-items: center; justify-content: center; gap: 3px;
+  }
+  .hs-timer-unit {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 28px;
+  }
+  .hs-timer-num {
+    font-size: 14px; font-weight: 900; color: #fff;
+    font-variant-numeric: tabular-nums; line-height: 1;
+    letter-spacing: -0.5px;
+  }
+  @media (max-width: 374px) { .hs-timer-num { font-size: 12px; } }
+  .hs-timer-lbl {
+    font-size: 8px; font-weight: 600; color: rgba(255,255,255,0.65);
+    text-transform: uppercase; line-height: 1; margin-top: 1px;
+  }
+  .hs-timer-sep {
+    font-size: 13px; font-weight: 900; color: rgba(255,255,255,0.6);
+    margin-bottom: 8px; line-height: 1;
+  }
 
   .hs-body { padding: 11px 11px 12px; display: flex; flex-direction: column; gap: 0; flex: 1; }
   .hs-status { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.3px; width: fit-content; margin-bottom: 6px; }
   .st-orange { background: rgba(230,100,10,0.1); color: #E6640A; }
   .st-blue   { background: rgba(59,130,246,0.1); color: #3b82f6; }
   .hs-brand { font-size: 9.5px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
-  .hs-name { font-size: 12px; font-weight: 600; color: #111; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 32px; margin-bottom: 6px; }
+  .hs-name { font-size: 12px; font-weight: 600; color: #111; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 32px; margin-bottom: 8px; }
   @media (prefers-color-scheme: dark) { .hs-name { color: #f9fafb; } }
-  .hs-stars { display: flex; align-items: center; gap: 2px; margin-bottom: 6px; }
-  .hs-rating-count { font-size: 9.5px; color: #bbb; margin-left: 3px; }
   .hs-price-row { display: flex; align-items: baseline; gap: 5px; margin-bottom: 8px; }
-  .hs-price       { font-size: 13.5px; font-weight: 800; color: #E6640A; letter-spacing: -0.3px; }
+  .hs-price       { font-size: 13px; font-weight: 800; color: #E6640A; letter-spacing: -0.3px; }
   .hs-price-old   { font-size: 10px; color: #c0b8b0; text-decoration: line-through; }
-  .hs-price-plain { font-size: 13.5px; font-weight: 800; color: #111; letter-spacing: -0.3px; }
+  .hs-price-plain { font-size: 13px; font-weight: 800; color: #111; letter-spacing: -0.3px; }
   @media (prefers-color-scheme: dark) { .hs-price-plain { color: #f9fafb; } }
 
-  /* ── SHARED ACTION BUTTONS ── */
+  /* ── ACTION BUTTONS ── */
   .p-actions { display: flex; gap: 5px; margin-top: auto; }
-  .p-btn-cart { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; background: #f3f4f6; border: 1px solid rgba(0,0,0,0.09); color: #333; font-size: 10.5px; font-weight: 700; padding: 7px 8px; border-radius: 9px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
-  .p-btn-cart:hover { background: rgba(0,0,0,0.08); }
-  .p-btn-cart:disabled { opacity: 0.5; cursor: not-allowed; }
-  .p-btn-order { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; background: #E6640A; border: none; color: #fff; font-size: 10.5px; font-weight: 700; padding: 7px 8px; border-radius: 9px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+  .p-btn-order { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; background: #E6640A; border: none; color: #fff; font-size: 10.5px; font-weight: 700; padding: 8px; border-radius: 9px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
   .p-btn-order:hover { background: #d45a09; }
 
   /* ── AD BANNER ── */
@@ -1037,8 +1010,8 @@ const MOBILE_STYLES = `
   /* ── AI FEATURES ── */
   .ai-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
   @media (min-width: 900px) { .ai-grid { grid-template-columns: repeat(4,1fr); } }
-  .ai-card { background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; padding: 15px 13px; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
-  @media (prefers-color-scheme: dark) { .ai-card { background: #1f2937; border-color: rgba(255,255,255,0.07); } }
+  .ai-card { background: #f9fafb; border-radius: 16px; padding: 15px 13px; cursor: pointer; transition: all 0.2s; }
+  @media (prefers-color-scheme: dark) { .ai-card { background: #111827; } }
   .ai-card-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
   .ai-card-title { font-family: 'Satoshi', sans-serif; font-size: 13.5px; font-weight: 700; color: #111; margin-bottom: 4px; }
   @media (prefers-color-scheme: dark) { .ai-card-title { color: #f9fafb; } }
@@ -1047,8 +1020,8 @@ const MOBILE_STYLES = `
   /* ── TRUST GRID ── */
   .trust-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
   @media (min-width: 900px) { .trust-grid { grid-template-columns: repeat(4,1fr); } }
-  .trust-card { background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 15px; padding: 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
-  @media (prefers-color-scheme: dark) { .trust-card { background: #1f2937; border-color: rgba(255,255,255,0.07); } }
+  .trust-card { background: #fff; border-radius: 15px; padding: 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  @media (prefers-color-scheme: dark) { .trust-card { background: #1a1d27; } }
   @media (min-width: 640px) { .trust-card { padding: 18px 16px; flex-direction: row; align-items: flex-start; gap: 12px; } }
   .trust-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(230,100,10,0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .trust-title { font-size: 13px; font-weight: 700; color: #111; }
@@ -1056,7 +1029,7 @@ const MOBILE_STYLES = `
   .trust-desc { font-size: 11.5px; color: #666; margin-top: 2px; line-height: 1.5; }
 
   /* ── CTA BANNER ── */
-  .cta-banner { position: relative; overflow: hidden; border-radius: 22px; background: linear-gradient(135deg,#0d0d0d 0%,#1a0800 60%,#2d1000 100%); border: 1px solid rgba(230,100,10,0.18); padding: 28px 20px; display: flex; flex-direction: column; gap: 0; }
+  .cta-banner { position: relative; overflow: hidden; border-radius: 22px; background: linear-gradient(135deg,#0d0d0d 0%,#1a0800 60%,#2d1000 100%); padding: 28px 20px; display: flex; flex-direction: column; gap: 0; }
   @media (min-width: 640px) { .cta-banner { padding: 40px 36px; flex-direction: row; align-items: center; justify-content: space-between; } }
   .cta-content { position: relative; z-index: 1; }
   .cta-h2 { font-family: 'Satoshi', sans-serif; font-size: clamp(22px,6vw,32px); font-weight: 800; color: #fff; line-height: 1.2; letter-spacing: -0.5px; margin: 0 0 10px; }
@@ -1109,18 +1082,15 @@ const MOBILE_STYLES = `
   .popup-skip-btn { display: block; width: 100%; text-align: center; font-size: 12px; color: rgba(255,255,255,0.22); background: transparent; border: none; cursor: pointer; padding: 6px 0; }
   .popup-safe-bottom { height: env(safe-area-inset-bottom, 0px); }
 
-  /* ── live / shimmer badges ── */
+  /* ── LIVE / SHIMMER BADGES ── */
   .live-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.22); color: #ef4444; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.5px; }
   .live-dot { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; animation: live-pulse 1.2s ease-in-out infinite; }
   @keyframes live-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
   .shimmer-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.22); color: #8b5cf6; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.3px; }
 
-  .flash-section-header { display: flex; align-items: center; justify-content: space-between; padding: 0 0 14px; }
-  .flash-section-left   { display: flex; align-items: center; gap: 10px; }
-
   /* ── FOOTER ── */
-  .footer { background: #f9fafb; border-top: 1px solid rgba(0,0,0,0.08); }
-  @media (prefers-color-scheme: dark) { .footer { background: #111827; } }
+  .footer { background: #fff; border-top: 1px solid rgba(0,0,0,0.06); margin-top: 4px; }
+  @media (prefers-color-scheme: dark) { .footer { background: #1a1d27; border-top-color: rgba(255,255,255,0.06); } }
   .footer-inner { max-width: 1280px; margin: 0 auto; padding: 36px 16px 24px; }
   @media (min-width: 640px)  { .footer-inner { padding: 48px 24px 28px; } }
   @media (min-width: 1024px) { .footer-inner { padding: 56px 40px 32px; } }
@@ -1140,7 +1110,7 @@ const MOBILE_STYLES = `
   .footer-link { font-size: 13.5px; color: #111; text-decoration: none; opacity: 0.75; transition: opacity 0.15s; }
   @media (prefers-color-scheme: dark) { .footer-link { color: #e5e7eb; } }
   .footer-link:hover { opacity: 1; }
-  .footer-bottom { border-top: 1px solid rgba(0,0,0,0.08); margin-top: 28px; padding-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .footer-bottom { border-top: 1px solid rgba(0,0,0,0.06); margin-top: 28px; padding-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   @media (min-width: 640px) { .footer-bottom { flex-direction: row; justify-content: space-between; } }
   .footer-copy { font-size: 12px; color: #888; margin: 0; }
 `;
@@ -1232,41 +1202,21 @@ const Index = () => {
         <WelcomePopup />
         <Navbar />
 
-        {/* ── HERO — updated background image ── */}
+        {/* ── HERO ── */}
         <section
           className="hero relative overflow-hidden"
           style={{ minHeight: "92dvh", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}
         >
-          {/* Desktop bg */}
-          <img
-            src={HERO_BG_DESKTOP}
-            alt="Shopping"
-            className="absolute inset-0 h-full w-full object-cover object-center hidden sm:block"
-            loading="eager"
-          />
-          {/* Mobile bg */}
-          <img
-            src={HERO_BG_MOBILE}
-            alt="Shopping"
-            className="absolute inset-0 h-full w-full object-cover object-center block sm:hidden"
-            loading="eager"
-          />
-          {/* Gradient overlay */}
+          <img src={HERO_BG_DESKTOP} alt="Shopping" className="absolute inset-0 h-full w-full object-cover object-center hidden sm:block" loading="eager" />
+          <img src={HERO_BG_MOBILE} alt="Shopping" className="absolute inset-0 h-full w-full object-cover object-center block sm:hidden" loading="eager" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-          {/* Content */}
-          <div
-            className="relative z-10 pg hero-inner"
-            style={{ paddingTop: 96, paddingBottom: 64 }}
-          >
+          <div className="relative z-10 pg hero-inner" style={{ paddingTop: 96, paddingBottom: 64 }}>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div
-                className="hero-badge inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm mb-5"
-              >
+              <div className="hero-badge inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm mb-5">
                 <IconSparkles size={13} />
                 AI-Powered · Ghana's Smartest Shop
               </div>
@@ -1282,25 +1232,14 @@ const Index = () => {
               >
                 Personalized picks, snap-to-search, budget advice, and unbeatable deals — all in one place.
               </p>
-              <div
-                className="hero-btns flex gap-3"
-                style={{ flexWrap: "wrap" }}
-              >
+              <div className="hero-btns flex gap-3" style={{ flexWrap: "wrap" }}>
                 <motion.div style={{ x: magnet1.x, y: magnet1.y }}>
-                  <Link
-                    to="/search?keyword="
-                    className="h-btn-primary inline-flex items-center gap-2 rounded-xl bg-[#E6640A] px-6 py-3.5 text-base font-bold text-white transition-all hover:bg-[#d45a09]"
-                    {...magnet1.magneticProps}
-                  >
+                  <Link to="/search?keyword=" className="h-btn-primary inline-flex items-center gap-2 rounded-xl bg-[#E6640A] px-6 py-3.5 text-base font-bold text-white transition-all hover:bg-[#d45a09]" {...magnet1.magneticProps}>
                     Start Shopping <IconArrowRight size={16} />
                   </Link>
                 </motion.div>
                 <motion.div style={{ x: magnet2.x, y: magnet2.y }}>
-                  <Link
-                    to="/ai-assistant"
-                    className="h-btn-ghost inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-6 py-3.5 text-base font-bold text-white backdrop-blur-sm transition-all hover:bg-white/20"
-                    {...magnet2.magneticProps}
-                  >
+                  <Link to="/ai-assistant" className="h-btn-ghost inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-6 py-3.5 text-base font-bold text-white backdrop-blur-sm transition-all hover:bg-white/20" {...magnet2.magneticProps}>
                     <IconSparkles size={14} />Try AI Assistant
                   </Link>
                 </motion.div>
@@ -1309,82 +1248,78 @@ const Index = () => {
           </div>
         </section>
 
+        <div className="sdiv" />
+
         {/* ── CATEGORIES ── */}
-        <div className="cats-wrap">
-          <div className="pg">
-            <div className="section-card">
-              <div className="mb-4 flex items-end justify-between sm:flex md:mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0" style={{ background: "rgba(230,100,10,0.08)" }}>
-                    <IconTag size={18} style={{ color: "#E6640A" }} />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Browse Categories</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Find exactly what you're looking for</p>
-                  </div>
+        <div className="pg">
+          <div className="section-card">
+            <div className="mb-4 flex items-end justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0" style={{ background: "rgba(230,100,10,0.08)" }}>
+                  <IconTag size={18} style={{ color: "#E6640A" }} />
                 </div>
-                <Link to="/categories" className="flex items-center gap-1 text-sm font-bold text-primary-700 hover:text-primary-800 dark:text-primary-400">
-                  View all <IconChevronRight size={14} />
+                <div>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white" style={{ letterSpacing: "-0.2px" }}>Browse Categories</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Find exactly what you're looking for</p>
+                </div>
+              </div>
+              <Link to="/categories" className="flex items-center gap-1 text-xs font-bold" style={{ color: "#E6640A" }}>
+                See all <IconChevronRight size={12} />
+              </Link>
+            </div>
+            <div className="cats-scroll">
+              {(categories.length > 0 ? categories : sampleCategories).slice(0, 12).map((cat: any) => (
+                <Link key={cat.id} to={`/categories/${cat.slug}`} className="cat-item">
+                  <div className="cat-icon-box">
+                    {cat.icon?.imageUrl
+                      ? <img src={cat.icon.imageUrl} alt={cat.name} className="cat-icon-img" loading="lazy" />
+                      : <IconPackage size={22} />}
+                  </div>
+                  <span className="cat-lbl">{cat.name}</span>
                 </Link>
-              </div>
-              <div className="cats-scroll">
-                {(categories.length > 0 ? categories : sampleCategories).slice(0, 12).map((cat: any) => (
-                  <Link key={cat.id} to={`/categories/${cat.slug}`} className="cat-item">
-                    <div className="cat-icon-box">
-                      {cat.icon?.imageUrl
-                        ? <img src={cat.icon.imageUrl} alt={cat.name} className="cat-icon-img" loading="lazy" />
-                        : <IconPackage size={22} />}
-                    </div>
-                    <span className="cat-lbl">{cat.name}</span>
-                  </Link>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
         <div className="sdiv" />
 
-        {/* ── FLASH SALE — horizontal scroll ── */}
+        {/* ── FLASH SALE ── */}
         {flashSale.length > 0 && (
-          <div style={{ padding: "0 0 8px" }}>
-            <div className="pg">
-              <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e5e7eb", padding: "18px 16px 20px" }}>
-                {/* Header */}
-                <div className="fb-sec-header">
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <IconFlame size={16} style={{ color: "#ef4444" }} />
-                    </div>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 16, fontWeight: 800, color: "#111", letterSpacing: "-0.3px" }}>Flash Sale</span>
-                        <div className="live-badge"><div className="live-dot" />LIVE</div>
-                      </div>
-                      <div style={{ fontSize: 12, color: "#888", marginTop: 1 }}>Limited time — grab it before it's gone</div>
-                    </div>
+          <div className="pg">
+            <div className="section-card">
+              <div className="fb-sec-header">
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <IconFlame size={16} style={{ color: "#ef4444" }} />
                   </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -220, behavior: "smooth" })}>
-                      <IconChevronLeft size={13} />
-                    </button>
-                    <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 220, behavior: "smooth" })}>
-                      <IconChevronRight size={13} />
-                    </button>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: "#111827", letterSpacing: "-0.3px" }}>Flash Sale</span>
+                      <div className="live-badge"><div className="live-dot" />LIVE</div>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 2 }}>Limited time — grab it before it's gone</div>
                   </div>
                 </div>
-                {/* Track — overflows the card padding on mobile to bleed */}
-                <div id="flash-track" className="fb-prod-track" style={{ marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16 }}>
-                  {flashSale.map(item => (
-                    <motion.div
-                      key={item.id}
-                      style={{ flexShrink: 0, alignSelf: "stretch" }}
-                      whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
-                    >
-                      <FlowbiteProductCard product={item} />
-                    </motion.div>
-                  ))}
+                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                  <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -220, behavior: "smooth" })}>
+                    <IconChevronLeft size={13} />
+                  </button>
+                  <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 220, behavior: "smooth" })}>
+                    <IconChevronRight size={13} />
+                  </button>
                 </div>
+              </div>
+              <div id="flash-track" className="fb-prod-track" style={{ marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16 }}>
+                {flashSale.map(item => (
+                  <motion.div
+                    key={item.id}
+                    style={{ flexShrink: 0, alignSelf: "stretch" }}
+                    whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
+                  >
+                    <FlowbiteProductCard product={item} />
+                  </motion.div>
+                ))}
               </div>
             </div>
           </div>
@@ -1414,68 +1349,62 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── NEW ARRIVALS — horizontal scroll ── */}
+        {/* ── NEW ARRIVALS ── */}
         {newArrivalsCarousel.length > 0 && (
-          <div style={{ padding: "0 0 8px" }}>
-            <div className="pg">
-              <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e5e7eb", padding: "18px 16px 20px" }}>
-                <FlowbiteGridSection
-                  title="New Arrivals"
-                  subtitle="Fresh products added this week"
-                  accent="#f59e0b"
-                  icon={IconZap}
-                  items={newArrivalsCarousel}
-                  seeAllLink="/search?keyword=new"
-                />
-              </div>
+          <div className="pg">
+            <div className="section-card">
+              <FlowbiteGridSection
+                title="New Arrivals"
+                subtitle="Fresh products added this week"
+                accent="#f59e0b"
+                icon={IconZap}
+                items={newArrivalsCarousel}
+                seeAllLink="/search?keyword=new"
+              />
             </div>
           </div>
         )}
 
         <div className="sdiv" />
 
-        {/* ── UPCOMING DROPS — horizontal scroll with timers ── */}
+        {/* ── UPCOMING DROPS ── */}
         {upcomingCarousel.length > 0 && (
-          <div className="hs-section">
-            <div className="pg">
-              <div className="section-card">
-                <HScrollSection
-                  title="Upcoming Drops"
-                  subtitle="Pre-order & coming soon — with live countdowns"
-                  accent="#8b5cf6"
-                  icon={IconCalendarClock}
-                  items={upcomingCarousel}
-                  showTimer
-                  badge={
-                    <span className="shimmer-badge">
-                      <IconClock size={9} />Live timer
-                    </span>
-                  }
-                />
-              </div>
+          <div className="pg">
+            <div className="section-card">
+              <HScrollSection
+                title="Upcoming Drops"
+                subtitle="Pre-order & coming soon"
+                accent="#8b5cf6"
+                icon={IconCalendarClock}
+                items={upcomingCarousel}
+                showTimer
+                badge={
+                  <span className="shimmer-badge">
+                    <IconClock size={9} />Live timer
+                  </span>
+                }
+              />
             </div>
           </div>
         )}
 
         <div className="sdiv" />
 
-        {/* ── JUST DROPPED — horizontal scroll ── */}
+        {/* ── JUST DROPPED ── */}
         {newArrivals.length > 0 && (
-          <div style={{ padding: "0 0 8px" }}>
-            <div className="pg">
-              <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e5e7eb", padding: "18px 16px 20px" }}>
-                <FlowbiteGridSection
-                  title="Just Dropped"
-                  subtitle="Browse all the latest products"
-                  accent="#E6640A"
-                  icon={IconFlame}
-                  items={dedupeById(newArrivals.map(p => ({
-                    ...normaliseToCarousel(p),
-                    stock: (p as ProductCardData).stock,
-                  })))}
-                  seeAllLink="/search?keyword="
-                />
-              </div>
+          <div className="pg">
+            <div className="section-card">
+              <FlowbiteGridSection
+                title="Just Dropped"
+                subtitle="Browse all the latest products"
+                accent="#E6640A"
+                icon={IconFlame}
+                items={dedupeById(newArrivals.map(p => ({
+                  ...normaliseToCarousel(p),
+                  stock: (p as ProductCardData).stock,
+                })))}
+                seeAllLink="/search?keyword="
+              />
             </div>
           </div>
         )}
@@ -1485,13 +1414,13 @@ const Index = () => {
         {/* ── AI FEATURES ── */}
         <div className="pg">
           <div className="section-card">
-            <div className="mb-4 flex items-center gap-3 md:mb-6">
+            <div className="mb-4 flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0" style={{ background: "rgba(230,100,10,0.08)" }}>
                 <IconSparkles size={18} style={{ color: "#E6640A" }} />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Shopping, Reimagined</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Powered by AI</p>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white" style={{ letterSpacing: "-0.2px" }}>Shopping, Reimagined</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Powered by AI</p>
               </div>
             </div>
             <div className="ai-grid">
@@ -1550,9 +1479,7 @@ const Index = () => {
               <h2 className="cta-h2">Not sure what to buy?<br />Let AI decide.</h2>
               <p className="cta-p">Describe what you need, set your budget, and our AI will curate the perfect selection just for you.</p>
               <div className="cta-btns">
-                <Link to="/ai-assistant" className="cta-btn-w">
-                  <IconSparkles size={14} />Chat with AI
-                </Link>
+                <Link to="/ai-assistant" className="cta-btn-w"><IconSparkles size={14} />Chat with AI</Link>
                 <Link to="/register" className="cta-btn-g">Create Free Account</Link>
               </div>
             </div>
@@ -1614,21 +1541,13 @@ const Index = () => {
               viewport={{ once: true }}
               variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
             >
-              <motion.div
-                className="footer-col"
-                variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-                transition={{ duration: 0.4 }}
-              >
+              <motion.div className="footer-col" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.4 }}>
                 <div className="footer-brand-row">
                   <OnettLogoMark size={34} />
                   <span className="footer-brand-name">ONETT<em>.</em></span>
                 </div>
                 <p className="footer-tagline">Ghana's AI-powered marketplace. Shop smarter, not harder.</p>
-                <a
-                  href="https://wa.me/233257765011?text=Hi%2C%20I%20found%20you%20on%20ONETT"
-                  target="_blank" rel="noopener noreferrer"
-                  className="footer-wa"
-                >
+                <a href="https://wa.me/233257765011?text=Hi%2C%20I%20found%20you%20on%20ONETT" target="_blank" rel="noopener noreferrer" className="footer-wa">
                   <IconWhatsapp size={15} /> Chat with a Seller
                 </a>
               </motion.div>
@@ -1649,12 +1568,7 @@ const Index = () => {
                   { label: "Messages",     to: "/messages" },
                 ]},
               ].map(col => (
-                <motion.div
-                  key={col.title}
-                  className="footer-col"
-                  variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-                  transition={{ duration: 0.4 }}
-                >
+                <motion.div key={col.title} className="footer-col" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.4 }}>
                   <div className="footer-col-title">{col.title}</div>
                   <div className="footer-links">
                     {col.links.map(link => (
@@ -1665,13 +1579,7 @@ const Index = () => {
               ))}
             </motion.div>
 
-            <motion.div
-              className="footer-bottom"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
+            <motion.div className="footer-bottom" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.3 }}>
               <p className="footer-copy">© 2026 ONETT. All rights reserved.</p>
               <p className="footer-copy">Smart Buying · Affordable Access</p>
             </motion.div>
