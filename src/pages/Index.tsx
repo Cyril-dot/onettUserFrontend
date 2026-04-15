@@ -268,7 +268,7 @@ function StarRating({ rating = 4.5, count = 42 }: { rating?: number; count?: num
   );
 }
 
-// ─── Flowbite-style Product Card (matches the HTML structure exactly) ─────────
+// ─── Unified Product Card — fixed 260×480, same style everywhere ──────────────
 function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCardData }) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -292,148 +292,169 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
     finally { setCartLoading(false); }
   };
 
-  const rating = 4.5 + Math.random() * 0.5;
-  const reviewCount = Math.floor(Math.random() * 2000) + 100;
+  // stable rating per product id
+  const seed = product.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const rating = (4.5 + (seed % 10) * 0.05).toFixed(1);
+  const reviewCount = 100 + (seed % 1900);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 flex flex-col overflow-hidden" style={{width:260,height:460,flexShrink:0}}>
-      {/* Image — fixed 224px height, fully fills width, no padding */}
-      <div className="w-full relative overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0" style={{height:180}}>
-        <Link to={`/products/${product.id}`} className="block h-full w-full">
+    <div
+      style={{
+        width: 260,
+        height: 480,
+        flexShrink: 0,
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: 12,
+        border: "1px solid #e5e7eb",
+        background: "#fff",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        overflow: "hidden",
+        transition: "box-shadow 0.2s, transform 0.2s",
+      }}
+    >
+      {/* ── IMAGE — 190px, fills full width, object-cover ── */}
+      <div style={{ width: "100%", height: 190, flexShrink: 0, position: "relative", overflow: "hidden", background: "#f3f4f6" }}>
+        <Link to={`/products/${product.id}`} style={{ display: "block", width: "100%", height: "100%" }}>
           {imageUrl ? (
             <img
-              className="h-full w-full object-cover object-center transition-transform duration-300 hover:scale-105"
               src={imageUrl}
               alt={product.name}
               loading="lazy"
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block", transition: "transform 0.3s" }}
+              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.05)")}
+              onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-gray-300">
+            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#d1d5db" }}>
               <IconPackage size={48} />
             </div>
           )}
         </Link>
         {!inStock && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <span className="rounded-lg bg-black/70 px-3 py-1.5 text-xs font-bold text-white">Out of stock</span>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 7 }}>Out of stock</span>
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="px-4 py-3 flex flex-col flex-1 overflow-hidden">
-        {/* Badges + action icons row */}
-        <div className="mb-2 flex items-center justify-between gap-4">
+      {/* ── BODY — remaining 290px ── */}
+      <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+
+        {/* Badge row + icons */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
           {hasDiscount ? (
-            <span className="me-2 rounded bg-primary-100 px-2.5 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-900 dark:text-primary-300">
+            <span style={{ background: "#dbeafe", color: "#1e40af", fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 5 }}>
               Up to {product.discountPercentage}% off
             </span>
           ) : (product as CarouselProduct).stockStatus === "PRE_ORDER" ? (
-            <span className="me-2 rounded bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-300">
-              Pre-order
-            </span>
+            <span style={{ background: "#ffedd5", color: "#9a3412", fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 5 }}>Pre-order</span>
           ) : (product as CarouselProduct).stockStatus === "COMING_SOON" ? (
-            <span className="me-2 rounded bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-              Coming Soon
-            </span>
+            <span style={{ background: "#dbeafe", color: "#1e3a8a", fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 5 }}>Coming Soon</span>
           ) : (
-            <span className="me-2 rounded bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
-              In Stock
-            </span>
+            <span style={{ background: "#dcfce7", color: "#166534", fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 5 }}>In Stock</span>
           )}
-
-          <div className="flex items-center justify-end gap-1">
+          <div style={{ display: "flex", gap: 4 }}>
             <button
-              type="button"
               title="Quick look"
               onClick={() => navigate(`/products/${product.id}`)}
-              className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white transition-colors"
+              style={{ width: 30, height: 30, borderRadius: 8, background: "#f3f4f6", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}
             >
-              <IconEye size={18} />
+              <IconEye size={15} />
             </button>
             <button
-              type="button"
-              title="Add to favorites"
+              title="Favourite"
               onClick={() => setWishlisted(w => !w)}
-              className={`rounded-lg p-2 transition-colors ${wishlisted ? "text-red-500 bg-red-50 dark:bg-red-900/20" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"}`}
+              style={{ width: 30, height: 30, borderRadius: 8, background: wishlisted ? "#fee2e2" : "#f3f4f6", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: wishlisted ? "#ef4444" : "#6b7280" }}
             >
-              <svg className="h-5 w-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill={wishlisted ? "currentColor" : "none"} viewBox="0 0 24 24">
-                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6C6.5 1 1 8 5.8 13l6.2 7 6.2-7C23 8 17.5 1 12 6Z" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             </button>
           </div>
         </div>
 
-        {/* Product name */}
+        {/* Brand */}
+        {(product as any).brand && (
+          <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", color: "#9ca3af", marginBottom: 4 }}>
+            {(product as any).brand}
+          </p>
+        )}
+
+        {/* Name — 2 lines max */}
         <Link
           to={`/products/${product.id}`}
-          className="text-lg font-semibold leading-tight text-gray-900 hover:underline dark:text-white line-clamp-2"
+          style={{ fontSize: 13.5, fontWeight: 600, color: "#111827", lineHeight: 1.35, textDecoration: "none", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", marginBottom: 6 }}
         >
           {product.name}
         </Link>
 
-        {/* Brand + Stars */}
-        {(product as any).brand && (
-          <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-gray-400">{(product as any).brand}</p>
-        )}
-
-        <StarRating rating={parseFloat(rating.toFixed(1))} count={reviewCount} />
-
-        {/* Delivery badges */}
-        <ul className="mt-1 flex items-center gap-3">
-          <li className="flex items-center gap-2">
-            <svg className="h-4 w-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h6l2 4m-8-4v8m0-8V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v9h2m8 0H9m4 0h2m4 0h2v-4m0 0h-5m3.5 5.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm-10 0a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z" />
+        {/* Stars */}
+        <div style={{ display: "flex", alignItems: "center", gap: 2, marginBottom: 6 }}>
+          {[1,2,3,4,5].map(s => (
+            <svg key={s} width="13" height="13" viewBox="0 0 24 24" fill={s <= Math.round(Number(rating)) ? "#fbbf24" : "#e5e7eb"}>
+              <path d="M13.8 4.2a2 2 0 0 0-3.6 0L8.4 8.4l-4.6.3a2 2 0 0 0-1.1 3.5l3.5 3-1 4.4c-.5 1.7 1.4 3 2.9 2.1l3.9-2.3 3.9 2.3c1.5 1 3.4-.4 3-2.1l-1-4.4 3.4-3a2 2 0 0 0-1.1-3.5l-4.6-.3-1.8-4.2Z" />
             </svg>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Fast Delivery</p>
-          </li>
-          <li className="flex items-center gap-2">
-            <svg className="h-4 w-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="M8 7V6c0-.6.4-1 1-1h11c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1h-1M3 18v-7c0-.6.4-1 1-1h11c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1H4a1 1 0 0 1-1-1Zm8-3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
-            </svg>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Best Price</p>
-          </li>
-        </ul>
+          ))}
+          <span style={{ fontSize: 11.5, fontWeight: 600, color: "#111", marginLeft: 3 }}>{rating}</span>
+          <span style={{ fontSize: 11.5, color: "#9ca3af" }}>({reviewCount})</span>
+        </div>
 
-        {/* Price + Add to cart — pinned to bottom */}
-        <div className="mt-auto pt-2 flex items-center justify-between gap-3">
-          <div className="flex flex-col">
-            <p className="text-2xl font-extrabold leading-tight text-gray-900 dark:text-white">
+        {/* Meta */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11.5, color: "#6b7280" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 7h6l2 4m-8-4v8m0-8V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v9h2m8 0H9m4 0h2m4 0h2v-4m0 0h-5m3.5 5.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm-10 0a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Fast Delivery
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11.5, color: "#6b7280" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 7V6c0-.6.4-1 1-1h11c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1h-1M3 18v-7c0-.6.4-1 1-1h11c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1H4a1 1 0 0 1-1-1Zm8-3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" strokeLinecap="round"/></svg>
+            Best Price
+          </div>
+        </div>
+
+        {/* Price + Cart — always visible at bottom */}
+        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <div>
+            <p style={{ fontSize: 20, fontWeight: 800, color: "#111827", letterSpacing: "-0.5px", lineHeight: 1 }}>
               GHS {Number(displayPrice).toLocaleString()}
             </p>
             {hasDiscount && (
-              <p className="text-sm text-gray-400 line-through">GHS {Number(product.price).toLocaleString()}</p>
+              <p style={{ fontSize: 11, color: "#d1d5db", textDecoration: "line-through", marginTop: 2 }}>
+                GHS {Number(product.price).toLocaleString()}
+              </p>
             )}
           </div>
 
-          {inStock ? (
-            <button
-              type="button"
-              disabled={cartLoading}
-              onClick={handleCart}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 disabled:opacity-60 transition-colors"
-            >
-              <svg className="-ms-2 me-2 h-5 w-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4h1.5L8 16m0 0h8m-8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm.75-3H7.5M11 7H6.312M17 4v6m-3-3h6" />
-              </svg>
-              {cartLoading ? "Adding…" : "Add to cart"}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => navigate(`/products/${product.id}`)}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors"
-            >
-              View Details
-            </button>
-          )}
+          <button
+            type="button"
+            disabled={cartLoading || !inStock}
+            onClick={handleCart}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              background: inStock ? "#1d4ed8" : "#9ca3af",
+              color: "#fff", border: "none", borderRadius: 9,
+              padding: "9px 13px", fontSize: 12, fontWeight: 700,
+              cursor: inStock ? "pointer" : "not-allowed",
+              whiteSpace: "nowrap", flexShrink: 0,
+              transition: "background 0.15s",
+              opacity: cartLoading ? 0.7 : 1,
+            }}
+            onMouseEnter={e => inStock && ((e.currentTarget as HTMLButtonElement).style.background = "#1e40af")}
+            onMouseLeave={e => inStock && ((e.currentTarget as HTMLButtonElement).style.background = "#1d4ed8")}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+            {!inStock ? "Out of stock" : cartLoading ? "Adding…" : "Add to cart"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Flowbite-style Grid Section ──────────────────────────────────────────────
+// ─── Scrollable Product Section (same style as flash sale) ───────────────────
 function FlowbiteGridSection({
   title, subtitle, accent, icon: Icon,
   items, seeAllLink
@@ -442,58 +463,68 @@ function FlowbiteGridSection({
   items: (CarouselProduct | ProductCardData)[]; seeAllLink?: string;
 }) {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(sectionRef, { once: true, margin: "-80px" });
+  const trackRef   = useRef<HTMLDivElement>(null);
+  const isInView   = useInView(sectionRef, { once: true, margin: "-80px" });
+  const scroll = (dir: number) => trackRef.current?.scrollBy({ left: dir * 280, behavior: "smooth" });
 
   return (
     <div ref={sectionRef}>
-      {/* Section header */}
-      <div className="mb-4 flex items-end justify-between space-y-4 sm:flex sm:space-y-0 md:mb-8">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0" style={{ background: `${accent}18` }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: `${accent}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Icon size={18} style={{ color: accent }} />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">{title}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>{title}</div>
+            <div style={{ fontSize: 12.5, color: "#9ca3af", marginTop: 2 }}>{subtitle}</div>
           </div>
         </div>
-        {seeAllLink && (
-          <Link
-            to={seeAllLink}
-            className="flex items-center gap-1 text-sm font-bold text-primary-700 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
-          >
-            View all <IconChevronRight size={14} />
-          </Link>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {seeAllLink && (
+            <Link to={seeAllLink} style={{ fontSize: 13, fontWeight: 700, color: "#E6640A", textDecoration: "none", marginRight: 4 }}>
+              View all →
+            </Link>
+          )}
+          <button onClick={() => scroll(-1)} style={{ width: 32, height: 32, borderRadius: "50%", background: "#f3f4f6", border: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151" }}>
+            <IconChevronLeft size={14} />
+          </button>
+          <button onClick={() => scroll(1)} style={{ width: 32, height: 32, borderRadius: "50%", background: "#f3f4f6", border: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151" }}>
+            <IconChevronRight size={14} />
+          </button>
+        </div>
       </div>
 
-      {/* 4-col grid — mirrors Flowbite */}
-      <div className="mb-4 md:mb-8 flex flex-wrap gap-4">
-        {items.slice(0, 8).map((item, i) => (
+      {/* Horizontal scroll track */}
+      <div
+        ref={trackRef}
+        style={{
+          display: "flex",
+          gap: 14,
+          overflowX: "auto",
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+          paddingBottom: 4,
+          // bleed on mobile
+          marginLeft: -14,
+          paddingLeft: 14,
+          marginRight: -14,
+          paddingRight: 14,
+        }}
+      >
+        {items.map((item, i) => (
           <motion.div
             key={item.id}
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.45, delay: Math.min(i * 0.06, 0.45), ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
-            style={{ width: 260, flexShrink: 0 }}
+            transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.4), ease: [0.22, 1, 0.36, 1] }}
+            whileHover={{ y: -4, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", transition: { type: "spring", stiffness: 380, damping: 22 } }}
+            style={{ flexShrink: 0 }}
           >
             <FlowbiteProductCard product={item} />
           </motion.div>
         ))}
       </div>
-
-      {/* Show more button */}
-      {seeAllLink && items.length > 8 && (
-        <div className="w-full text-center mt-2">
-          <Link
-            to={seeAllLink}
-            className="inline-block rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
-          >
-            Show more
-          </Link>
-        </div>
-      )}
     </div>
   );
 }
@@ -847,6 +878,8 @@ const MOBILE_STYLES = `
   }
   @media (min-width: 640px) { .hs-track { margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; gap: 12px; } }
   .hs-track::-webkit-scrollbar { display: none; }
+  #flash-track::-webkit-scrollbar { display: none; }
+  .prod-track::-webkit-scrollbar { display: none; }
 
   .hs-card {
     width: 168px; flex-shrink: 0;
@@ -1245,8 +1278,16 @@ const Index = () => {
                     </button>
                   </div>
                 </div>
-                <div id="flash-track" className="hs-track">
-                  {flashSale.map(item => <HScrollCard key={item.id} product={item} />)}
+                <div id="flash-track" style={{ display: "flex", gap: 14, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", paddingBottom: 4 }}>
+                  {flashSale.map(item => (
+                    <motion.div
+                      key={item.id}
+                      style={{ flexShrink: 0 }}
+                      whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
+                    >
+                      <FlowbiteProductCard product={item} />
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </div>
