@@ -298,7 +298,7 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
   const reviewCount = 100 + (seed % 1900);
 
   return (
-    <div className="fb-product-card">
+    <div className="fb-product-card" style={{ height: "100%" }}>
       {/* ── IMAGE — fills full card width, fixed height via CSS var ── */}
       <div className="fb-product-img">
         <Link to={`/products/${product.id}`} style={{ display: "block", width: "100%", height: "100%" }}>
@@ -426,33 +426,35 @@ function FlowbiteGridSection({
 
   return (
     <div ref={sectionRef}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: `${accent}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Icon size={18} style={{ color: accent }} />
+      {/* Header — stacks on mobile, row on sm+ */}
+      <div className="fb-sec-header">
+        {/* Title row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: `${accent}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon size={17} style={{ color: accent }} />
           </div>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>{title}</div>
-            <div style={{ fontSize: 12.5, color: "#9ca3af", marginTop: 2 }}>{subtitle}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#111827", letterSpacing: "-0.3px" }}>{title}</div>
+            <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 1 }}>{subtitle}</div>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {/* Nav row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 0 }}>
           {seeAllLink && (
-            <Link to={seeAllLink} style={{ fontSize: 13, fontWeight: 700, color: "#E6640A", textDecoration: "none", marginRight: 4 }}>
+            <Link to={seeAllLink} style={{ fontSize: 12.5, fontWeight: 700, color: "#E6640A", textDecoration: "none" }}>
               View all →
             </Link>
           )}
-          <button onClick={() => scroll(-1)} style={{ width: 32, height: 32, borderRadius: "50%", background: "#f3f4f6", border: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151" }}>
-            <IconChevronLeft size={14} />
+          <button onClick={() => scroll(-1)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#f3f4f6", border: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151" }}>
+            <IconChevronLeft size={13} />
           </button>
-          <button onClick={() => scroll(1)} style={{ width: 32, height: 32, borderRadius: "50%", background: "#f3f4f6", border: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151" }}>
-            <IconChevronRight size={14} />
+          <button onClick={() => scroll(1)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#f3f4f6", border: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151" }}>
+            <IconChevronRight size={13} />
           </button>
         </div>
       </div>
 
-      {/* Horizontal scroll track — first card always fully visible */}
+      {/* Horizontal scroll track — stretch makes all cards same height in a row */}
       <div
         ref={trackRef}
         className="fb-prod-track"
@@ -465,7 +467,7 @@ function FlowbiteGridSection({
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.4), ease: [0.22, 1, 0.36, 1] }}
             whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
-            style={{ flexShrink: 0 }}
+            style={{ flexShrink: 0, alignSelf: "stretch" }}
           >
             <FlowbiteProductCard product={item} />
           </motion.div>
@@ -863,7 +865,7 @@ const MOBILE_STYLES = `
 
   .fb-product-body {
     padding: 8px 10px 10px;
-    display: flex; flex-direction: column; gap: 0;
+    display: flex; flex-direction: column; flex: 1; gap: 0;
   }
   @media (min-width: 480px)  { .fb-product-body { padding: 10px 12px 12px; } }
   @media (min-width: 1024px) { .fb-product-body { padding: 12px 14px 14px; } }
@@ -917,7 +919,7 @@ const MOBILE_STYLES = `
   .fb-meta-item svg { flex-shrink: 0; }
 
   .fb-product-footer {
-    margin-top: 8px; display: flex; align-items: center;
+    margin-top: auto; padding-top: 8px; display: flex; align-items: center;
     justify-content: space-between; gap: 6px;
   }
   .fb-product-price {
@@ -949,10 +951,27 @@ const MOBILE_STYLES = `
     padding-bottom: 6px;
     padding-left: 2px;
     padding-right: 2px;
-    align-items: flex-start;
+    align-items: stretch; /* all cards same height as tallest */
   }
   @media (min-width: 640px)  { .fb-prod-track { gap: 12px; } }
   @media (min-width: 1024px) { .fb-prod-track { gap: 14px; } }
+
+  /* ── SECTION HEADER — stacks on mobile, row on sm+ ── */
+  .fb-sec-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  @media (min-width: 540px) {
+    .fb-sec-header {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+  }
 
 
 
@@ -1332,25 +1351,25 @@ const Index = () => {
             <div className="pg">
               <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e5e7eb", padding: "18px 16px 20px" }}>
                 {/* Header */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <div className="fb-sec-header">
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <IconFlame size={16} style={{ color: "#ef4444" }} />
                     </div>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: "#111", letterSpacing: "-0.3px" }}>Flash Sale</span>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: "#111", letterSpacing: "-0.3px" }}>Flash Sale</span>
                         <div className="live-badge"><div className="live-dot" />LIVE</div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: "#888", marginTop: 1 }}>Limited time — grab it before it's gone</div>
+                      <div style={{ fontSize: 12, color: "#888", marginTop: 1 }}>Limited time — grab it before it's gone</div>
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -220, behavior: "smooth" })}>
-                      <IconChevronLeft size={14} />
+                      <IconChevronLeft size={13} />
                     </button>
                     <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 220, behavior: "smooth" })}>
-                      <IconChevronRight size={14} />
+                      <IconChevronRight size={13} />
                     </button>
                   </div>
                 </div>
@@ -1359,7 +1378,7 @@ const Index = () => {
                   {flashSale.map(item => (
                     <motion.div
                       key={item.id}
-                      style={{ flexShrink: 0 }}
+                      style={{ flexShrink: 0, alignSelf: "stretch" }}
                       whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
                     >
                       <FlowbiteProductCard product={item} />
