@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTilt, useMagnetic } from "@/hooks/useMotion";
 
-// ─── SVG Icon Components (professional, clean) ────────────────────────────────
+// ─── SVG Icon Components ──────────────────────────────────────────────────────
 const IconArrowRight = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M5 12h14M12 5l7 7-7 7" />
@@ -131,7 +131,7 @@ const IconStar = ({ size = 12, filled = true }: { size?: number; filled?: boolea
   </svg>
 );
 
-// ─── Inline logo ──────────────────────────────────────────────────────────────
+// ─── Logo Mark ────────────────────────────────────────────────────────────────
 function OnettLogoMark({ size = 36 }: { size?: number }) {
   return (
     <div style={{
@@ -202,8 +202,11 @@ const aiFeatures = [
   { icon: IconSearch, title: "Smart Search", desc: "Natural language that understands what you mean", color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
 ];
 
-// Hero background image — premium lifestyle/tech shopping aesthetic
-const HERO_BG = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=80";
+// ─── Hero BG — mobile-optimised portrait image ────────────────────────────────
+// Desktop: editorial lifestyle/tech shopping scene
+const HERO_BG_DESKTOP = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=80";
+// Mobile: vibrant Ghanaian market / mobile shopping feel — tall portrait crop
+const HERO_BG_MOBILE  = "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=800&q=80";
 
 function normaliseToCarousel(p: any): CarouselProduct {
   return {
@@ -269,18 +272,13 @@ function HScrollCard({ product, showTimer }: { product: CarouselProduct; showTim
   const hasStatus = isPreOrder || isComingSoon;
 
   const { rotateX, rotateY, glowX, glowY, tiltProps } = useTilt({
-    maxRotateX: 5,
-    maxRotateY: 5,
-    maxGlow: 30,
-    springStiffness: 120,
-    springDamping: 25,
-    perspective: 1200,
+    maxRotateX: 5, maxRotateY: 5, maxGlow: 30,
+    springStiffness: 120, springDamping: 25, perspective: 1200,
   });
 
   const cardGlow = useTransform(
     [glowX, glowY],
-    ([gx, gy]) =>
-      `radial-gradient(circle at ${gx}% ${gy}%, rgba(230,100,10,0.2) 0%, transparent 70%)`
+    ([gx, gy]) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(230,100,10,0.2) 0%, transparent 70%)`
   );
 
   return (
@@ -352,8 +350,7 @@ function GridCard({ product }: { product: ProductCardData }) {
 
   const cardGlow = useTransform(
     [glowX, glowY],
-    ([gx, gy]) =>
-      `radial-gradient(circle at ${gx}% ${gy}%, rgba(230,100,10,0.18) 0%, transparent 70%)`
+    ([gx, gy]) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(230,100,10,0.18) 0%, transparent 70%)`
   );
 
   return (
@@ -365,48 +362,44 @@ function GridCard({ product }: { product: ProductCardData }) {
         className="gc cursor-pointer"
       >
         <Link to={`/products/${product.id}`} className="gc">
-        <div className="gc-img-wrap">
-          {imageUrl
-            ? <img src={imageUrl} alt={product.name} className="gc-img-el" loading="lazy" />
-            : <div className="gc-img-ph"><IconPackage size={28} /></div>}
-          {hasDiscount && <div className="gc-disc">-{product.discountPercentage}%</div>}
-          {!inStock && (
-            <div className="gc-oos"><span>Out of stock</span></div>
-          )}
-        </div>
-        <div className="gc-body">
-          {product.brand && <div className="gc-brand">{product.brand}</div>}
-          <div className="gc-name">{product.name}</div>
-          <div className="gc-stars">
-            {[1,2,3,4,5].map(s => (
-              <span key={s} style={{ color: "#f59e0b" }}>
-                <IconStar size={10} filled={s <= 4} />
-              </span>
-            ))}
-            <span className="gc-rating-count">(42)</span>
+          <div className="gc-img-wrap">
+            {imageUrl
+              ? <img src={imageUrl} alt={product.name} className="gc-img-el" loading="lazy" />
+              : <div className="gc-img-ph"><IconPackage size={28} /></div>}
+            {hasDiscount && <div className="gc-disc">-{product.discountPercentage}%</div>}
+            {!inStock && <div className="gc-oos"><span>Out of stock</span></div>}
           </div>
-          <div className="gc-price-row">
-            <span className="gc-price">GHS {Number(displayPrice).toLocaleString()}</span>
-            {hasDiscount && <span className="gc-price-old">GHS {Number(product.price).toLocaleString()}</span>}
-          </div>
-          {inStock && (
-            <div className="p-actions">
-              <CartBtn productId={product.id} />
-              <button
-                onClick={e => { e.preventDefault(); e.stopPropagation(); navigate(`/products/${product.id}`); }}
-                className="p-btn-order"
-              >
-                <IconArrowRight size={10} />Order
-              </button>
+          <div className="gc-body">
+            {product.brand && <div className="gc-brand">{product.brand}</div>}
+            <div className="gc-name">{product.name}</div>
+            <div className="gc-stars">
+              {[1,2,3,4,5].map(s => (
+                <span key={s} style={{ color: "#f59e0b" }}><IconStar size={10} filled={s <= 4} /></span>
+              ))}
+              <span className="gc-rating-count">(42)</span>
             </div>
-          )}
-        </div>
-      </Link>
-      <motion.div
-        className="pointer-events-none absolute inset-0 rounded-2xl"
-        style={{ background: cardGlow }}
-      />
-    </motion.div>
+            <div className="gc-price-row">
+              <span className="gc-price">GHS {Number(displayPrice).toLocaleString()}</span>
+              {hasDiscount && <span className="gc-price-old">GHS {Number(product.price).toLocaleString()}</span>}
+            </div>
+            {inStock && (
+              <div className="p-actions">
+                <CartBtn productId={product.id} />
+                <button
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); navigate(`/products/${product.id}`); }}
+                  className="p-btn-order"
+                >
+                  <IconArrowRight size={10} />Order
+                </button>
+              </div>
+            )}
+          </div>
+        </Link>
+        <motion.div
+          className="pointer-events-none absolute inset-0 rounded-2xl"
+          style={{ background: cardGlow }}
+        />
+      </motion.div>
     </div>
   );
 }
@@ -462,27 +455,13 @@ function HScrollSection({ title, subtitle, accent, icon: Icon, items, showTimer,
       <div ref={trackRef} className="hs-track">
         {items.map((item, i) => {
           const fromTop = i % 2 === 0;
-          const initialY = fromTop ? -50 : 50;
-          const initialOpacity = 0;
-          const initialScale = 0.88;
-          const initialRotate = fromTop ? -3 : 3;
-
           return (
             <motion.div
               key={item.id}
-              initial={{ opacity: initialOpacity, y: initialY, scale: initialScale, rotate: initialRotate }}
+              initial={{ opacity: 0, y: fromTop ? -50 : 50, scale: 0.88, rotate: fromTop ? -3 : 3 }}
               animate={isInView ? { opacity: 1, y: 0, scale: 1, rotate: 0 } : {}}
-              transition={{
-                duration: 0.55,
-                delay: Math.min(i * 0.07, 0.5),
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              whileHover={{
-                y: -8,
-                scale: 1.04,
-                rotate: 0,
-                transition: { type: "spring", stiffness: 400, damping: 20 },
-              }}
+              transition={{ duration: 0.55, delay: Math.min(i * 0.07, 0.5), ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ y: -8, scale: 1.04, rotate: 0, transition: { type: "spring", stiffness: 400, damping: 20 } }}
             >
               <HScrollCard product={item} showTimer={showTimer} />
             </motion.div>
@@ -508,8 +487,8 @@ function AdBanner({ ad }: { ad: typeof adBanners[0] }) {
   );
 }
 
-// ─── Welcome Popup (redesigned) ───────────────────────────────────────────────
-const WELCOME_KEY = "onett_welcome_v4";
+// ─── Welcome Popup — fully mobile responsive ──────────────────────────────────
+const WELCOME_KEY = "onett_welcome_v5";
 
 function WelcomePopup() {
   const [visible, setVisible] = useState(false);
@@ -548,168 +527,740 @@ function WelcomePopup() {
         onClick={close}
         style={{
           position: "fixed", inset: 0, zIndex: 9999,
-          background: "rgba(5,8,18,0.82)",
-          backdropFilter: "blur(8px) saturate(0.6)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: 20,
+          background: "rgba(5,8,18,0.88)",
+          backdropFilter: "blur(10px) saturate(0.5)",
+          display: "flex", alignItems: "flex-end",
+          justifyContent: "center",
+          // On larger screens centre it
+          paddingBottom: 0,
         }}
+        // On larger screens: centre vertically
+        className="popup-overlay"
       >
         <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.93 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.96 }}
+          initial={{ opacity: 0, y: 80 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 60 }}
           transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
           onClick={e => e.stopPropagation()}
-          style={{
-            position: "relative",
-            width: "100%",
-            maxWidth: 380,
-            borderRadius: 28,
-            overflow: "hidden",
-            background: "#0d0d0d",
-            border: "1px solid rgba(255,255,255,0.07)",
-            boxShadow: "0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(230,100,10,0.15)",
-          }}
+          className="popup-sheet"
         >
-          {/* Top image strip */}
-          <div style={{
-            width: "100%", height: 180,
-            background: `url(${HERO_BG}) center/cover no-repeat`,
-            position: "relative",
-          }}>
-            <div style={{
-              position: "absolute", inset: 0,
-              background: "linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(13,13,13,1) 100%)",
-            }} />
-            {/* Logo centered on image */}
-            <div style={{
-              position: "absolute", top: "50%", left: "50%",
-              transform: "translate(-50%, -60%)",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-            }}>
-              <div style={{
-                width: 64, height: 64, borderRadius: 18,
-                background: "linear-gradient(135deg,#E6640A,#cf5208)",
-                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 12px 40px rgba(230,100,10,0.5)",
-              }}>
-                <span style={{ fontFamily: "'Satoshi', sans-serif", fontWeight: 900, fontSize: 22, color: "#fff", lineHeight: 1, letterSpacing: "-1px" }}>ON</span>
-                <span style={{ fontFamily: "'Satoshi', sans-serif", fontWeight: 700, fontSize: 12, color: "rgba(255,255,255,0.65)", lineHeight: 1, letterSpacing: "2px" }}>ETT</span>
+          {/* ── Top decorative strip — no image on mobile, gradient instead ── */}
+          <div className="popup-hero-strip">
+            <div className="popup-hero-overlay" />
+            {/* Logo */}
+            <div className="popup-logo-wrap">
+              <div className="popup-logo-box">
+                <span className="popup-logo-on">ON</span>
+                <span className="popup-logo-ett">ETT</span>
               </div>
             </div>
           </div>
 
           {/* Close */}
-          <button
-            onClick={close}
-            style={{
-              position: "absolute", top: 14, right: 14, zIndex: 10,
-              width: 32, height: 32, borderRadius: "50%",
-              background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)",
-              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-              color: "rgba(255,255,255,0.7)",
-            }}
-          >
+          <button onClick={close} className="popup-close-btn">
             <IconX size={14} />
           </button>
 
           {/* Content */}
-          <div style={{ padding: "0 24px 26px" }}>
+          <div className="popup-body">
             {/* Badge */}
             <div style={{ textAlign: "center", marginBottom: 10 }}>
-              <span style={{
-                display: "inline-flex", alignItems: "center", gap: 5,
-                background: "rgba(230,100,10,0.12)", border: "1px solid rgba(230,100,10,0.2)",
-                color: "#fb923c", fontSize: 11, fontWeight: 700,
-                padding: "4px 12px", borderRadius: 99,
-              }}>
+              <span className="popup-badge">
                 <IconSparkles size={10} />
                 Welcome to ONETT
               </span>
             </div>
 
-            <h2 style={{
-              textAlign: "center",
-              fontFamily: "'Satoshi', sans-serif",
-              fontSize: 26, fontWeight: 800,
-              color: "#fff", lineHeight: 1.15,
-              margin: "0 0 8px",
-              letterSpacing: "-0.5px",
-            }}>
+            <h2 className="popup-h2">
               Shop Smarter,<br />
               <span style={{ color: "#E6640A" }}>Every Day.</span>
             </h2>
-            <p style={{
-              textAlign: "center", fontSize: 13,
-              color: "rgba(255,255,255,0.4)",
-              lineHeight: 1.65, margin: "0 0 20px",
-            }}>
+            <p className="popup-sub">
               Ghana's AI-powered marketplace.<br />
               Personalized picks & unbeatable deals.
             </p>
 
             {/* Perks */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+            <div className="popup-perks">
               {perks.map(({ icon: Icon, label, desc }) => (
-                <div key={label} style={{
-                  display: "flex", alignItems: "center", gap: 12,
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 14, padding: "11px 14px",
-                }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    background: "rgba(230,100,10,0.15)",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  }}>
+                <div key={label} className="popup-perk">
+                  <div className="popup-perk-icon">
                     <Icon size={16} style={{ color: "#E6640A" }} />
                   </div>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", fontFamily: "'Manrope', sans-serif" }}>{label}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.38)", marginTop: 1 }}>{desc}</div>
+                  <div style={{ flex: 1 }}>
+                    <div className="popup-perk-label">{label}</div>
+                    <div className="popup-perk-desc">{desc}</div>
                   </div>
-                  <div style={{ marginLeft: "auto" }}>
-                    <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(230,100,10,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <IconChevronRight size={10} />
-                    </div>
+                  <div className="popup-perk-arrow">
+                    <IconChevronRight size={10} />
                   </div>
                 </div>
               ))}
             </div>
 
             {/* CTA */}
-            <Link
-              to="/search?keyword="
-              onClick={close}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                background: "linear-gradient(135deg, #E6640A, #d45a09)",
-                color: "#fff", borderRadius: 14, padding: "14px 0",
-                fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 15,
-                textDecoration: "none",
-                boxShadow: "0 8px 24px rgba(230,100,10,0.4)",
-                marginBottom: 10,
-              }}
-            >
+            <Link to="/search?keyword=" onClick={close} className="popup-cta-btn">
               Start Shopping <IconArrowRight size={16} />
             </Link>
 
-            <button
-              onClick={close}
-              style={{
-                display: "block", width: "100%", textAlign: "center",
-                fontSize: 12, color: "rgba(255,255,255,0.22)",
-                background: "transparent", border: "none", cursor: "pointer",
-                padding: "4px 0",
-              }}
-            >
+            <button onClick={close} className="popup-skip-btn">
               Maybe later
             </button>
           </div>
+
+          {/* Bottom safe area spacer for iOS */}
+          <div className="popup-safe-bottom" />
         </motion.div>
       </motion.div>
     </AnimatePresence>
   );
+}
+
+// ─── Inline styles injected once ─────────────────────────────────────────────
+// All mobile-responsive overrides live here so existing CSS classes still work.
+const MOBILE_STYLES = `
+  /* ── Popup responsive ─────────────────────────────────────── */
+  .popup-overlay {
+    align-items: flex-end;
+  }
+  @media (min-width: 600px) {
+    .popup-overlay {
+      align-items: center;
+      padding: 20px;
+    }
+  }
+
+  .popup-sheet {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 28px 28px 0 0;
+    overflow: hidden;
+    background: #0d0d0d;
+    border: 1px solid rgba(255,255,255,0.07);
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(230,100,10,0.12);
+    max-height: 92dvh;
+    overflow-y: auto;
+  }
+  @media (min-width: 600px) {
+    .popup-sheet {
+      border-radius: 28px;
+      max-height: 90vh;
+    }
+  }
+
+  .popup-hero-strip {
+    width: 100%;
+    height: 140px;
+    background: linear-gradient(135deg, #1a0a00 0%, #3d1500 40%, #E6640A 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  @media (min-width: 600px) {
+    .popup-hero-strip {
+      height: 170px;
+      background-image: url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+  }
+
+  .popup-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(13,13,13,0.3) 0%, rgba(13,13,13,0.95) 100%);
+  }
+  @media (min-width: 600px) {
+    .popup-hero-overlay {
+      background: linear-gradient(to bottom, rgba(13,13,13,0.1) 0%, rgba(13,13,13,1) 100%);
+    }
+  }
+
+  .popup-logo-wrap {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .popup-logo-box {
+    width: 60px; height: 60px;
+    border-radius: 17px;
+    background: linear-gradient(135deg, #E6640A, #cf5208);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(230,100,10,0.5);
+  }
+  .popup-logo-on {
+    font-family: 'Satoshi', sans-serif;
+    font-weight: 900; font-size: 21px;
+    color: #fff; line-height: 1; letter-spacing: -1px;
+  }
+  .popup-logo-ett {
+    font-family: 'Satoshi', sans-serif;
+    font-weight: 700; font-size: 11px;
+    color: rgba(255,255,255,0.65); line-height: 1; letter-spacing: 2px;
+  }
+
+  .popup-close-btn {
+    position: absolute; top: 14px; right: 14px; z-index: 10;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.12);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.75);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .popup-body {
+    padding: 0 20px 20px;
+  }
+  @media (min-width: 400px) {
+    .popup-body { padding: 0 24px 24px; }
+  }
+
+  .popup-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(230,100,10,0.12);
+    border: 1px solid rgba(230,100,10,0.22);
+    color: #fb923c; font-size: 11px; font-weight: 700;
+    padding: 4px 12px; border-radius: 99px;
+  }
+  .popup-h2 {
+    text-align: center;
+    font-family: 'Satoshi', sans-serif;
+    font-size: clamp(22px, 6vw, 26px);
+    font-weight: 800; color: #fff;
+    line-height: 1.18; margin: 8px 0 7px;
+    letter-spacing: -0.5px;
+  }
+  .popup-sub {
+    text-align: center; font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    line-height: 1.65; margin: 0 0 18px;
+  }
+  .popup-perks {
+    display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;
+  }
+  .popup-perk {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 11px 13px;
+  }
+  .popup-perk-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(230,100,10,0.14);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .popup-perk-label {
+    font-size: 13px; font-weight: 700; color: #fff;
+    font-family: 'Manrope', sans-serif;
+  }
+  .popup-perk-desc {
+    font-size: 11px; color: rgba(255,255,255,0.36); margin-top: 1px;
+  }
+  .popup-perk-arrow {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(230,100,10,0.18);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: rgba(255,255,255,0.6);
+    margin-left: auto;
+  }
+  .popup-cta-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    background: linear-gradient(135deg, #E6640A, #d45a09);
+    color: #fff; border-radius: 14px; padding: 15px 0;
+    font-family: 'Manrope', sans-serif; font-weight: 700;
+    font-size: clamp(14px, 4vw, 15px);
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(230,100,10,0.38);
+    margin-bottom: 10px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .popup-skip-btn {
+    display: block; width: 100%; text-align: center;
+    font-size: 12px; color: rgba(255,255,255,0.22);
+    background: transparent; border: none; cursor: pointer;
+    padding: 6px 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .popup-safe-bottom {
+    height: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ── Hero mobile ───────────────────────────────────────────── */
+  .hero-bg-img {
+    content: url('${HERO_BG_DESKTOP}');
+  }
+  @media (max-width: 639px) {
+    .hero-bg-img {
+      content: url('${HERO_BG_MOBILE}');
+      object-position: center top;
+    }
+    .hero {
+      min-height: 85dvh !important;
+    }
+    .hero-inner {
+      padding-top: 80px !important;
+      padding-bottom: 48px !important;
+    }
+    .hero-h1 {
+      font-size: clamp(32px, 9vw, 48px) !important;
+    }
+    .hero-p {
+      font-size: 14px !important;
+      max-width: 90% !important;
+    }
+    .hero-btns {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 10px !important;
+    }
+    .h-btn-primary, .h-btn-ghost {
+      width: 100% !important;
+      justify-content: center !important;
+      padding: 15px 20px !important;
+      font-size: 15px !important;
+    }
+  }
+
+  /* ── Section spacing ────────────────────────────────────────── */
+  .sdiv {
+    height: 32px;
+  }
+  @media (min-width: 640px) {
+    .sdiv { height: 48px; }
+  }
+  @media (min-width: 1024px) {
+    .sdiv { height: 56px; }
+  }
+
+  /* ── Page horizontal padding ────────────────────────────────── */
+  .pg {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  @media (min-width: 640px) {
+    .pg { padding-left: 24px; padding-right: 24px; }
+  }
+  @media (min-width: 1024px) {
+    .pg { padding-left: 40px; padding-right: 40px; }
+  }
+
+  /* ── Section headers ────────────────────────────────────────── */
+  .sh, .hs-header { padding: 0 0 14px; }
+  @media (min-width: 640px) {
+    .sh, .hs-header { padding: 0 0 18px; }
+  }
+
+  /* ── HScroll cards — wider on very small phones ─────────────── */
+  .hs-card {
+    width: 200px;
+    flex-shrink: 0;
+  }
+  @media (max-width: 374px) {
+    .hs-card { width: 175px; }
+  }
+  @media (min-width: 640px) {
+    .hs-card { width: 220px; }
+  }
+
+  .hs-track {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+    /* Bleed to edge on mobile */
+    margin-left: -16px;
+    padding-left: 16px;
+    margin-right: -16px;
+    padding-right: 16px;
+  }
+  @media (min-width: 640px) {
+    .hs-track {
+      margin-left: 0; padding-left: 0;
+      margin-right: 0; padding-right: 0;
+      gap: 14px;
+    }
+  }
+  .hs-track::-webkit-scrollbar { display: none; }
+
+  /* ── Category scroll ─────────────────────────────────────────── */
+  .cats-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+    margin-left: -16px;
+    padding-left: 16px;
+    margin-right: -16px;
+    padding-right: 16px;
+  }
+  @media (min-width: 640px) {
+    .cats-scroll {
+      margin-left: 0; padding-left: 0;
+      margin-right: 0; padding-right: 0;
+      flex-wrap: wrap;
+      overflow-x: visible;
+    }
+  }
+  .cats-scroll::-webkit-scrollbar { display: none; }
+
+  .cat-item {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 6px;
+    flex-shrink: 0;
+    min-width: 68px;
+  }
+  .cat-icon-box {
+    width: 60px; height: 60px;
+    border-radius: 18px;
+    background: var(--muted, #f5f5f5);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .cat-item:active .cat-icon-box { transform: scale(0.93); }
+  @media (min-width: 640px) {
+    .cat-icon-box { width: 68px; height: 68px; }
+  }
+  .cat-icon-img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-lbl {
+    font-size: 11px; font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    max-width: 68px;
+    color: var(--foreground, #111);
+  }
+
+  /* ── Ad banner ───────────────────────────────────────────────── */
+  .ad-banner {
+    border-radius: 18px;
+    padding: 16px;
+    display: flex; align-items: center; gap: 12px;
+    position: relative; overflow: hidden;
+  }
+  @media (min-width: 640px) {
+    .ad-banner { padding: 20px 24px; border-radius: 22px; gap: 16px; }
+  }
+  .ad-icon { font-size: 26px; flex-shrink: 0; }
+  @media (min-width: 640px) { .ad-icon { font-size: 32px; } }
+  .ad-body { flex: 1; min-width: 0; }
+  .ad-title {
+    font-family: 'Satoshi', sans-serif;
+    font-size: clamp(13px, 3.5vw, 15px);
+    font-weight: 700; color: #fff;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ad-sub {
+    font-size: clamp(11px, 2.8vw, 13px);
+    color: rgba(255,255,255,0.6); margin-top: 2px;
+    overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  }
+  .ad-label {
+    position: absolute; top: 8px; right: 8px;
+    font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.08); border-radius: 4px; padding: 2px 5px;
+    letter-spacing: 0.5px;
+  }
+  .ad-cta {
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.22);
+    color: #fff; font-size: 12px; font-weight: 700;
+    padding: 8px 14px; border-radius: 10px; cursor: pointer;
+    font-family: 'Manrope', sans-serif;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  @media (min-width: 640px) {
+    .ad-cta { padding: 10px 18px; font-size: 13px; }
+  }
+
+  /* ── AI Feature grid ─────────────────────────────────────────── */
+  .ai-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  @media (min-width: 640px) {
+    .ai-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  }
+  @media (min-width: 900px) {
+    .ai-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .ai-card {
+    background: var(--card, #fff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 18px;
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  @media (min-width: 640px) {
+    .ai-card { padding: 20px 18px; border-radius: 20px; }
+  }
+  .ai-card-icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+  }
+  .ai-card-title {
+    font-family: 'Satoshi', sans-serif;
+    font-size: 14px; font-weight: 700;
+    color: var(--foreground, #111); margin-bottom: 4px;
+  }
+  .ai-card-desc {
+    font-size: 12px; color: var(--muted-foreground, #666); line-height: 1.55;
+  }
+  @media (min-width: 640px) {
+    .ai-card-title { font-size: 15px; }
+    .ai-card-desc { font-size: 13px; }
+  }
+
+  /* ── Trust grid ──────────────────────────────────────────────── */
+  .trust-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  @media (min-width: 640px) {
+    .trust-grid { gap: 14px; }
+  }
+  @media (min-width: 900px) {
+    .trust-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .trust-card {
+    background: var(--card, #fff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  @media (min-width: 640px) {
+    .trust-card { padding: 18px 16px; border-radius: 18px; flex-direction: row; align-items: flex-start; gap: 12px; }
+  }
+  .trust-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(230,100,10,0.08);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .trust-title { font-size: 13px; font-weight: 700; color: var(--foreground, #111); }
+  .trust-desc { font-size: 11.5px; color: var(--muted-foreground, #666); margin-top: 2px; line-height: 1.5; }
+  @media (min-width: 640px) {
+    .trust-title { font-size: 14px; }
+    .trust-desc { font-size: 12.5px; }
+  }
+
+  /* ── CTA banner ──────────────────────────────────────────────── */
+  .cta-banner {
+    position: relative; overflow: hidden;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #0d0d0d 0%, #1a0800 60%, #2d1000 100%);
+    border: 1px solid rgba(230,100,10,0.18);
+    padding: 28px 20px;
+    display: flex; flex-direction: column; gap: 0;
+  }
+  @media (min-width: 640px) {
+    .cta-banner {
+      padding: 40px 36px;
+      flex-direction: row; align-items: center; justify-content: space-between;
+    }
+  }
+  .cta-content { position: relative; z-index: 1; }
+  .cta-h2 {
+    font-family: 'Satoshi', sans-serif;
+    font-size: clamp(22px, 6vw, 32px);
+    font-weight: 800; color: #fff; line-height: 1.2;
+    letter-spacing: -0.5px; margin: 0 0 10px;
+  }
+  .cta-p {
+    font-size: clamp(13px, 3.5vw, 14.5px);
+    color: rgba(255,255,255,0.5); line-height: 1.65; margin: 0 0 20px;
+    max-width: 380px;
+  }
+  .cta-btns {
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  @media (max-width: 479px) {
+    .cta-btns { flex-direction: column; }
+    .cta-btn-w, .cta-btn-g { justify-content: center; width: 100%; }
+  }
+  .cta-btn-w, .cta-btn-g {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 13px 22px; border-radius: 12px;
+    font-family: 'Manrope', sans-serif; font-weight: 700;
+    font-size: 14px; text-decoration: none; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .cta-btn-w {
+    background: #E6640A; color: #fff;
+    box-shadow: 0 6px 20px rgba(230,100,10,0.4);
+  }
+  .cta-btn-g {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12); color: #fff;
+  }
+  .cta-logo {
+    display: none;
+  }
+  @media (min-width: 640px) {
+    .cta-logo {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 8px; flex-shrink: 0; position: relative; z-index: 1;
+    }
+  }
+  .cta-logo-box {
+    width: 64px; height: 64px; border-radius: 18px;
+    background: linear-gradient(135deg, #E6640A, #cf5208);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    box-shadow: 0 8px 28px rgba(230,100,10,0.4);
+  }
+  .cta-logo-on {
+    font-family: 'Satoshi', sans-serif; font-weight: 900;
+    font-size: 22px; color: #fff; line-height: 1; letter-spacing: -1px;
+  }
+  .cta-logo-ett {
+    font-family: 'Satoshi', sans-serif; font-weight: 700;
+    font-size: 11px; color: rgba(255,255,255,0.55);
+    line-height: 1; letter-spacing: 2px;
+  }
+  .cta-logo-name {
+    font-family: 'Satoshi', sans-serif; font-weight: 800;
+    font-size: 16px; color: rgba(255,255,255,0.7);
+    letter-spacing: -0.5px;
+  }
+  .cta-glow {
+    position: absolute; top: -60px; right: -60px;
+    width: 240px; height: 240px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(230,100,10,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── Footer ──────────────────────────────────────────────────── */
+  .footer { background: var(--card, #f9f9f9); border-top: 1px solid var(--border, #e5e7eb); }
+  .footer-inner { max-width: 1280px; margin: 0 auto; padding: 36px 16px 24px; }
+  @media (min-width: 640px) { .footer-inner { padding: 48px 24px 28px; } }
+  @media (min-width: 1024px) { .footer-inner { padding: 56px 40px 32px; } }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 20px;
+  }
+  @media (min-width: 640px) {
+    .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; }
+  }
+
+  .footer-brand-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .footer-brand-name {
+    font-family: 'Satoshi', sans-serif; font-weight: 800;
+    font-size: 20px; color: var(--foreground, #111);
+    letter-spacing: -0.5px;
+  }
+  .footer-brand-name em { color: #E6640A; font-style: normal; }
+  .footer-tagline {
+    font-size: 13px; color: var(--muted-foreground, #666);
+    line-height: 1.6; margin: 0 0 12px;
+  }
+  .footer-wa {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: #25D366; color: #fff;
+    font-size: 13px; font-weight: 700;
+    padding: 9px 16px; border-radius: 10px; text-decoration: none;
+    font-family: 'Manrope', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .footer-col { grid-column: span 1; }
+  .footer-col:first-child { grid-column: 1 / -1; }
+  @media (min-width: 640px) {
+    .footer-col:first-child { grid-column: span 1; }
+  }
+  .footer-col-title {
+    font-family: 'Satoshi', sans-serif;
+    font-size: 12px; font-weight: 800;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--muted-foreground, #666); margin-bottom: 12px;
+  }
+  .footer-links { display: flex; flex-direction: column; gap: 8px; }
+  .footer-link {
+    font-size: 13.5px; color: var(--foreground, #111);
+    text-decoration: none; opacity: 0.75;
+    transition: opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .footer-link:hover { opacity: 1; }
+  .footer-bottom {
+    border-top: 1px solid var(--border, #e5e7eb);
+    margin-top: 28px; padding-top: 20px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 4px;
+  }
+  @media (min-width: 640px) {
+    .footer-bottom { flex-direction: row; justify-content: space-between; }
+  }
+  .footer-copy {
+    font-size: 12px; color: var(--muted-foreground, #888); margin: 0;
+  }
+
+  /* ── Sections layout ─────────────────────────────────────────── */
+  .hs-section { width: 100%; overflow: hidden; }
+  .hs-section.hs-alt { background: var(--muted, rgba(0,0,0,0.02)); }
+  .hs-section > .pg { padding-top: 28px; padding-bottom: 28px; }
+  @media (min-width: 640px) {
+    .hs-section > .pg { padding-top: 36px; padding-bottom: 36px; }
+  }
+
+  /* ── Category section padding ────────────────────────────────── */
+  .cats-wrap { padding: 28px 0; }
+  @media (min-width: 640px) { .cats-wrap { padding: 36px 0; } }
+
+  /* ── General touch targets ───────────────────────────────────── */
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
+  * { box-sizing: border-box; }
+`;
+
+function InjectStyles() {
+  useEffect(() => {
+    const id = "onett-mobile-styles";
+    if (!document.getElementById(id)) {
+      const el = document.createElement("style");
+      el.id = id;
+      el.textContent = MOBILE_STYLES;
+      document.head.appendChild(el);
+    }
+    return () => { /* leave styles in DOM */ };
+  }, []);
+  return null;
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -777,15 +1328,16 @@ const Index = () => {
 
   return (
     <>
+      <InjectStyles />
       <div className="onett-page">
         <WelcomePopup />
         <Navbar />
 
-        {/* ── HERO — full bleed image ── */}
+        {/* ── HERO ── */}
         <section className="hero">
           <img
             className="hero-bg-img"
-            src={HERO_BG}
+            src={HERO_BG_DESKTOP}
             alt="Shopping"
             loading="eager"
           />
@@ -895,8 +1447,8 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── AD BANNER (rotating) ── */}
-        <div className="pg" style={{ paddingTop: 16 }}>
+        {/* ── AD BANNER 1 ── */}
+        <div className="pg" style={{ paddingTop: 4, paddingBottom: 4 }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={adBanners[adIdx].id}
@@ -957,7 +1509,7 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── JUST DROPPED (deduplicated scroll) ── */}
+        {/* ── JUST DROPPED ── */}
         {newArrivals.length > 0 && (() => {
           const dedupedForScroll = dedupeById(newArrivals.map(p => ({
             id: String(p.id), name: p.name ?? "", brand: p.brand ?? "",
@@ -1011,8 +1563,7 @@ const Index = () => {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   whileHover={{
-                    y: -6,
-                    scale: 1.04,
+                    y: -6, scale: 1.04,
                     boxShadow: "0 16px 40px rgba(230,100,10,0.12)",
                     borderColor: "rgba(230,100,10,0.3)",
                     transition: { type: "spring", stiffness: 400, damping: 18 },
@@ -1028,14 +1579,13 @@ const Index = () => {
                 </motion.div>
               ))}
             </div>
-            <div style={{ textAlign: "center", padding: "14px 0 26px" }}>
+            <div style={{ textAlign: "center", padding: "16px 0 28px" }}>
               <Link to="/ai-assistant" style={{
                 display: "inline-flex", alignItems: "center", gap: 7,
                 background: "rgba(230,100,10,0.08)", border: "1px solid rgba(230,100,10,0.2)",
                 color: "#E6640A", fontFamily: "'Manrope', sans-serif",
                 fontSize: 13.5, fontWeight: 700,
-                padding: "11px 24px", borderRadius: 12, textDecoration: "none",
-                transition: "background 0.15s",
+                padding: "12px 24px", borderRadius: 12, textDecoration: "none",
               }}>
                 <IconSparkles size={14} />Try AI Assistant Now
               </Link>
@@ -1046,14 +1596,14 @@ const Index = () => {
         <div className="sdiv" />
 
         {/* ── AD BANNER 2 ── */}
-        <div className="pg" style={{ paddingTop: 16, paddingBottom: 4 }}>
+        <div className="pg" style={{ paddingTop: 4, paddingBottom: 4 }}>
           <AdBanner ad={adBanners[(adIdx + 1) % adBanners.length]} />
         </div>
 
         <div className="sdiv" />
 
         {/* ── CTA BANNER ── */}
-        <div className="pg" style={{ paddingTop: 22, paddingBottom: 10 }}>
+        <div className="pg" style={{ paddingTop: 4, paddingBottom: 4 }}>
           <motion.div
             className="cta-banner"
             initial={{ opacity: 0, y: 22 }}
@@ -1082,8 +1632,10 @@ const Index = () => {
           </motion.div>
         </div>
 
+        <div className="sdiv" />
+
         {/* ── TRUST GRID ── */}
-        <div className="pg" style={{ paddingTop: 10, paddingBottom: 26 }}>
+        <div className="pg" style={{ paddingTop: 4, paddingBottom: 4 }}>
           <div className="trust-grid">
             {[
               { icon: IconShieldCheck, title: "Secure Payments", desc: "Every transaction is encrypted and protected" },
@@ -1097,8 +1649,7 @@ const Index = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 whileHover={{
-                  y: -6,
-                  scale: 1.04,
+                  y: -6, scale: 1.04,
                   boxShadow: "0 16px 40px rgba(0,0,0,0.1)",
                   borderColor: "rgba(230,100,10,0.25)",
                   transition: { type: "spring", stiffness: 400, damping: 20 },
@@ -1116,6 +1667,8 @@ const Index = () => {
           </div>
         </div>
 
+        <div className="sdiv" />
+
         {/* ── FOOTER ── */}
         <motion.footer
           className="footer"
@@ -1130,12 +1683,10 @@ const Index = () => {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              variants={{
-                hidden: {},
-                visible: { transition: { staggerChildren: 0.08 } },
-              }}
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
             >
               <motion.div
+                className="footer-col"
                 variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
                 transition={{ duration: 0.4 }}
               >
