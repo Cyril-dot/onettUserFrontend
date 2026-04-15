@@ -2,24 +2,31 @@ import { useEffect, useRef } from "react";
 import { initFCM, onForegroundMessage } from "@/lib/firebase";
 import { notificationApi } from "@/lib/api";
 
-// ── iOS helpers ───────────────────────────────────────────────────────────────
+// ── Better iOS detection (more reliable than UA only) ───────────────
 function isIOS(): boolean {
+  if (typeof window === "undefined") return false;
+
+  const ua = navigator.userAgent || "";
+
   return (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-    !(window as any).MSStream
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
   );
 }
 
+// ── PWA standalone check ───────────────────────────────────────────
 function isInStandaloneMode(): boolean {
-  return (window.navigator as any).standalone === true;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as any).standalone === true
+  );
 }
 
-// ── Hook ──────────────────────────────────────────────────────────────────────
+// ── Hook ────────────────────────────────────────────────────────────
 export function useFCM(isAuthenticated: boolean) {
   const initialized = useRef(false);
 
   useEffect(() => {
-    // Reset when user logs out so FCM re-initialises on next login
     if (!isAuthenticated) {
       initialized.current = false;
       return;
@@ -27,70 +34,68 @@ export function useFCM(isAuthenticated: boolean) {
 
     if (initialized.current) return;
 
-    // Basic environment checks
-    if (
-      typeof window === "undefined" ||
-      !("serviceWorker" in navigator) ||
-      !("PushManager" in window)
-    ) {
-      console.warn("[FCM] Push not supported on this device/browser");
+    // Must be browser environment
+    if (typeof window === "undefined") return;
+
+    // Service worker + push support check
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      console.warn("[FCM] Push not supported in this browser");
       return;
     }
 
-    // iOS only supports push when running as a PWA from the Home Screen
+    // iOS restriction: only allow PWA mode
     if (isIOS() && !isInStandaloneMode()) {
       console.warn(
-        "[FCM] iOS detected but not running as PWA — skipping push setup. " +
-          "User must add the app to their Home Screen via Safari."
+        "[FCM] iOS detected but app is not installed as PWA. " +
+          "Push notifications disabled until added to Home Screen."
       );
       return;
     }
 
     let unsubscribeForeground: (() => void) | undefined;
 
-    async function setup() {
+    const setup = async () => {
       try {
         const success = await initFCM(async (token) => {
-          await notificationApi.registerFcmToken(token);
-          console.info("[FCM] Token registered with backend");
+          try {
+            await notificationApi.registerFcmToken(token);
+            console.info("[FCM] Token registered successfully");
+          } catch (err) {
+            console.error("[FCM] Failed to register token:", err);
+          }
         });
 
-        // Only continue if token was obtained successfully
         if (!success) return;
 
         initialized.current = true;
 
         unsubscribeForeground = onForegroundMessage((payload) => {
-          console.info("[FCM] Foreground message received:", payload);
+          console.info("[FCM] Foreground message:", payload);
 
-          // Refresh navbar notification badge if exposed globally
+          // Optional UI refresh hook
           (window as any).__refreshNotifBadge?.();
 
-          // Use the SW to show the notification — this works on both
-          // focused and unfocused tabs, and on Android Chrome.
-          // `new Notification()` is blocked on focused tabs in many browsers
-          // and is completely unsupported on iOS.
-          if (navigator.serviceWorker.controller) {
+          const title =
+            payload?.notification?.title || "New notification";
+          const body =
+            payload?.notification?.body || "";
+
+          if ("serviceWorker" in navigator) {
             navigator.serviceWorker.ready.then((reg) => {
-              reg.showNotification(
-                payload.notification?.title ?? "New notification",
-                {
-                  body: payload.notification?.body ?? "",
-                  icon: "/onet-logo.jpeg",
-                  badge: "/onet-logo.jpeg",
-                  data: { url: "/notifications" },
-                  // ✅ Cast to fix TS2353 — vibrate is valid at runtime
-                  // but missing from TypeScript's NotificationOptions type
-                  vibrate: [200, 100, 200],
-                } as NotificationOptions & { vibrate?: number[] }
-              );
+              reg.showNotification(title, {
+                body,
+                icon: "/onet-logo.jpeg",
+                badge: "/onet-logo.jpeg",
+                data: { url: "/notifications" },
+                vibrate: [200, 100, 200],
+              });
             });
           }
         });
       } catch (err) {
         console.error("[FCM] Setup error:", err);
       }
-    }
+    };
 
     setup();
 
