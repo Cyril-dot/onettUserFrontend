@@ -202,10 +202,7 @@ const aiFeatures = [
   { icon: IconSearch, title: "Smart Search", desc: "Natural language that understands what you mean", color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
 ];
 
-// ─── Hero BG — mobile-optimised portrait image ────────────────────────────────
-// Desktop: editorial lifestyle/tech shopping scene
 const HERO_BG_DESKTOP = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=80";
-// Mobile: vibrant Ghanaian market / mobile shopping feel — tall portrait crop
 const HERO_BG_MOBILE  = "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=800&q=80";
 
 function normaliseToCarousel(p: any): CarouselProduct {
@@ -243,7 +240,7 @@ function useCountdown(productId: string, days: number | null | undefined) {
   return t;
 }
 
-// ─── Cart button ──────────────────────────────────────────────────────────────
+// ─── Cart Button ──────────────────────────────────────────────────────────────
 function CartBtn({ productId }: { productId: string }) {
   const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -263,50 +260,47 @@ function CartBtn({ productId }: { productId: string }) {
 }
 
 // ─── HScroll Card ─────────────────────────────────────────────────────────────
+// Fixed-height image (160px), name clamped to 2 lines with min-height so all
+// price rows align perfectly across every card in the row.
 function HScrollCard({ product, showTimer }: { product: CarouselProduct; showTimer?: boolean }) {
   const navigate = useNavigate();
   const { days, hours, minutes, seconds } = useCountdown(product.id, product.availableInDays);
-  const hasDiscount = product.isDiscounted && product.discountPrice;
-  const isPreOrder = product.stockStatus === "PRE_ORDER";
+  const hasDiscount  = product.isDiscounted && product.discountPrice;
+  const isPreOrder   = product.stockStatus === "PRE_ORDER";
   const isComingSoon = product.stockStatus === "COMING_SOON";
-  const hasStatus = isPreOrder || isComingSoon;
+  const hasStatus    = isPreOrder || isComingSoon;
 
-  const { rotateX, rotateY, glowX, glowY, tiltProps } = useTilt({
-    maxRotateX: 5, maxRotateY: 5, maxGlow: 30,
+  const { rotateX, rotateY, tiltProps } = useTilt({
+    maxRotateX: 5, maxRotateY: 5,
     springStiffness: 120, springDamping: 25, perspective: 1200,
   });
 
-  const cardGlow = useTransform(
-    [glowX, glowY],
-    ([gx, gy]) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(230,100,10,0.2) 0%, transparent 70%)`
-  );
-
   return (
-    <Link to={`/products/${product.id}`} className="hs-card cursor-pointer">
+    <Link to={`/products/${product.id}`} className="hs-card">
       <motion.div
         {...tiltProps}
-        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+        style={{ rotateX, rotateY, transformStyle: "preserve-3d", height: "100%", display: "flex", flexDirection: "column" }}
         transition={{ type: "spring", stiffness: 120, damping: 25 }}
-        className="relative overflow-hidden"
       >
-        <motion.div
-          className="pointer-events-none absolute inset-0 z-10 opacity-0 transition-opacity duration-300"
-          style={{ background: cardGlow }}
-        />
+        {/* ── Image container — fixed 160 px, object-fit cover ── */}
         <div className="hs-img">
           {product.primaryImageUrl
             ? <img src={product.primaryImageUrl} alt={product.name} className="hs-img-el" loading="lazy" />
             : <div className="hs-img-ph"><IconPackage size={32} /></div>}
+
           {hasDiscount && !showTimer && (
             <div className="hs-disc-badge">-{product.discountPercentage}%</div>
           )}
           {showTimer && hasStatus && (
             <div className={`hs-timer-badge${isPreOrder ? " tb-orange" : " tb-blue"}`}>
               <IconClock size={9} />
-              {String(days).padStart(2,"0")}d:{String(hours).padStart(2,"0")}h:{String(minutes).padStart(2,"0")}m:{String(seconds).padStart(2,"0")}s
+              {String(days).padStart(2, "0")}d:{String(hours).padStart(2, "0")}h:
+              {String(minutes).padStart(2, "0")}m:{String(seconds).padStart(2, "0")}s
             </div>
           )}
         </div>
+
+        {/* ── Body — flex-grows to fill remaining height ── */}
         <div className="hs-body">
           {hasStatus && (
             <div className={`hs-status${isPreOrder ? " st-orange" : " st-blue"}`}>
@@ -315,15 +309,20 @@ function HScrollCard({ product, showTimer }: { product: CarouselProduct; showTim
             </div>
           )}
           <div className="hs-brand">{product.brand}</div>
+          {/* min-height keeps price rows aligned even when name is short */}
           <div className="hs-name">{product.name}</div>
+
           <div className="hs-price-row">
-            {hasDiscount
-              ? <>
-                  <span className="hs-price">GHS {product.discountPrice?.toLocaleString()}</span>
-                  <span className="hs-price-old">GHS {product.price?.toLocaleString()}</span>
-                </>
-              : <span className="hs-price-plain">GHS {product.price?.toLocaleString()}</span>}
+            {hasDiscount ? (
+              <>
+                <span className="hs-price">GHS {product.discountPrice?.toLocaleString()}</span>
+                <span className="hs-price-old">GHS {product.price?.toLocaleString()}</span>
+              </>
+            ) : (
+              <span className="hs-price-plain">GHS {product.price?.toLocaleString()}</span>
+            )}
           </div>
+
           <div className="p-actions">
             <CartBtn productId={product.id} />
             <button
@@ -340,48 +339,58 @@ function HScrollCard({ product, showTimer }: { product: CarouselProduct; showTim
 }
 
 // ─── Grid Card ────────────────────────────────────────────────────────────────
+// Square image via aspect-ratio 1/1, name clamped to 2 lines, uniform height
+// across every card in the same grid row.
 function GridCard({ product }: { product: ProductCardData }) {
   const navigate = useNavigate();
-  const imageUrl = product.primaryImageUrl || product.images?.[0]?.imageUrl || null;
+  const imageUrl    = product.primaryImageUrl || product.images?.[0]?.imageUrl || null;
   const hasDiscount = product.isDiscounted && product.discountPrice;
   const displayPrice = hasDiscount ? product.discountPrice! : product.price;
-  const inStock = (product.stock ?? 1) > 0;
-  const { containerRef, rotateX, rotateY, glowX, glowY, tiltProps } = useTilt();
-
-  const cardGlow = useTransform(
-    [glowX, glowY],
-    ([gx, gy]) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(230,100,10,0.18) 0%, transparent 70%)`
-  );
+  const inStock     = (product.stock ?? 1) > 0;
+  const { containerRef, rotateX, rotateY, tiltProps } = useTilt();
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} style={{ height: "100%" }}>
       <motion.div
         {...tiltProps}
-        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+        style={{ rotateX, rotateY, transformStyle: "preserve-3d", height: "100%" }}
         transition={{ type: "spring", stiffness: 120, damping: 25 }}
-        className="gc cursor-pointer"
       >
         <Link to={`/products/${product.id}`} className="gc">
+          {/* ── Image — always square, object-fit cover ── */}
           <div className="gc-img-wrap">
             {imageUrl
               ? <img src={imageUrl} alt={product.name} className="gc-img-el" loading="lazy" />
               : <div className="gc-img-ph"><IconPackage size={28} /></div>}
             {hasDiscount && <div className="gc-disc">-{product.discountPercentage}%</div>}
-            {!inStock && <div className="gc-oos"><span>Out of stock</span></div>}
+            {!inStock && (
+              <div className="gc-oos"><span>Out of stock</span></div>
+            )}
           </div>
+
+          {/* ── Body ── */}
           <div className="gc-body">
             {product.brand && <div className="gc-brand">{product.brand}</div>}
+            {/* min-height clamps to 2 lines so stars & prices align */}
             <div className="gc-name">{product.name}</div>
+
             <div className="gc-stars">
-              {[1,2,3,4,5].map(s => (
-                <span key={s} style={{ color: "#f59e0b" }}><IconStar size={10} filled={s <= 4} /></span>
+              {[1, 2, 3, 4, 5].map(s => (
+                <span key={s} style={{ color: "#f59e0b" }}>
+                  <IconStar size={10} filled={s <= 4} />
+                </span>
               ))}
               <span className="gc-rating-count">(42)</span>
             </div>
+
             <div className="gc-price-row">
               <span className="gc-price">GHS {Number(displayPrice).toLocaleString()}</span>
-              {hasDiscount && <span className="gc-price-old">GHS {Number(product.price).toLocaleString()}</span>}
+              {hasDiscount && (
+                <span className="gc-price-old">GHS {Number(product.price).toLocaleString()}</span>
+              )}
             </div>
+
+            {/* Only render actions when in stock — avoids layout gaps */}
             {inStock && (
               <div className="p-actions">
                 <CartBtn productId={product.id} />
@@ -395,10 +404,6 @@ function GridCard({ product }: { product: ProductCardData }) {
             )}
           </div>
         </Link>
-        <motion.div
-          className="pointer-events-none absolute inset-0 rounded-2xl"
-          style={{ background: cardGlow }}
-        />
       </motion.div>
     </div>
   );
@@ -410,8 +415,8 @@ function HScrollSection({ title, subtitle, accent, icon: Icon, items, showTimer,
   items: CarouselProduct[]; showTimer?: boolean; badge?: React.ReactNode;
 }) {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(sectionRef, { once: true, margin: "-80px" });
+  const trackRef   = useRef<HTMLDivElement>(null);
+  const isInView   = useInView(sectionRef, { once: true, margin: "-80px" });
   const scroll = (dir: number) => trackRef.current?.scrollBy({ left: dir * 260, behavior: "smooth" });
 
   return (
@@ -452,6 +457,7 @@ function HScrollSection({ title, subtitle, accent, icon: Icon, items, showTimer,
           <button className="hs-nav-btn" onClick={() => scroll(1)}><IconChevronRight size={14} /></button>
         </div>
       </div>
+
       <div ref={trackRef} className="hs-track">
         {items.map((item, i) => {
           const fromTop = i % 2 === 0;
@@ -461,7 +467,7 @@ function HScrollSection({ title, subtitle, accent, icon: Icon, items, showTimer,
               initial={{ opacity: 0, y: fromTop ? -50 : 50, scale: 0.88, rotate: fromTop ? -3 : 3 }}
               animate={isInView ? { opacity: 1, y: 0, scale: 1, rotate: 0 } : {}}
               transition={{ duration: 0.55, delay: Math.min(i * 0.07, 0.5), ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ y: -8, scale: 1.04, rotate: 0, transition: { type: "spring", stiffness: 400, damping: 20 } }}
+              whileHover={{ y: -6, scale: 1.03, transition: { type: "spring", stiffness: 400, damping: 20 } }}
             >
               <HScrollCard product={item} showTimer={showTimer} />
             </motion.div>
@@ -487,7 +493,7 @@ function AdBanner({ ad }: { ad: typeof adBanners[0] }) {
   );
 }
 
-// ─── Welcome Popup — fully mobile responsive ──────────────────────────────────
+// ─── Welcome Popup ────────────────────────────────────────────────────────────
 const WELCOME_KEY = "onett_welcome_v5";
 
 function WelcomePopup() {
@@ -513,9 +519,9 @@ function WelcomePopup() {
   if (!visible) return null;
 
   const perks = [
-    { icon: IconBrain, label: "AI-Powered Picks", desc: "Curated just for you" },
-    { icon: IconShieldCheck, label: "Secure Checkout", desc: "Encrypted & trusted" },
-    { icon: IconTruck, label: "Fast Delivery", desc: "Across all of Ghana" },
+    { icon: IconBrain,       label: "AI-Powered Picks", desc: "Curated just for you" },
+    { icon: IconShieldCheck, label: "Secure Checkout",  desc: "Encrypted & trusted" },
+    { icon: IconTruck,       label: "Fast Delivery",    desc: "Across all of Ghana" },
   ];
 
   return (
@@ -525,17 +531,13 @@ function WelcomePopup() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={close}
+        className="popup-overlay"
         style={{
           position: "fixed", inset: 0, zIndex: 9999,
           background: "rgba(5,8,18,0.88)",
           backdropFilter: "blur(10px) saturate(0.5)",
-          display: "flex", alignItems: "flex-end",
-          justifyContent: "center",
-          // On larger screens centre it
-          paddingBottom: 0,
+          display: "flex", alignItems: "flex-end", justifyContent: "center",
         }}
-        // On larger screens: centre vertically
-        className="popup-overlay"
       >
         <motion.div
           initial={{ opacity: 0, y: 80 }}
@@ -545,10 +547,8 @@ function WelcomePopup() {
           onClick={e => e.stopPropagation()}
           className="popup-sheet"
         >
-          {/* ── Top decorative strip — no image on mobile, gradient instead ── */}
           <div className="popup-hero-strip">
             <div className="popup-hero-overlay" />
-            {/* Logo */}
             <div className="popup-logo-wrap">
               <div className="popup-logo-box">
                 <span className="popup-logo-on">ON</span>
@@ -557,59 +557,33 @@ function WelcomePopup() {
             </div>
           </div>
 
-          {/* Close */}
-          <button onClick={close} className="popup-close-btn">
-            <IconX size={14} />
-          </button>
+          <button onClick={close} className="popup-close-btn"><IconX size={14} /></button>
 
-          {/* Content */}
           <div className="popup-body">
-            {/* Badge */}
             <div style={{ textAlign: "center", marginBottom: 10 }}>
-              <span className="popup-badge">
-                <IconSparkles size={10} />
-                Welcome to ONETT
-              </span>
+              <span className="popup-badge"><IconSparkles size={10} />Welcome to ONETT</span>
             </div>
+            <h2 className="popup-h2">Shop Smarter,<br /><span style={{ color: "#E6640A" }}>Every Day.</span></h2>
+            <p className="popup-sub">Ghana's AI-powered marketplace.<br />Personalized picks & unbeatable deals.</p>
 
-            <h2 className="popup-h2">
-              Shop Smarter,<br />
-              <span style={{ color: "#E6640A" }}>Every Day.</span>
-            </h2>
-            <p className="popup-sub">
-              Ghana's AI-powered marketplace.<br />
-              Personalized picks & unbeatable deals.
-            </p>
-
-            {/* Perks */}
             <div className="popup-perks">
               {perks.map(({ icon: Icon, label, desc }) => (
                 <div key={label} className="popup-perk">
-                  <div className="popup-perk-icon">
-                    <Icon size={16} style={{ color: "#E6640A" }} />
-                  </div>
+                  <div className="popup-perk-icon"><Icon size={16} style={{ color: "#E6640A" }} /></div>
                   <div style={{ flex: 1 }}>
                     <div className="popup-perk-label">{label}</div>
                     <div className="popup-perk-desc">{desc}</div>
                   </div>
-                  <div className="popup-perk-arrow">
-                    <IconChevronRight size={10} />
-                  </div>
+                  <div className="popup-perk-arrow"><IconChevronRight size={10} /></div>
                 </div>
               ))}
             </div>
 
-            {/* CTA */}
             <Link to="/search?keyword=" onClick={close} className="popup-cta-btn">
               Start Shopping <IconArrowRight size={16} />
             </Link>
-
-            <button onClick={close} className="popup-skip-btn">
-              Maybe later
-            </button>
+            <button onClick={close} className="popup-skip-btn">Maybe later</button>
           </div>
-
-          {/* Bottom safe area spacer for iOS */}
           <div className="popup-safe-bottom" />
         </motion.div>
       </motion.div>
@@ -617,635 +591,592 @@ function WelcomePopup() {
   );
 }
 
-// ─── Inline styles injected once ─────────────────────────────────────────────
-// All mobile-responsive overrides live here so existing CSS classes still work.
+// ─── Injected CSS ─────────────────────────────────────────────────────────────
 const MOBILE_STYLES = `
-  /* ── Popup responsive ─────────────────────────────────────── */
-  .popup-overlay {
-    align-items: flex-end;
+  /* ════════════════════════════════════════════════
+     PRODUCT CARDS — HScroll + Grid
+     Key principles:
+     · hs-img: fixed 160 px height, object-fit cover → images never squash
+     · gc-img-wrap: aspect-ratio 1/1 → perfect square at any grid width
+     · hs-name / gc-name: -webkit-line-clamp:2 + min-height:34px
+       → names always occupy exactly 2 lines so price rows align
+     · .gc height:100% → grid rows stretch all cards to equal height
+  ════════════════════════════════════════════════ */
+
+  /* ── HScroll card shell ────────────────────────── */
+  .hs-card {
+    width: 200px;
+    flex-shrink: 0;
+    background: var(--card, #fff);
+    border: 0.5px solid var(--border, #e5e7eb);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
   }
-  @media (min-width: 600px) {
-    .popup-overlay {
-      align-items: center;
-      padding: 20px;
-    }
+  @media (max-width: 374px) { .hs-card { width: 175px; } }
+  @media (min-width: 640px) { .hs-card { width: 220px; } }
+
+  /* ── HScroll image — fixed height, cover fill ─── */
+  .hs-img {
+    width: 100%;
+    height: 160px;
+    position: relative;
+    overflow: hidden;
+    background: var(--muted, #f5f5f5);
+    flex-shrink: 0;
   }
+  .hs-img-el {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transition: transform 0.35s ease;
+  }
+  .hs-card:hover .hs-img-el { transform: scale(1.05); }
+  .hs-img-ph {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted-foreground, #bbb);
+  }
+
+  /* ── HScroll badges ─────────────────────────────── */
+  .hs-disc-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: #ef4444; color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 7px; border-radius: 6px;
+    letter-spacing: 0.2px;
+  }
+  .hs-timer-badge {
+    position: absolute; bottom: 8px; left: 8px;
+    background: rgba(0,0,0,0.72); color: #fff;
+    font-size: 9px; font-weight: 700;
+    padding: 4px 8px; border-radius: 6px;
+    display: flex; align-items: center; gap: 4px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.3px;
+  }
+  .tb-orange { background: rgba(230,100,10,0.9) !important; }
+  .tb-blue   { background: rgba(59,130,246,0.9) !important; }
+
+  /* ── HScroll body ────────────────────────────────── */
+  .hs-body {
+    padding: 11px 12px 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+  }
+  .hs-status {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 9px; font-weight: 700;
+    padding: 2px 7px; border-radius: 5px;
+    letter-spacing: 0.3px; width: fit-content;
+    margin-bottom: 2px;
+  }
+  .st-orange { background: rgba(230,100,10,0.1); color: #E6640A; }
+  .st-blue   { background: rgba(59,130,246,0.1);  color: #3b82f6; }
+  .hs-brand {
+    font-size: 10px; font-weight: 600;
+    color: var(--muted-foreground, #888);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .hs-name {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--foreground, #111);
+    line-height: 1.35;
+    /* clamp to exactly 2 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    /* reserve space for 2 lines so price rows always align */
+    min-height: 34px;
+  }
+  .hs-price-row {
+    display: flex; align-items: baseline; gap: 5px;
+    margin-top: 4px;
+  }
+  .hs-price       { font-size: 13px; font-weight: 700; color: #E6640A; }
+  .hs-price-old   { font-size: 10px; color: var(--muted-foreground,#999); text-decoration: line-through; }
+  .hs-price-plain { font-size: 13px; font-weight: 700; color: var(--foreground,#111); }
+
+  /* ════════════════════════════════════════════════ */
+
+  /* ── Grid card shell ─────────────────────────────── */
+  .gc {
+    background: var(--card, #fff);
+    border: 0.5px solid var(--border, #e5e7eb);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* stretch to equal row height in CSS grid */
+  }
+
+  /* ── Grid image — square, cover fill ─────────────── */
+  .gc-img-wrap {
+    width: 100%;
+    aspect-ratio: 1 / 1;   /* always a perfect square */
+    position: relative;
+    overflow: hidden;
+    background: var(--muted, #f5f5f5);
+    flex-shrink: 0;
+  }
+  .gc-img-el {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transition: transform 0.35s ease;
+  }
+  .gc:hover .gc-img-el { transform: scale(1.05); }
+  .gc-img-ph {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted-foreground, #bbb);
+  }
+
+  /* ── Grid badges / overlays ─────────────────────── */
+  .gc-disc {
+    position: absolute; top: 10px; left: 10px;
+    background: #ef4444; color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 7px; border-radius: 6px;
+    letter-spacing: 0.2px;
+  }
+  .gc-oos {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.42);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gc-oos span {
+    background: rgba(0,0,0,0.72); color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 5px 10px; border-radius: 8px;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Grid body ───────────────────────────────────── */
+  .gc-body {
+    padding: 11px 12px 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+  }
+  .gc-brand {
+    font-size: 10px; font-weight: 600;
+    color: var(--muted-foreground, #888);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .gc-name {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--foreground, #111);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 34px; /* aligns star rows across all cards */
+  }
+  .gc-stars {
+    display: flex; align-items: center; gap: 2px;
+    margin-top: 3px;
+  }
+  .gc-rating-count {
+    font-size: 10px; color: var(--muted-foreground,#999);
+    margin-left: 3px;
+  }
+  .gc-price-row {
+    display: flex; align-items: baseline; gap: 5px;
+    margin-top: 5px;
+  }
+  .gc-price     { font-size: 13px; font-weight: 700; color: #E6640A; }
+  .gc-price-old { font-size: 10px; color: var(--muted-foreground,#999); text-decoration: line-through; }
+
+  /* ════════════════════════════════════════════════
+     SHARED ACTION BUTTONS
+  ════════════════════════════════════════════════ */
+  .p-actions {
+    display: flex; gap: 6px;
+    margin-top: 8px;
+  }
+  .p-btn-cart {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    background: var(--muted, #f5f5f5);
+    border: 0.5px solid var(--border, #e5e7eb);
+    color: var(--foreground, #111);
+    font-size: 10.5px; font-weight: 600;
+    padding: 6px 10px; border-radius: 8px;
+    cursor: pointer; white-space: nowrap;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .p-btn-cart:hover { background: var(--border, #e5e7eb); }
+  .p-btn-cart:disabled { opacity: 0.5; cursor: not-allowed; }
+  .p-btn-order {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    background: #E6640A; border: none; color: #fff;
+    font-size: 10.5px; font-weight: 700;
+    padding: 6px 10px; border-radius: 8px;
+    cursor: pointer; white-space: nowrap;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .p-btn-order:hover { background: #d45a09; }
+
+  /* ════════════════════════════════════════════════
+     POPUP
+  ════════════════════════════════════════════════ */
+  .popup-overlay { align-items: flex-end; }
+  @media (min-width: 600px) { .popup-overlay { align-items: center; padding: 20px; } }
 
   .popup-sheet {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    border-radius: 28px 28px 0 0;
-    overflow: hidden;
-    background: #0d0d0d;
-    border: 1px solid rgba(255,255,255,0.07);
+    position: relative; width: 100%; max-width: 420px;
+    border-radius: 28px 28px 0 0; overflow: hidden;
+    background: #0d0d0d; border: 1px solid rgba(255,255,255,0.07);
     box-shadow: 0 -20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(230,100,10,0.12);
-    max-height: 92dvh;
-    overflow-y: auto;
+    max-height: 92dvh; overflow-y: auto;
   }
-  @media (min-width: 600px) {
-    .popup-sheet {
-      border-radius: 28px;
-      max-height: 90vh;
-    }
-  }
+  @media (min-width: 600px) { .popup-sheet { border-radius: 28px; max-height: 90vh; } }
 
   .popup-hero-strip {
-    width: 100%;
-    height: 140px;
+    width: 100%; height: 140px;
     background: linear-gradient(135deg, #1a0a00 0%, #3d1500 40%, #E6640A 100%);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   @media (min-width: 600px) {
     .popup-hero-strip {
       height: 170px;
-      background-image: url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&q=80');
-      background-size: cover;
-      background-position: center;
+      background-image: url('${HERO_BG_DESKTOP}');
+      background-size: cover; background-position: center;
     }
   }
-
   .popup-hero-overlay {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     background: linear-gradient(to bottom, rgba(13,13,13,0.3) 0%, rgba(13,13,13,0.95) 100%);
   }
   @media (min-width: 600px) {
-    .popup-hero-overlay {
-      background: linear-gradient(to bottom, rgba(13,13,13,0.1) 0%, rgba(13,13,13,1) 100%);
-    }
+    .popup-hero-overlay { background: linear-gradient(to bottom, rgba(13,13,13,0.1) 0%, rgba(13,13,13,1) 100%); }
   }
-
-  .popup-logo-wrap {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  .popup-logo-wrap { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; }
   .popup-logo-box {
-    width: 60px; height: 60px;
-    border-radius: 17px;
+    width: 60px; height: 60px; border-radius: 17px;
     background: linear-gradient(135deg, #E6640A, #cf5208);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     box-shadow: 0 12px 40px rgba(230,100,10,0.5);
   }
-  .popup-logo-on {
-    font-family: 'Satoshi', sans-serif;
-    font-weight: 900; font-size: 21px;
-    color: #fff; line-height: 1; letter-spacing: -1px;
-  }
-  .popup-logo-ett {
-    font-family: 'Satoshi', sans-serif;
-    font-weight: 700; font-size: 11px;
-    color: rgba(255,255,255,0.65); line-height: 1; letter-spacing: 2px;
-  }
-
+  .popup-logo-on  { font-family:'Satoshi',sans-serif; font-weight:900; font-size:21px; color:#fff; line-height:1; letter-spacing:-1px; }
+  .popup-logo-ett { font-family:'Satoshi',sans-serif; font-weight:700; font-size:11px; color:rgba(255,255,255,0.65); line-height:1; letter-spacing:2px; }
   .popup-close-btn {
     position: absolute; top: 14px; right: 14px; z-index: 10;
     width: 34px; height: 34px; border-radius: 50%;
-    background: rgba(0,0,0,0.55);
-    border: 1px solid rgba(255,255,255,0.12);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: rgba(255,255,255,0.75);
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.12);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.75); -webkit-tap-highlight-color: transparent;
   }
-
-  .popup-body {
-    padding: 0 20px 20px;
-  }
-  @media (min-width: 400px) {
-    .popup-body { padding: 0 24px 24px; }
-  }
-
+  .popup-body { padding: 0 20px 20px; }
+  @media (min-width: 400px) { .popup-body { padding: 0 24px 24px; } }
   .popup-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    background: rgba(230,100,10,0.12);
-    border: 1px solid rgba(230,100,10,0.22);
+    background: rgba(230,100,10,0.12); border: 1px solid rgba(230,100,10,0.22);
     color: #fb923c; font-size: 11px; font-weight: 700;
     padding: 4px 12px; border-radius: 99px;
   }
   .popup-h2 {
-    text-align: center;
-    font-family: 'Satoshi', sans-serif;
-    font-size: clamp(22px, 6vw, 26px);
-    font-weight: 800; color: #fff;
-    line-height: 1.18; margin: 8px 0 7px;
-    letter-spacing: -0.5px;
+    text-align: center; font-family:'Satoshi',sans-serif;
+    font-size: clamp(22px,6vw,26px); font-weight: 800; color: #fff;
+    line-height: 1.18; margin: 8px 0 7px; letter-spacing: -0.5px;
   }
-  .popup-sub {
-    text-align: center; font-size: 13px;
-    color: rgba(255,255,255,0.4);
-    line-height: 1.65; margin: 0 0 18px;
-  }
-  .popup-perks {
-    display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;
-  }
+  .popup-sub { text-align: center; font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.65; margin: 0 0 18px; }
+  .popup-perks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
   .popup-perk {
     display: flex; align-items: center; gap: 12px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
     border-radius: 14px; padding: 11px 13px;
   }
   .popup-perk-icon {
     width: 36px; height: 36px; border-radius: 10px;
     background: rgba(230,100,10,0.14);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .popup-perk-label {
-    font-size: 13px; font-weight: 700; color: #fff;
-    font-family: 'Manrope', sans-serif;
-  }
-  .popup-perk-desc {
-    font-size: 11px; color: rgba(255,255,255,0.36); margin-top: 1px;
-  }
+  .popup-perk-label { font-size: 13px; font-weight: 700; color: #fff; font-family:'Manrope',sans-serif; }
+  .popup-perk-desc  { font-size: 11px; color: rgba(255,255,255,0.36); margin-top: 1px; }
   .popup-perk-arrow {
     width: 20px; height: 20px; border-radius: 50%;
     background: rgba(230,100,10,0.18);
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; color: rgba(255,255,255,0.6);
-    margin-left: auto;
+    flex-shrink: 0; color: rgba(255,255,255,0.6); margin-left: auto;
   }
   .popup-cta-btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%;
-    background: linear-gradient(135deg, #E6640A, #d45a09);
-    color: #fff; border-radius: 14px; padding: 15px 0;
-    font-family: 'Manrope', sans-serif; font-weight: 700;
-    font-size: clamp(14px, 4vw, 15px);
-    text-decoration: none;
-    box-shadow: 0 8px 24px rgba(230,100,10,0.38);
-    margin-bottom: 10px;
+    width: 100%; background: linear-gradient(135deg,#E6640A,#d45a09); color: #fff;
+    border-radius: 14px; padding: 15px 0;
+    font-family:'Manrope',sans-serif; font-weight: 700;
+    font-size: clamp(14px,4vw,15px); text-decoration: none;
+    box-shadow: 0 8px 24px rgba(230,100,10,0.38); margin-bottom: 10px;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
   }
   .popup-skip-btn {
     display: block; width: 100%; text-align: center;
     font-size: 12px; color: rgba(255,255,255,0.22);
-    background: transparent; border: none; cursor: pointer;
-    padding: 6px 0;
+    background: transparent; border: none; cursor: pointer; padding: 6px 0;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
   }
-  .popup-safe-bottom {
-    height: env(safe-area-inset-bottom, 0px);
-  }
+  .popup-safe-bottom { height: env(safe-area-inset-bottom, 0px); }
 
-  /* ── Hero mobile ───────────────────────────────────────────── */
-  .hero-bg-img {
-    content: url('${HERO_BG_DESKTOP}');
-  }
+  /* ════════════════════════════════════════════════
+     HERO
+  ════════════════════════════════════════════════ */
+  .hero-bg-img { content: url('${HERO_BG_DESKTOP}'); }
   @media (max-width: 639px) {
-    .hero-bg-img {
-      content: url('${HERO_BG_MOBILE}');
-      object-position: center top;
-    }
-    .hero {
-      min-height: 85dvh !important;
-    }
-    .hero-inner {
-      padding-top: 80px !important;
-      padding-bottom: 48px !important;
-    }
-    .hero-h1 {
-      font-size: clamp(32px, 9vw, 48px) !important;
-    }
-    .hero-p {
-      font-size: 14px !important;
-      max-width: 90% !important;
-    }
-    .hero-btns {
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 10px !important;
-    }
-    .h-btn-primary, .h-btn-ghost {
-      width: 100% !important;
-      justify-content: center !important;
-      padding: 15px 20px !important;
-      font-size: 15px !important;
-    }
+    .hero-bg-img { content: url('${HERO_BG_MOBILE}'); object-position: center top; }
+    .hero { min-height: 85dvh !important; }
+    .hero-inner { padding-top: 80px !important; padding-bottom: 48px !important; }
+    .hero-h1 { font-size: clamp(32px,9vw,48px) !important; }
+    .hero-p { font-size: 14px !important; max-width: 90% !important; }
+    .hero-btns { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
+    .h-btn-primary, .h-btn-ghost { width: 100% !important; justify-content: center !important; padding: 15px 20px !important; font-size: 15px !important; }
   }
 
-  /* ── Section spacing ────────────────────────────────────────── */
-  .sdiv {
-    height: 32px;
-  }
-  @media (min-width: 640px) {
-    .sdiv { height: 48px; }
-  }
-  @media (min-width: 1024px) {
-    .sdiv { height: 56px; }
-  }
+  /* ════════════════════════════════════════════════
+     LAYOUT UTILITIES
+  ════════════════════════════════════════════════ */
+  .sdiv { height: 32px; }
+  @media (min-width: 640px)  { .sdiv { height: 48px; } }
+  @media (min-width: 1024px) { .sdiv { height: 56px; } }
 
-  /* ── Page horizontal padding ────────────────────────────────── */
   .pg {
     padding-left: max(16px, env(safe-area-inset-left));
     padding-right: max(16px, env(safe-area-inset-right));
-    max-width: 1280px;
-    margin: 0 auto;
-    width: 100%;
+    max-width: 1280px; margin: 0 auto; width: 100%;
   }
-  @media (min-width: 640px) {
-    .pg { padding-left: 24px; padding-right: 24px; }
-  }
-  @media (min-width: 1024px) {
-    .pg { padding-left: 40px; padding-right: 40px; }
-  }
+  @media (min-width: 640px)  { .pg { padding-left: 24px;  padding-right: 24px; } }
+  @media (min-width: 1024px) { .pg { padding-left: 40px;  padding-right: 40px; } }
 
-  /* ── Section headers ────────────────────────────────────────── */
   .sh, .hs-header { padding: 0 0 14px; }
-  @media (min-width: 640px) {
-    .sh, .hs-header { padding: 0 0 18px; }
-  }
+  @media (min-width: 640px) { .sh, .hs-header { padding: 0 0 18px; } }
 
-  /* ── HScroll cards — wider on very small phones ─────────────── */
-  .hs-card {
-    width: 200px;
-    flex-shrink: 0;
-  }
-  @media (max-width: 374px) {
-    .hs-card { width: 175px; }
-  }
-  @media (min-width: 640px) {
-    .hs-card { width: 220px; }
-  }
-
+  /* ════════════════════════════════════════════════
+     HSCROLL TRACK
+  ════════════════════════════════════════════════ */
   .hs-track {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 8px;
-    /* Bleed to edge on mobile */
-    margin-left: -16px;
-    padding-left: 16px;
-    margin-right: -16px;
-    padding-right: 16px;
+    display: flex; gap: 12px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; padding-bottom: 8px;
+    /* bleed to edge on mobile */
+    margin-left: -16px; padding-left: 16px;
+    margin-right: -16px; padding-right: 16px;
+    /* align-items: stretch ensures all cards stretch to the tallest */
+    align-items: stretch;
   }
   @media (min-width: 640px) {
-    .hs-track {
-      margin-left: 0; padding-left: 0;
-      margin-right: 0; padding-right: 0;
-      gap: 14px;
-    }
+    .hs-track { margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; gap: 14px; }
   }
   .hs-track::-webkit-scrollbar { display: none; }
 
-  /* ── Category scroll ─────────────────────────────────────────── */
+  /* ════════════════════════════════════════════════
+     CATEGORIES
+  ════════════════════════════════════════════════ */
   .cats-scroll {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 8px;
-    margin-left: -16px;
-    padding-left: 16px;
-    margin-right: -16px;
-    padding-right: 16px;
+    display: flex; gap: 10px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; padding-bottom: 8px;
+    margin-left: -16px; padding-left: 16px;
+    margin-right: -16px; padding-right: 16px;
   }
   @media (min-width: 640px) {
-    .cats-scroll {
-      margin-left: 0; padding-left: 0;
-      margin-right: 0; padding-right: 0;
-      flex-wrap: wrap;
-      overflow-x: visible;
-    }
+    .cats-scroll { margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; flex-wrap: wrap; overflow-x: visible; }
   }
   .cats-scroll::-webkit-scrollbar { display: none; }
-
-  .cat-item {
-    display: flex; flex-direction: column;
-    align-items: center; gap: 6px;
-    flex-shrink: 0;
-    min-width: 68px;
-  }
+  .cat-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; min-width: 68px; }
   .cat-icon-box {
-    width: 60px; height: 60px;
-    border-radius: 18px;
-    background: var(--muted, #f5f5f5);
+    width: 60px; height: 60px; border-radius: 18px;
+    background: var(--muted,#f5f5f5);
     display: flex; align-items: center; justify-content: center;
-    overflow: hidden;
-    transition: transform 0.2s;
+    overflow: hidden; transition: transform 0.2s;
   }
   .cat-item:active .cat-icon-box { transform: scale(0.93); }
-  @media (min-width: 640px) {
-    .cat-icon-box { width: 68px; height: 68px; }
-  }
+  @media (min-width: 640px) { .cat-icon-box { width: 68px; height: 68px; } }
   .cat-icon-img { width: 100%; height: 100%; object-fit: cover; }
   .cat-lbl {
-    font-size: 11px; font-weight: 600;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis;
-    max-width: 68px;
-    color: var(--foreground, #111);
+    font-size: 11px; font-weight: 600; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 68px; color: var(--foreground,#111);
   }
 
-  /* ── Ad banner ───────────────────────────────────────────────── */
+  /* ════════════════════════════════════════════════
+     AD BANNER
+  ════════════════════════════════════════════════ */
   .ad-banner {
-    border-radius: 18px;
-    padding: 16px;
+    border-radius: 18px; padding: 16px;
     display: flex; align-items: center; gap: 12px;
     position: relative; overflow: hidden;
   }
-  @media (min-width: 640px) {
-    .ad-banner { padding: 20px 24px; border-radius: 22px; gap: 16px; }
-  }
+  @media (min-width: 640px) { .ad-banner { padding: 20px 24px; border-radius: 22px; gap: 16px; } }
   .ad-icon { font-size: 26px; flex-shrink: 0; }
   @media (min-width: 640px) { .ad-icon { font-size: 32px; } }
   .ad-body { flex: 1; min-width: 0; }
   .ad-title {
-    font-family: 'Satoshi', sans-serif;
-    font-size: clamp(13px, 3.5vw, 15px);
-    font-weight: 700; color: #fff;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-family:'Satoshi',sans-serif; font-size: clamp(13px,3.5vw,15px);
+    font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .ad-sub {
-    font-size: clamp(11px, 2.8vw, 13px);
-    color: rgba(255,255,255,0.6); margin-top: 2px;
-    overflow: hidden;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    font-size: clamp(11px,2.8vw,13px); color: rgba(255,255,255,0.6); margin-top: 2px;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   }
   .ad-label {
     position: absolute; top: 8px; right: 8px;
     font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.4);
-    background: rgba(255,255,255,0.08); border-radius: 4px; padding: 2px 5px;
-    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.08); border-radius: 4px; padding: 2px 5px; letter-spacing: 0.5px;
   }
   .ad-cta {
-    flex-shrink: 0;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.22);
-    color: #fff; font-size: 12px; font-weight: 700;
-    padding: 8px 14px; border-radius: 10px; cursor: pointer;
-    font-family: 'Manrope', sans-serif;
-    white-space: nowrap;
+    flex-shrink: 0; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.22);
+    color: #fff; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 10px;
+    cursor: pointer; font-family:'Manrope',sans-serif; white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
   }
-  @media (min-width: 640px) {
-    .ad-cta { padding: 10px 18px; font-size: 13px; }
-  }
+  @media (min-width: 640px) { .ad-cta { padding: 10px 18px; font-size: 13px; } }
+  .ad-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+  .ad-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border,#e5e7eb); cursor: pointer; transition: background 0.2s, transform 0.2s; }
+  .ad-dot.active { background: #E6640A; transform: scale(1.3); }
 
-  /* ── AI Feature grid ─────────────────────────────────────────── */
-  .ai-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-  @media (min-width: 640px) {
-    .ai-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  }
-  @media (min-width: 900px) {
-    .ai-grid { grid-template-columns: repeat(4, 1fr); }
-  }
-
+  /* ════════════════════════════════════════════════
+     AI FEATURE GRID
+  ════════════════════════════════════════════════ */
+  .ai-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+  @media (min-width: 640px) { .ai-grid { gap: 14px; } }
+  @media (min-width: 900px) { .ai-grid { grid-template-columns: repeat(4,1fr); } }
   .ai-card {
-    background: var(--card, #fff);
-    border: 1px solid var(--border, #e5e7eb);
-    border-radius: 18px;
-    padding: 16px 14px;
-    cursor: pointer;
-    transition: all 0.2s;
+    background: var(--card,#fff); border: 0.5px solid var(--border,#e5e7eb);
+    border-radius: 18px; padding: 16px 14px; cursor: pointer; transition: all 0.2s;
   }
-  @media (min-width: 640px) {
-    .ai-card { padding: 20px 18px; border-radius: 20px; }
-  }
-  .ai-card-icon {
-    width: 40px; height: 40px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 12px;
-  }
-  .ai-card-title {
-    font-family: 'Satoshi', sans-serif;
-    font-size: 14px; font-weight: 700;
-    color: var(--foreground, #111); margin-bottom: 4px;
-  }
-  .ai-card-desc {
-    font-size: 12px; color: var(--muted-foreground, #666); line-height: 1.55;
-  }
-  @media (min-width: 640px) {
-    .ai-card-title { font-size: 15px; }
-    .ai-card-desc { font-size: 13px; }
-  }
+  @media (min-width: 640px) { .ai-card { padding: 20px 18px; border-radius: 20px; } }
+  .ai-card-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .ai-card-title { font-family:'Satoshi',sans-serif; font-size: 14px; font-weight: 700; color: var(--foreground,#111); margin-bottom: 4px; }
+  .ai-card-desc  { font-size: 12px; color: var(--muted-foreground,#666); line-height: 1.55; }
+  @media (min-width: 640px) { .ai-card-title { font-size: 15px; } .ai-card-desc { font-size: 13px; } }
 
-  /* ── Trust grid ──────────────────────────────────────────────── */
-  .trust-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-  @media (min-width: 640px) {
-    .trust-grid { gap: 14px; }
-  }
-  @media (min-width: 900px) {
-    .trust-grid { grid-template-columns: repeat(4, 1fr); }
-  }
-
+  /* ════════════════════════════════════════════════
+     TRUST GRID
+  ════════════════════════════════════════════════ */
+  .trust-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+  @media (min-width: 640px) { .trust-grid { gap: 14px; } }
+  @media (min-width: 900px) { .trust-grid { grid-template-columns: repeat(4,1fr); } }
   .trust-card {
-    background: var(--card, #fff);
-    border: 1px solid var(--border, #e5e7eb);
-    border-radius: 16px;
-    padding: 14px;
+    background: var(--card,#fff); border: 0.5px solid var(--border,#e5e7eb);
+    border-radius: 16px; padding: 14px;
     display: flex; flex-direction: column; gap: 8px;
   }
-  @media (min-width: 640px) {
-    .trust-card { padding: 18px 16px; border-radius: 18px; flex-direction: row; align-items: flex-start; gap: 12px; }
-  }
-  .trust-icon {
-    width: 36px; height: 36px; border-radius: 10px;
-    background: rgba(230,100,10,0.08);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .trust-title { font-size: 13px; font-weight: 700; color: var(--foreground, #111); }
-  .trust-desc { font-size: 11.5px; color: var(--muted-foreground, #666); margin-top: 2px; line-height: 1.5; }
-  @media (min-width: 640px) {
-    .trust-title { font-size: 14px; }
-    .trust-desc { font-size: 12.5px; }
-  }
+  @media (min-width: 640px) { .trust-card { padding: 18px 16px; border-radius: 18px; flex-direction: row; align-items: flex-start; gap: 12px; } }
+  .trust-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(230,100,10,0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .trust-title { font-size: 13px; font-weight: 700; color: var(--foreground,#111); }
+  .trust-desc  { font-size: 11.5px; color: var(--muted-foreground,#666); margin-top: 2px; line-height: 1.5; }
+  @media (min-width: 640px) { .trust-title { font-size: 14px; } .trust-desc { font-size: 12.5px; } }
 
-  /* ── CTA banner ──────────────────────────────────────────────── */
+  /* ════════════════════════════════════════════════
+     CTA BANNER
+  ════════════════════════════════════════════════ */
   .cta-banner {
-    position: relative; overflow: hidden;
-    border-radius: 22px;
-    background: linear-gradient(135deg, #0d0d0d 0%, #1a0800 60%, #2d1000 100%);
-    border: 1px solid rgba(230,100,10,0.18);
-    padding: 28px 20px;
+    position: relative; overflow: hidden; border-radius: 22px;
+    background: linear-gradient(135deg,#0d0d0d 0%,#1a0800 60%,#2d1000 100%);
+    border: 1px solid rgba(230,100,10,0.18); padding: 28px 20px;
     display: flex; flex-direction: column; gap: 0;
   }
-  @media (min-width: 640px) {
-    .cta-banner {
-      padding: 40px 36px;
-      flex-direction: row; align-items: center; justify-content: space-between;
-    }
-  }
+  @media (min-width: 640px) { .cta-banner { padding: 40px 36px; flex-direction: row; align-items: center; justify-content: space-between; } }
   .cta-content { position: relative; z-index: 1; }
-  .cta-h2 {
-    font-family: 'Satoshi', sans-serif;
-    font-size: clamp(22px, 6vw, 32px);
-    font-weight: 800; color: #fff; line-height: 1.2;
-    letter-spacing: -0.5px; margin: 0 0 10px;
-  }
-  .cta-p {
-    font-size: clamp(13px, 3.5vw, 14.5px);
-    color: rgba(255,255,255,0.5); line-height: 1.65; margin: 0 0 20px;
-    max-width: 380px;
-  }
-  .cta-btns {
-    display: flex; gap: 10px; flex-wrap: wrap;
-  }
-  @media (max-width: 479px) {
-    .cta-btns { flex-direction: column; }
-    .cta-btn-w, .cta-btn-g { justify-content: center; width: 100%; }
-  }
-  .cta-btn-w, .cta-btn-g {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 13px 22px; border-radius: 12px;
-    font-family: 'Manrope', sans-serif; font-weight: 700;
-    font-size: 14px; text-decoration: none; cursor: pointer;
-    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-  }
-  .cta-btn-w {
-    background: #E6640A; color: #fff;
-    box-shadow: 0 6px 20px rgba(230,100,10,0.4);
-  }
-  .cta-btn-g {
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12); color: #fff;
-  }
-  .cta-logo {
-    display: none;
-  }
-  @media (min-width: 640px) {
-    .cta-logo {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 8px; flex-shrink: 0; position: relative; z-index: 1;
-    }
-  }
-  .cta-logo-box {
-    width: 64px; height: 64px; border-radius: 18px;
-    background: linear-gradient(135deg, #E6640A, #cf5208);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    box-shadow: 0 8px 28px rgba(230,100,10,0.4);
-  }
-  .cta-logo-on {
-    font-family: 'Satoshi', sans-serif; font-weight: 900;
-    font-size: 22px; color: #fff; line-height: 1; letter-spacing: -1px;
-  }
-  .cta-logo-ett {
-    font-family: 'Satoshi', sans-serif; font-weight: 700;
-    font-size: 11px; color: rgba(255,255,255,0.55);
-    line-height: 1; letter-spacing: 2px;
-  }
-  .cta-logo-name {
-    font-family: 'Satoshi', sans-serif; font-weight: 800;
-    font-size: 16px; color: rgba(255,255,255,0.7);
-    letter-spacing: -0.5px;
-  }
-  .cta-glow {
-    position: absolute; top: -60px; right: -60px;
-    width: 240px; height: 240px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(230,100,10,0.18) 0%, transparent 70%);
-    pointer-events: none;
-  }
+  .cta-h2 { font-family:'Satoshi',sans-serif; font-size: clamp(22px,6vw,32px); font-weight: 800; color: #fff; line-height: 1.2; letter-spacing: -0.5px; margin: 0 0 10px; }
+  .cta-p  { font-size: clamp(13px,3.5vw,14.5px); color: rgba(255,255,255,0.5); line-height: 1.65; margin: 0 0 20px; max-width: 380px; }
+  .cta-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  @media (max-width: 479px) { .cta-btns { flex-direction: column; } .cta-btn-w, .cta-btn-g { justify-content: center; width: 100%; } }
+  .cta-btn-w, .cta-btn-g { display: inline-flex; align-items: center; gap: 7px; padding: 13px 22px; border-radius: 12px; font-family:'Manrope',sans-serif; font-weight: 700; font-size: 14px; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .cta-btn-w { background: #E6640A; color: #fff; box-shadow: 0 6px 20px rgba(230,100,10,0.4); }
+  .cta-btn-g { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: #fff; }
+  .cta-logo  { display: none; }
+  @media (min-width: 640px) { .cta-logo { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; position: relative; z-index: 1; } }
+  .cta-logo-box { width: 64px; height: 64px; border-radius: 18px; background: linear-gradient(135deg,#E6640A,#cf5208); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 8px 28px rgba(230,100,10,0.4); }
+  .cta-logo-on  { font-family:'Satoshi',sans-serif; font-weight: 900; font-size: 22px; color: #fff; line-height: 1; letter-spacing: -1px; }
+  .cta-logo-ett { font-family:'Satoshi',sans-serif; font-weight: 700; font-size: 11px; color: rgba(255,255,255,0.55); line-height: 1; letter-spacing: 2px; }
+  .cta-logo-name { font-family:'Satoshi',sans-serif; font-weight: 800; font-size: 16px; color: rgba(255,255,255,0.7); letter-spacing: -0.5px; }
+  .cta-glow { position: absolute; top: -60px; right: -60px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle,rgba(230,100,10,0.18) 0%,transparent 70%); pointer-events: none; }
 
-  /* ── Footer ──────────────────────────────────────────────────── */
-  .footer { background: var(--card, #f9f9f9); border-top: 1px solid var(--border, #e5e7eb); }
+  /* ════════════════════════════════════════════════
+     FOOTER
+  ════════════════════════════════════════════════ */
+  .footer { background: var(--card,#f9f9f9); border-top: 1px solid var(--border,#e5e7eb); }
   .footer-inner { max-width: 1280px; margin: 0 auto; padding: 36px 16px 24px; }
-  @media (min-width: 640px) { .footer-inner { padding: 48px 24px 28px; } }
+  @media (min-width: 640px)  { .footer-inner { padding: 48px 24px 28px; } }
   @media (min-width: 1024px) { .footer-inner { padding: 56px 40px 32px; } }
-
-  .footer-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 28px 20px;
-  }
-  @media (min-width: 640px) {
-    .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; }
-  }
-
-  .footer-brand-row {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
-  }
-  .footer-brand-name {
-    font-family: 'Satoshi', sans-serif; font-weight: 800;
-    font-size: 20px; color: var(--foreground, #111);
-    letter-spacing: -0.5px;
-  }
+  .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 20px; }
+  @media (min-width: 640px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; } }
+  .footer-brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .footer-brand-name { font-family:'Satoshi',sans-serif; font-weight: 800; font-size: 20px; color: var(--foreground,#111); letter-spacing: -0.5px; }
   .footer-brand-name em { color: #E6640A; font-style: normal; }
-  .footer-tagline {
-    font-size: 13px; color: var(--muted-foreground, #666);
-    line-height: 1.6; margin: 0 0 12px;
-  }
-  .footer-wa {
-    display: inline-flex; align-items: center; gap: 7px;
-    background: #25D366; color: #fff;
-    font-size: 13px; font-weight: 700;
-    padding: 9px 16px; border-radius: 10px; text-decoration: none;
-    font-family: 'Manrope', sans-serif;
-    -webkit-tap-highlight-color: transparent;
-  }
+  .footer-tagline { font-size: 13px; color: var(--muted-foreground,#666); line-height: 1.6; margin: 0 0 12px; }
+  .footer-wa { display: inline-flex; align-items: center; gap: 7px; background: #25D366; color: #fff; font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 10px; text-decoration: none; font-family:'Manrope',sans-serif; -webkit-tap-highlight-color: transparent; }
   .footer-col { grid-column: span 1; }
   .footer-col:first-child { grid-column: 1 / -1; }
-  @media (min-width: 640px) {
-    .footer-col:first-child { grid-column: span 1; }
-  }
-  .footer-col-title {
-    font-family: 'Satoshi', sans-serif;
-    font-size: 12px; font-weight: 800;
-    letter-spacing: 0.8px; text-transform: uppercase;
-    color: var(--muted-foreground, #666); margin-bottom: 12px;
-  }
+  @media (min-width: 640px) { .footer-col:first-child { grid-column: span 1; } }
+  .footer-col-title { font-family:'Satoshi',sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted-foreground,#666); margin-bottom: 12px; }
   .footer-links { display: flex; flex-direction: column; gap: 8px; }
-  .footer-link {
-    font-size: 13.5px; color: var(--foreground, #111);
-    text-decoration: none; opacity: 0.75;
-    transition: opacity 0.15s;
-    -webkit-tap-highlight-color: transparent;
-  }
+  .footer-link { font-size: 13.5px; color: var(--foreground,#111); text-decoration: none; opacity: 0.75; transition: opacity 0.15s; -webkit-tap-highlight-color: transparent; }
   .footer-link:hover { opacity: 1; }
-  .footer-bottom {
-    border-top: 1px solid var(--border, #e5e7eb);
-    margin-top: 28px; padding-top: 20px;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 4px;
-  }
-  @media (min-width: 640px) {
-    .footer-bottom { flex-direction: row; justify-content: space-between; }
-  }
-  .footer-copy {
-    font-size: 12px; color: var(--muted-foreground, #888); margin: 0;
-  }
+  .footer-bottom { border-top: 1px solid var(--border,#e5e7eb); margin-top: 28px; padding-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  @media (min-width: 640px) { .footer-bottom { flex-direction: row; justify-content: space-between; } }
+  .footer-copy { font-size: 12px; color: var(--muted-foreground,#888); margin: 0; }
 
-  /* ── Sections layout ─────────────────────────────────────────── */
+  /* ════════════════════════════════════════════════
+     SECTIONS
+  ════════════════════════════════════════════════ */
   .hs-section { width: 100%; overflow: hidden; }
-  .hs-section.hs-alt { background: var(--muted, rgba(0,0,0,0.02)); }
+  .hs-section.hs-alt { background: var(--muted,rgba(0,0,0,0.02)); }
   .hs-section > .pg { padding-top: 28px; padding-bottom: 28px; }
-  @media (min-width: 640px) {
-    .hs-section > .pg { padding-top: 36px; padding-bottom: 36px; }
-  }
-
-  /* ── Category section padding ────────────────────────────────── */
+  @media (min-width: 640px) { .hs-section > .pg { padding-top: 36px; padding-bottom: 36px; } }
   .cats-wrap { padding: 28px 0; }
   @media (min-width: 640px) { .cats-wrap { padding: 36px 0; } }
 
-  /* ── General touch targets ───────────────────────────────────── */
-  button, a {
-    -webkit-tap-highlight-color: transparent;
-  }
+  /* ── Live badge ── */
+  .live-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.22); color: #ef4444; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.5px; }
+  .live-dot   { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; animation: live-pulse 1.2s ease-in-out infinite; }
+  @keyframes live-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+
+  /* ── Shimmer badge ── */
+  .shimmer-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.22); color: #8b5cf6; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.3px; }
+
+  /* ── Section header shared ── */
+  .sh-left { display: flex; align-items: center; gap: 10px; }
+  .sh { display: flex; align-items: center; justify-content: space-between; padding: 0 0 14px; }
+  @media (min-width: 640px) { .sh { padding: 0 0 18px; } }
+  .sh-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sh-title { font-family:'Satoshi',sans-serif; font-size: 16px; font-weight: 800; color: var(--foreground,#111); letter-spacing: -0.3px; }
+  .sh-sub   { font-size: 12px; color: var(--muted-foreground,#888); margin-top: 1px; }
+  .sh-link  { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #E6640A; text-decoration: none; font-family:'Manrope',sans-serif; flex-shrink: 0; }
+
+  /* ── HScroll section inner ── */
+  .hs-section-inner { width: 100%; }
+  .hs-header { display: flex; align-items: center; justify-content: space-between; }
+  .hs-header-left { display: flex; align-items: center; gap: 10px; }
+  .hs-icon  { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .hs-title { font-family:'Satoshi',sans-serif; font-size: 16px; font-weight: 800; color: var(--foreground,#111); letter-spacing: -0.3px; }
+  .hs-sub   { font-size: 12px; color: var(--muted-foreground,#888); margin-top: 1px; }
+  .hs-nav-btns { display: flex; gap: 6px; }
+  .hs-nav-btn  { width: 32px; height: 32px; border-radius: 50%; background: var(--muted,#f5f5f5); border: 0.5px solid var(--border,#e5e7eb); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--foreground,#111); transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
+  .hs-nav-btn:hover { background: var(--border,#e5e7eb); }
+
+  /* ── Flash sale header ── */
+  .flash-section-header { display: flex; align-items: center; justify-content: space-between; padding: 0 0 14px; }
+  .flash-section-left   { display: flex; align-items: center; gap: 10px; }
+
+  /* ── Touch targets ── */
+  button, a { -webkit-tap-highlight-color: transparent; }
   * { box-sizing: border-box; }
 `;
 
@@ -1258,20 +1189,19 @@ function InjectStyles() {
       el.textContent = MOBILE_STYLES;
       document.head.appendChild(el);
     }
-    return () => { /* leave styles in DOM */ };
   }, []);
   return null;
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const Index = () => {
-  const [categories, setCategories] = useState<any[]>([]);
-  const [newArrivals, setNewArrivals] = useState<ProductCardData[]>([]);
-  const [newArrivalsCarousel, setNewArrivalsCarousel] = useState<CarouselProduct[]>([]);
-  const [upcomingCarousel, setUpcomingCarousel] = useState<CarouselProduct[]>([]);
-  const [flashSale, setFlashSale] = useState<CarouselProduct[]>([]);
-  const [adIdx, setAdIdx] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [categories,           setCategories]           = useState<any[]>([]);
+  const [newArrivals,          setNewArrivals]          = useState<ProductCardData[]>([]);
+  const [newArrivalsCarousel,  setNewArrivalsCarousel]  = useState<CarouselProduct[]>([]);
+  const [upcomingCarousel,     setUpcomingCarousel]     = useState<CarouselProduct[]>([]);
+  const [flashSale,            setFlashSale]            = useState<CarouselProduct[]>([]);
+  const [adIdx,                setAdIdx]                = useState(0);
+  const [loading,              setLoading]              = useState(true);
 
   const magnet1 = useMagnetic({ strength: 0.3 });
   const magnet2 = useMagnetic({ strength: 0.3 });
@@ -1297,7 +1227,9 @@ const Index = () => {
         setNewArrivals(dedupedArrivals);
         const carouselArrivals = dedupeById(dedupedArrivals.map(normaliseToCarousel));
         setNewArrivalsCarousel(carouselArrivals.length > 0 ? carouselArrivals : sampleNewArrivalsCarousel);
-        const discounted = dedupeById(dedupedArrivals.filter(p => p.isDiscounted && p.discountPrice).map(normaliseToCarousel));
+        const discounted = dedupeById(
+          dedupedArrivals.filter(p => p.isDiscounted && p.discountPrice).map(normaliseToCarousel)
+        );
         setFlashSale(discounted.length > 0 ? discounted : sampleFlashSale);
       } else {
         setCategories(sampleCategories);
@@ -1308,11 +1240,13 @@ const Index = () => {
 
       if (upcomingResult.status === "fulfilled" && upcomingResult.value) {
         const upcoming = upcomingResult.value;
-        const pre = Array.isArray(upcoming.preOrder) ? upcoming.preOrder.map(normaliseToCarousel) : [];
+        const pre  = Array.isArray(upcoming.preOrder)   ? upcoming.preOrder.map(normaliseToCarousel)   : [];
         const soon = Array.isArray(upcoming.comingSoon) ? upcoming.comingSoon.map(normaliseToCarousel) : [];
         const merged = dedupeById([...pre, ...soon]);
         setUpcomingCarousel(merged.length > 0 ? merged : sampleUpcoming);
-      } else { setUpcomingCarousel(sampleUpcoming); }
+      } else {
+        setUpcomingCarousel(sampleUpcoming);
+      }
 
       setLoading(false);
     };
@@ -1333,7 +1267,7 @@ const Index = () => {
         <WelcomePopup />
         <Navbar />
 
-        {/* ── HERO ── */}
+        {/* ── HERO ────────────────────────────────────────────── */}
         <section className="hero">
           <img
             className="hero-bg-img"
@@ -1367,8 +1301,7 @@ const Index = () => {
                 </motion.div>
                 <motion.div style={{ x: magnet2.x, y: magnet2.y }}>
                   <Link to="/ai-assistant" className="h-btn-ghost" {...magnet2.magneticProps}>
-                    <IconSparkles size={13} />
-                    Try AI Assistant
+                    <IconSparkles size={13} />Try AI Assistant
                   </Link>
                 </motion.div>
               </div>
@@ -1376,7 +1309,7 @@ const Index = () => {
           </div>
         </section>
 
-        {/* ── CATEGORIES ── */}
+        {/* ── CATEGORIES ──────────────────────────────────────── */}
         <div className="cats-wrap">
           <div className="pg">
             <div className="sh">
@@ -1410,7 +1343,7 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── FLASH SALE ── */}
+        {/* ── FLASH SALE ──────────────────────────────────────── */}
         {flashSale.length > 0 && (
           <div className="hs-section">
             <div className="pg">
@@ -1427,15 +1360,13 @@ const Index = () => {
                     <div className="hs-sub">Limited time — grab it before it's gone</div>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div className="hs-nav-btns" style={{ display: "flex" }}>
-                    <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -260, behavior: "smooth" })}>
-                      <IconChevronLeft size={14} />
-                    </button>
-                    <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 260, behavior: "smooth" })}>
-                      <IconChevronRight size={14} />
-                    </button>
-                  </div>
+                <div className="hs-nav-btns">
+                  <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -260, behavior: "smooth" })}>
+                    <IconChevronLeft size={14} />
+                  </button>
+                  <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 260, behavior: "smooth" })}>
+                    <IconChevronRight size={14} />
+                  </button>
                 </div>
               </div>
               <div id="flash-track" className="hs-track">
@@ -1447,7 +1378,7 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── AD BANNER 1 ── */}
+        {/* ── AD BANNER 1 ─────────────────────────────────────── */}
         <div className="pg" style={{ paddingTop: 4, paddingBottom: 4 }}>
           <AnimatePresence mode="wait">
             <motion.div
@@ -1469,7 +1400,7 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── NEW ARRIVALS SCROLL ── */}
+        {/* ── NEW ARRIVALS SCROLL ──────────────────────────────── */}
         {newArrivalsCarousel.length > 0 && (
           <div className="hs-section hs-alt">
             <div className="pg">
@@ -1486,7 +1417,7 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── UPCOMING DROPS ── */}
+        {/* ── UPCOMING DROPS ───────────────────────────────────── */}
         {upcomingCarousel.length > 0 && (
           <div className="hs-section">
             <div className="pg">
@@ -1509,7 +1440,7 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── JUST DROPPED ── */}
+        {/* ── JUST DROPPED (grid) ──────────────────────────────── */}
         {newArrivals.length > 0 && (() => {
           const dedupedForScroll = dedupeById(newArrivals.map(p => ({
             id: String(p.id), name: p.name ?? "", brand: p.brand ?? "",
@@ -1529,7 +1460,10 @@ const Index = () => {
                   icon={IconZap}
                   items={dedupedForScroll}
                   badge={
-                    <Link to="/search?keyword=new" style={{ fontSize: 11, color: "#E6640A", textDecoration: "none", fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}>
+                    <Link
+                      to="/search?keyword=new"
+                      style={{ fontSize: 11, color: "#E6640A", textDecoration: "none", fontFamily: "'Manrope',sans-serif", fontWeight: 700 }}
+                    >
                       See all →
                     </Link>
                   }
@@ -1541,7 +1475,7 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── AI FEATURES ── */}
+        {/* ── AI FEATURES ─────────────────────────────────────── */}
         <div className="hs-section">
           <div className="pg">
             <div className="sh">
@@ -1583,7 +1517,7 @@ const Index = () => {
               <Link to="/ai-assistant" style={{
                 display: "inline-flex", alignItems: "center", gap: 7,
                 background: "rgba(230,100,10,0.08)", border: "1px solid rgba(230,100,10,0.2)",
-                color: "#E6640A", fontFamily: "'Manrope', sans-serif",
+                color: "#E6640A", fontFamily: "'Manrope',sans-serif",
                 fontSize: 13.5, fontWeight: 700,
                 padding: "12px 24px", borderRadius: 12, textDecoration: "none",
               }}>
@@ -1595,14 +1529,14 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── AD BANNER 2 ── */}
+        {/* ── AD BANNER 2 ─────────────────────────────────────── */}
         <div className="pg" style={{ paddingTop: 4, paddingBottom: 4 }}>
           <AdBanner ad={adBanners[(adIdx + 1) % adBanners.length]} />
         </div>
 
         <div className="sdiv" />
 
-        {/* ── CTA BANNER ── */}
+        {/* ── CTA BANNER ──────────────────────────────────────── */}
         <div className="pg" style={{ paddingTop: 4, paddingBottom: 4 }}>
           <motion.div
             className="cta-banner"
@@ -1634,14 +1568,14 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── TRUST GRID ── */}
+        {/* ── TRUST GRID ──────────────────────────────────────── */}
         <div className="pg" style={{ paddingTop: 4, paddingBottom: 4 }}>
           <div className="trust-grid">
             {[
-              { icon: IconShieldCheck, title: "Secure Payments", desc: "Every transaction is encrypted and protected" },
-              { icon: IconTruck, title: "Fast Delivery", desc: "Real-time tracking from purchase to doorstep" },
-              { icon: IconSparkles, title: "AI-Powered", desc: "Smart recommendations tailored just for you" },
-              { icon: IconMessageSquare, title: "24/7 Support", desc: "Connect with sellers and get instant help" },
+              { icon: IconShieldCheck, title: "Secure Payments",  desc: "Every transaction is encrypted and protected" },
+              { icon: IconTruck,       title: "Fast Delivery",    desc: "Real-time tracking from purchase to doorstep" },
+              { icon: IconSparkles,    title: "AI-Powered",       desc: "Smart recommendations tailored just for you" },
+              { icon: IconMessageSquare, title: "24/7 Support",   desc: "Connect with sellers and get instant help" },
             ].map((f, i) => (
               <motion.div
                 key={f.title}
@@ -1669,7 +1603,7 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── FOOTER ── */}
+        {/* ── FOOTER ──────────────────────────────────────────── */}
         <motion.footer
           className="footer"
           initial={{ opacity: 0, y: 30 }}
@@ -1697,25 +1631,27 @@ const Index = () => {
                 <p className="footer-tagline">Ghana's AI-powered marketplace. Shop smarter, not harder.</p>
                 <a
                   href="https://wa.me/233257765011?text=Hi%2C%20I%20found%20you%20on%20ONETT"
-                  target="_blank" rel="noopener noreferrer" className="footer-wa"
+                  target="_blank" rel="noopener noreferrer"
+                  className="footer-wa"
                 >
                   <IconWhatsapp size={15} /> Chat with a Seller
                 </a>
               </motion.div>
+
               {[
                 { title: "Shop", links: [
-                    { label: "Categories", to: "/categories" },
-                    { label: "All Products", to: "/search?keyword=" },
-                    { label: "Flash Sales", to: "/search?discount=true" },
+                    { label: "Categories",    to: "/categories" },
+                    { label: "All Products",  to: "/search?keyword=" },
+                    { label: "Flash Sales",   to: "/search?discount=true" },
                 ]},
                 { title: "Account", links: [
-                    { label: "Sign In", to: "/login" },
-                    { label: "Create Account", to: "/register" },
-                    { label: "My Orders", to: "/orders" },
+                    { label: "Sign In",         to: "/login" },
+                    { label: "Create Account",  to: "/register" },
+                    { label: "My Orders",       to: "/orders" },
                 ]},
                 { title: "Features", links: [
                     { label: "AI Assistant", to: "/ai-assistant" },
-                    { label: "Messages", to: "/messages" },
+                    { label: "Messages",     to: "/messages" },
                 ]},
               ].map(col => (
                 <motion.div
@@ -1733,6 +1669,7 @@ const Index = () => {
                 </motion.div>
               ))}
             </motion.div>
+
             <motion.div
               className="footer-bottom"
               initial={{ opacity: 0 }}
