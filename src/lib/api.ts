@@ -648,32 +648,24 @@ export const chatApi = {
 
 
 export const notificationApi = {
-  /** GET /notifications → all notifications for logged-in user */
-  getAll: () => unwrap<any[]>("/notifications"),
- 
-  /** GET /notifications?unreadOnly=true */
-  getUnread: () => unwrap<any[]>("/notifications?unreadOnly=true"),
- 
-  /** GET /notifications/unread-count → { unreadCount: number } */
-  getUnreadCount: () => unwrap<{ unreadCount: number }>("/notifications/unread-count"),
- 
-  /** PATCH /notifications/{id}/read */
+  getAll: () => unwrap<any[]>("/notifications/user"),
+
+  getUnread: () => unwrap<any[]>("/notifications/user?unreadOnly=true"),
+
+  getUnreadCount: () => unwrap<{ unreadCount: number }>("/notifications/user/unread-count"),
+
   markAsRead: (id: string) =>
-    unwrap<void>(`/notifications/${id}/read`, { method: "PATCH" }),
- 
-  /** PATCH /notifications/read-all */
+    unwrap<void>(`/notifications/user/${id}/read`, { method: "PATCH" }),
+
   markAllAsRead: () =>
-    unwrap<void>("/notifications/read-all", { method: "PATCH" }),
- 
-  /** POST /notifications/fcm-token  body: { fcmToken } */
+    unwrap<void>("/notifications/user/read-all", { method: "PATCH" }),
+
   registerFcmToken: (fcmToken: string) =>
-    unwrap<void>("/notifications/fcm-token", {
+    unwrap<void>("/notifications/user/fcm-token", {
       method: "POST",
       body: { fcmToken },
     }),
 };
-
-
 // ─── AI ───────────────────────────────────────────────────────────────────────
 export const aiApi = {
   chat: (message: string, budget?: number) => {
