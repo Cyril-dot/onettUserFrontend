@@ -268,7 +268,7 @@ function StarRating({ rating = 4.5, count = 42 }: { rating?: number; count?: num
   );
 }
 
-// ─── Unified Product Card — fixed 260×480, same style everywhere ──────────────
+// ─── Unified Product Card — responsive via CSS var --card-w / --card-h ────────
 function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCardData }) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -292,82 +292,60 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
     finally { setCartLoading(false); }
   };
 
-  // stable rating per product id
+  // stable rating per product id (no Math.random on every render)
   const seed = product.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const rating = (4.5 + (seed % 10) * 0.05).toFixed(1);
   const reviewCount = 100 + (seed % 1900);
 
   return (
-    <div
-      style={{
-        width: 260,
-        height: 480,
-        flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-        borderRadius: 12,
-        border: "1px solid #e5e7eb",
-        background: "#fff",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-        overflow: "hidden",
-        transition: "box-shadow 0.2s, transform 0.2s",
-      }}
-    >
-      {/* ── IMAGE — 190px, fills full width, object-cover ── */}
-      <div style={{ width: "100%", height: 190, flexShrink: 0, position: "relative", overflow: "hidden", background: "#f3f4f6" }}>
+    <div className="fb-product-card">
+      {/* ── IMAGE — fills full card width, fixed height via CSS var ── */}
+      <div className="fb-product-img">
         <Link to={`/products/${product.id}`} style={{ display: "block", width: "100%", height: "100%" }}>
           {imageUrl ? (
             <img
               src={imageUrl}
               alt={product.name}
               loading="lazy"
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block", transition: "transform 0.3s" }}
-              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.05)")}
-              onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+              className="fb-product-img-el"
             />
           ) : (
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#d1d5db" }}>
-              <IconPackage size={48} />
+              <IconPackage size={36} />
             </div>
           )}
         </Link>
         {!inStock && (
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 7 }}>Out of stock</span>
+            <span style={{ background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>Out of stock</span>
           </div>
         )}
       </div>
 
-      {/* ── BODY — remaining 290px ── */}
-      <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      {/* ── BODY ── */}
+      <div className="fb-product-body">
 
-        {/* Badge row + icons */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        {/* Badge + icons */}
+        <div className="fb-product-top">
           {hasDiscount ? (
-            <span style={{ background: "#dbeafe", color: "#1e40af", fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 5 }}>
-              Up to {product.discountPercentage}% off
-            </span>
+            <span className="fb-badge fb-badge-blue">Up to {product.discountPercentage}% off</span>
           ) : (product as CarouselProduct).stockStatus === "PRE_ORDER" ? (
-            <span style={{ background: "#ffedd5", color: "#9a3412", fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 5 }}>Pre-order</span>
+            <span className="fb-badge fb-badge-orange">Pre-order</span>
           ) : (product as CarouselProduct).stockStatus === "COMING_SOON" ? (
-            <span style={{ background: "#dbeafe", color: "#1e3a8a", fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 5 }}>Coming Soon</span>
+            <span className="fb-badge fb-badge-blue">Coming Soon</span>
           ) : (
-            <span style={{ background: "#dcfce7", color: "#166534", fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 5 }}>In Stock</span>
+            <span className="fb-badge fb-badge-green">In Stock</span>
           )}
-          <div style={{ display: "flex", gap: 4 }}>
-            <button
-              title="Quick look"
-              onClick={() => navigate(`/products/${product.id}`)}
-              style={{ width: 30, height: 30, borderRadius: 8, background: "#f3f4f6", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}
-            >
-              <IconEye size={15} />
+          <div style={{ display: "flex", gap: 3 }}>
+            <button className="fb-icon-btn" title="Quick look" onClick={() => navigate(`/products/${product.id}`)}>
+              <IconEye size={13} />
             </button>
             <button
+              className={`fb-icon-btn${wishlisted ? " fb-icon-btn-fav" : ""}`}
               title="Favourite"
               onClick={() => setWishlisted(w => !w)}
-              style={{ width: 30, height: 30, borderRadius: 8, background: wishlisted ? "#fee2e2" : "#f3f4f6", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: wishlisted ? "#ef4444" : "#6b7280" }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             </button>
@@ -376,77 +354,56 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
 
         {/* Brand */}
         {(product as any).brand && (
-          <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", color: "#9ca3af", marginBottom: 4 }}>
-            {(product as any).brand}
-          </p>
+          <div className="fb-product-brand">{(product as any).brand}</div>
         )}
 
-        {/* Name — 2 lines max */}
-        <Link
-          to={`/products/${product.id}`}
-          style={{ fontSize: 13.5, fontWeight: 600, color: "#111827", lineHeight: 1.35, textDecoration: "none", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", marginBottom: 6 }}
-        >
+        {/* Name */}
+        <Link to={`/products/${product.id}`} className="fb-product-name">
           {product.name}
         </Link>
 
         {/* Stars */}
-        <div style={{ display: "flex", alignItems: "center", gap: 2, marginBottom: 6 }}>
+        <div className="fb-product-stars">
           {[1,2,3,4,5].map(s => (
-            <svg key={s} width="13" height="13" viewBox="0 0 24 24" fill={s <= Math.round(Number(rating)) ? "#fbbf24" : "#e5e7eb"}>
+            <svg key={s} className={`fb-star${s <= Math.round(Number(rating)) ? "" : " fb-star-empty"}`} viewBox="0 0 24 24">
               <path d="M13.8 4.2a2 2 0 0 0-3.6 0L8.4 8.4l-4.6.3a2 2 0 0 0-1.1 3.5l3.5 3-1 4.4c-.5 1.7 1.4 3 2.9 2.1l3.9-2.3 3.9 2.3c1.5 1 3.4-.4 3-2.1l-1-4.4 3.4-3a2 2 0 0 0-1.1-3.5l-4.6-.3-1.8-4.2Z" />
             </svg>
           ))}
-          <span style={{ fontSize: 11.5, fontWeight: 600, color: "#111", marginLeft: 3 }}>{rating}</span>
-          <span style={{ fontSize: 11.5, color: "#9ca3af" }}>({reviewCount})</span>
+          <span className="fb-rating-val">{rating}</span>
+          <span className="fb-rating-ct">({reviewCount})</span>
         </div>
 
         {/* Meta */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11.5, color: "#6b7280" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 7h6l2 4m-8-4v8m0-8V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v9h2m8 0H9m4 0h2m4 0h2v-4m0 0h-5m3.5 5.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm-10 0a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <div className="fb-product-meta">
+          <div className="fb-meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 7h6l2 4m-8-4v8m0-8V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v9h2m8 0H9m4 0h2m4 0h2v-4m0 0h-5m3.5 5.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm-10 0a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z"/></svg>
             Fast Delivery
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11.5, color: "#6b7280" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 7V6c0-.6.4-1 1-1h11c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1h-1M3 18v-7c0-.6.4-1 1-1h11c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1H4a1 1 0 0 1-1-1Zm8-3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" strokeLinecap="round"/></svg>
+          <div className="fb-meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 7V6c0-.6.4-1 1-1h11c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1h-1M3 18v-7c0-.6.4-1 1-1h11c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1H4a1 1 0 0 1-1-1Zm8-3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>
             Best Price
           </div>
         </div>
 
-        {/* Price + Cart — always visible at bottom */}
-        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        {/* Price + Cart */}
+        <div className="fb-product-footer">
           <div>
-            <p style={{ fontSize: 20, fontWeight: 800, color: "#111827", letterSpacing: "-0.5px", lineHeight: 1 }}>
-              GHS {Number(displayPrice).toLocaleString()}
-            </p>
+            <div className="fb-product-price">GHS {Number(displayPrice).toLocaleString()}</div>
             {hasDiscount && (
-              <p style={{ fontSize: 11, color: "#d1d5db", textDecoration: "line-through", marginTop: 2 }}>
-                GHS {Number(product.price).toLocaleString()}
-              </p>
+              <div className="fb-product-price-old">GHS {Number(product.price).toLocaleString()}</div>
             )}
           </div>
-
           <button
             type="button"
             disabled={cartLoading || !inStock}
             onClick={handleCart}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: inStock ? "#1d4ed8" : "#9ca3af",
-              color: "#fff", border: "none", borderRadius: 9,
-              padding: "9px 13px", fontSize: 12, fontWeight: 700,
-              cursor: inStock ? "pointer" : "not-allowed",
-              whiteSpace: "nowrap", flexShrink: 0,
-              transition: "background 0.15s",
-              opacity: cartLoading ? 0.7 : 1,
-            }}
-            onMouseEnter={e => inStock && ((e.currentTarget as HTMLButtonElement).style.background = "#1e40af")}
-            onMouseLeave={e => inStock && ((e.currentTarget as HTMLButtonElement).style.background = "#1d4ed8")}
+            className="fb-cart-btn"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
             </svg>
-            {!inStock ? "Out of stock" : cartLoading ? "Adding…" : "Add to cart"}
+            {!inStock ? "Sold out" : cartLoading ? "Adding…" : "Add to cart"}
           </button>
         </div>
       </div>
@@ -495,22 +452,11 @@ function FlowbiteGridSection({
         </div>
       </div>
 
-      {/* Horizontal scroll track */}
+      {/* Horizontal scroll track — first card always fully visible */}
       <div
         ref={trackRef}
-        style={{
-          display: "flex",
-          gap: 14,
-          overflowX: "auto",
-          WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "none",
-          paddingBottom: 4,
-          // bleed on mobile
-          marginLeft: -14,
-          paddingLeft: 14,
-          marginRight: -14,
-          paddingRight: 14,
-        }}
+        className="fb-prod-track"
+        style={{ marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16 }}
       >
         {items.map((item, i) => (
           <motion.div
@@ -518,7 +464,7 @@ function FlowbiteGridSection({
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.4), ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -4, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", transition: { type: "spring", stiffness: 380, damping: 22 } }}
+            whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
             style={{ flexShrink: 0 }}
           >
             <FlowbiteProductCard product={item} />
@@ -880,6 +826,135 @@ const MOBILE_STYLES = `
   .hs-track::-webkit-scrollbar { display: none; }
   #flash-track::-webkit-scrollbar { display: none; }
   .prod-track::-webkit-scrollbar { display: none; }
+  .fb-prod-track::-webkit-scrollbar { display: none; }
+
+  /* ════════════════════════════════════════════════
+     UNIFIED PRODUCT CARD — responsive sizing
+     Mobile  (<480): 155×390
+     Small   (480+): 200×430
+     Tablet  (768+): 240×460
+     Desktop (1024+):260×470
+  ════════════════════════════════════════════════ */
+  .fb-product-card {
+    width: 155px; height: 390px;
+    flex-shrink: 0; display: flex; flex-direction: column;
+    border-radius: 12px; border: 1px solid #e5e7eb;
+    background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    overflow: hidden; transition: box-shadow 0.2s, transform 0.2s;
+  }
+  @media (min-width: 480px)  { .fb-product-card { width: 200px; height: 430px; } }
+  @media (min-width: 768px)  { .fb-product-card { width: 240px; height: 460px; } }
+  @media (min-width: 1024px) { .fb-product-card { width: 260px; height: 470px; } }
+  .fb-product-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.10); transform: translateY(-3px); }
+
+  .fb-product-img {
+    width: 100%; height: 130px; flex-shrink: 0;
+    position: relative; overflow: hidden; background: #f3f4f6;
+  }
+  @media (min-width: 480px)  { .fb-product-img { height: 155px; } }
+  @media (min-width: 768px)  { .fb-product-img { height: 175px; } }
+  @media (min-width: 1024px) { .fb-product-img { height: 190px; } }
+  .fb-product-img-el {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    display: block; transition: transform 0.3s;
+  }
+  .fb-product-card:hover .fb-product-img-el { transform: scale(1.05); }
+
+  .fb-product-body {
+    padding: 8px 10px 10px;
+    display: flex; flex-direction: column; flex: 1; min-height: 0;
+  }
+  @media (min-width: 480px)  { .fb-product-body { padding: 10px 12px 12px; } }
+  @media (min-width: 1024px) { .fb-product-body { padding: 12px 14px 14px; } }
+
+  .fb-product-top {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 5px;
+  }
+  .fb-badge { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+  @media (min-width: 480px) { .fb-badge { font-size: 10px; padding: 2px 7px; } }
+  .fb-badge-blue   { background: #dbeafe; color: #1e40af; }
+  .fb-badge-orange { background: #ffedd5; color: #9a3412; }
+  .fb-badge-green  { background: #dcfce7; color: #166534; }
+
+  .fb-icon-btn {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: #f3f4f6; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #6b7280; transition: background 0.15s;
+  }
+  @media (min-width: 480px) { .fb-icon-btn { width: 27px; height: 27px; } }
+  .fb-icon-btn:hover { background: #e5e7eb; }
+  .fb-icon-btn-fav { background: #fee2e2 !important; color: #ef4444 !important; }
+
+  .fb-product-brand {
+    font-size: 8.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #9ca3af; margin-bottom: 3px;
+  }
+  @media (min-width: 480px) { .fb-product-brand { font-size: 9.5px; } }
+
+  .fb-product-name {
+    font-size: 11.5px; font-weight: 600; color: #111827;
+    line-height: 1.35; text-decoration: none;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+    margin-bottom: 4px;
+  }
+  @media (min-width: 480px)  { .fb-product-name { font-size: 12.5px; } }
+  @media (min-width: 1024px) { .fb-product-name { font-size: 13.5px; } }
+  .fb-product-name:hover { text-decoration: underline; }
+
+  .fb-product-stars { display: flex; align-items: center; gap: 2px; margin-bottom: 4px; }
+  .fb-star { width: 10px; height: 10px; fill: #fbbf24; flex-shrink: 0; }
+  @media (min-width: 480px) { .fb-star { width: 12px; height: 12px; } }
+  .fb-star-empty { fill: #e5e7eb; }
+  .fb-rating-val { font-size: 10px; font-weight: 600; color: #111; margin-left: 3px; }
+  .fb-rating-ct  { font-size: 10px; color: #9ca3af; }
+
+  .fb-product-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .fb-meta-item { display: flex; align-items: center; gap: 3px; font-size: 10px; color: #6b7280; }
+  .fb-meta-item svg { flex-shrink: 0; }
+
+  .fb-product-footer {
+    margin-top: auto; display: flex; align-items: center;
+    justify-content: space-between; gap: 6px;
+  }
+  .fb-product-price {
+    font-size: 14px; font-weight: 800;
+    color: #111827; letter-spacing: -0.4px; line-height: 1;
+  }
+  @media (min-width: 480px)  { .fb-product-price { font-size: 16px; } }
+  @media (min-width: 1024px) { .fb-product-price { font-size: 18px; } }
+  .fb-product-price-old { font-size: 9.5px; color: #d1d5db; text-decoration: line-through; margin-top: 2px; }
+
+  .fb-cart-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #1d4ed8; color: #fff; border: none;
+    border-radius: 7px; padding: 6px 8px;
+    font-size: 9.5px; font-weight: 700;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  @media (min-width: 480px)  { .fb-cart-btn { padding: 7px 10px; font-size: 10.5px; border-radius: 8px; } }
+  @media (min-width: 1024px) { .fb-cart-btn { padding: 9px 13px; font-size: 12px; } }
+  .fb-cart-btn:hover { background: #1e40af; }
+  .fb-cart-btn:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+
+  /* ── PRODUCT SCROLL TRACK (shared by all card rows) ── */
+  .fb-prod-track {
+    display: flex; gap: 10px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 6px;
+    padding-left: 2px; /* ensures first card shadow/border is visible */
+    padding-right: 2px;
+    align-items: flex-start;
+  }
+  @media (min-width: 640px)  { .fb-prod-track { gap: 12px; } }
+  @media (min-width: 1024px) { .fb-prod-track { gap: 14px; } }
+
+
 
   .hs-card {
     width: 168px; flex-shrink: 0;
@@ -1253,32 +1328,34 @@ const Index = () => {
 
         {/* ── FLASH SALE — horizontal scroll ── */}
         {flashSale.length > 0 && (
-          <div className="hs-section">
+          <div style={{ padding: "0 0 8px" }}>
             <div className="pg">
-              <div className="section-card">
-                <div className="flash-section-header">
-                  <div className="flash-section-left">
-                    <div className="hs-icon" style={{ background: "rgba(239,68,68,0.08)" }}>
+              <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e5e7eb", padding: "18px 16px 20px" }}>
+                {/* Header */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <IconFlame size={16} style={{ color: "#ef4444" }} />
                     </div>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span className="hs-title">Flash Sale</span>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: "#111", letterSpacing: "-0.3px" }}>Flash Sale</span>
                         <div className="live-badge"><div className="live-dot" />LIVE</div>
                       </div>
-                      <div className="hs-sub">Limited time — grab it before it's gone</div>
+                      <div style={{ fontSize: 11.5, color: "#888", marginTop: 1 }}>Limited time — grab it before it's gone</div>
                     </div>
                   </div>
-                  <div className="hs-nav-btns">
-                    <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -260, behavior: "smooth" })}>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -220, behavior: "smooth" })}>
                       <IconChevronLeft size={14} />
                     </button>
-                    <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 260, behavior: "smooth" })}>
+                    <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 220, behavior: "smooth" })}>
                       <IconChevronRight size={14} />
                     </button>
                   </div>
                 </div>
-                <div id="flash-track" style={{ display: "flex", gap: 14, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", paddingBottom: 4 }}>
+                {/* Track — overflows the card padding on mobile to bleed */}
+                <div id="flash-track" className="fb-prod-track" style={{ marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16 }}>
                   {flashSale.map(item => (
                     <motion.div
                       key={item.id}
@@ -1318,20 +1395,22 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── NEW ARRIVALS — Flowbite 4-col grid ── */}
+        {/* ── NEW ARRIVALS — horizontal scroll ── */}
         {newArrivalsCarousel.length > 0 && (
-          <section className="py-6">
+          <div style={{ padding: "0 0 8px" }}>
             <div className="pg">
-              <FlowbiteGridSection
-                title="New Arrivals"
-                subtitle="Fresh products added this week"
-                accent="#f59e0b"
-                icon={IconZap}
-                items={newArrivalsCarousel}
-                seeAllLink="/search?keyword=new"
-              />
+              <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e5e7eb", padding: "18px 16px 20px" }}>
+                <FlowbiteGridSection
+                  title="New Arrivals"
+                  subtitle="Fresh products added this week"
+                  accent="#f59e0b"
+                  icon={IconZap}
+                  items={newArrivalsCarousel}
+                  seeAllLink="/search?keyword=new"
+                />
+              </div>
             </div>
-          </section>
+          </div>
         )}
 
         <div className="sdiv" />
@@ -1361,23 +1440,25 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── JUST DROPPED — Flowbite 4-col grid ── */}
+        {/* ── JUST DROPPED — horizontal scroll ── */}
         {newArrivals.length > 0 && (
-          <section className="py-6">
+          <div style={{ padding: "0 0 8px" }}>
             <div className="pg">
-              <FlowbiteGridSection
-                title="Just Dropped"
-                subtitle="Browse all the latest products"
-                accent="#E6640A"
-                icon={IconFlame}
-                items={dedupeById(newArrivals.map(p => ({
-                  ...normaliseToCarousel(p),
-                  stock: (p as ProductCardData).stock,
-                })))}
-                seeAllLink="/search?keyword="
-              />
+              <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #e5e7eb", padding: "18px 16px 20px" }}>
+                <FlowbiteGridSection
+                  title="Just Dropped"
+                  subtitle="Browse all the latest products"
+                  accent="#E6640A"
+                  icon={IconFlame}
+                  items={dedupeById(newArrivals.map(p => ({
+                    ...normaliseToCarousel(p),
+                    stock: (p as ProductCardData).stock,
+                  })))}
+                  seeAllLink="/search?keyword="
+                />
+              </div>
             </div>
-          </section>
+          </div>
         )}
 
         <div className="sdiv" />
