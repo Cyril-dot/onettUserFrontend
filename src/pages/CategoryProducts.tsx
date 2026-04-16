@@ -3,12 +3,10 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { productApi, cartApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import SkeletonGrid from "@/components/SkeletonGrid";
 import { Package, ShoppingCart, ArrowRight, Tag } from "lucide-react";
 import { toast } from "sonner";
 
-// ── Normalise discount fields that the API may return inconsistently ──────────
 function normaliseProduct(p: any) {
   return {
     ...p,
@@ -33,7 +31,6 @@ const CategoryProducts = () => {
       .getByCategory(slug)
       .then(res => {
         if (!res) { setData(null); return; }
-        // ── FIX: normalise every product in the response ──
         setData({
           ...res,
           products: Array.isArray(res.products)
@@ -67,15 +64,15 @@ const CategoryProducts = () => {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-background">
+    <div className="cat-page-root">
       <Navbar />
-      <div className="container mx-auto px-4 py-6">
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="skeleton-shimmer h-6 w-6 rounded-lg" />
-            <div className="skeleton-shimmer h-3 w-16 rounded-full" />
+      <div className="cat-page-container">
+        <div className="cat-header-skeleton">
+          <div className="cat-skeleton-icon-row">
+            <div className="cat-skeleton-icon" />
+            <div className="cat-skeleton-label" />
           </div>
-          <div className="skeleton-shimmer h-8 w-48 rounded-lg mt-2" />
+          <div className="cat-skeleton-title" />
         </div>
         <SkeletonGrid count={10} />
       </div>
@@ -86,38 +83,35 @@ const CategoryProducts = () => {
   const categoryName = data?.category?.name || slug;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="cat-page-root">
       <Navbar />
-      <div className="container mx-auto px-4 py-6">
+      <div className="cat-page-container">
+
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-orange-500/10">
-              <Tag className="h-3.5 w-3.5 text-primary" />
+        <div className="cat-page-header">
+          <div className="cat-header-eyebrow">
+            <div className="cat-eyebrow-icon-wrap">
+              <Tag className="cat-eyebrow-icon" />
             </div>
-            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground font-ui">
-              Category
-            </span>
+            <span className="cat-eyebrow-text">Category</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground font-satoshi">
-            {categoryName}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1 font-inter">
+          <h1 className="cat-page-title">{categoryName}</h1>
+          <p className="cat-page-subtitle">
             {products.length} product{products.length !== 1 ? "s" : ""} available
           </p>
         </div>
 
         {/* Product Grid */}
         {products.length === 0 ? (
-          <div className="text-center py-20">
-            <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
-            <p className="text-lg font-medium text-muted-foreground">No products in this category yet</p>
-            <Link to="/categories" className="text-sm text-primary hover:underline mt-2 inline-block">
+          <div className="cat-empty-state">
+            <Package className="cat-empty-icon" />
+            <p className="cat-empty-text">No products in this category yet</p>
+            <Link to="/categories" className="cat-empty-link">
               Browse other categories
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+          <div className="cat-product-grid">
             {products.map((product: any) => {
               const hasDiscount = product.isDiscounted && product.discountPrice;
               const displayPrice = hasDiscount ? product.discountPrice : product.price;
@@ -127,15 +121,15 @@ const CategoryProducts = () => {
                 <Link
                   key={product.id}
                   to={`/products/${product.id}`}
-                  className="group rounded-xl bg-card border border-border overflow-hidden transition-shadow duration-200 hover:shadow-md flex flex-col"
+                  className="cat-product-card"
                 >
                   {/* Image */}
-                  <div className="relative aspect-square bg-muted overflow-hidden">
+                  <div className="cat-card-image-wrap">
                     {imageUrl ? (
                       <img
                         src={imageUrl}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        className="cat-card-image"
                         loading="lazy"
                         onError={(e) => {
                           const el = e.currentTarget as HTMLImageElement;
@@ -143,74 +137,64 @@ const CategoryProducts = () => {
                           const parent = el.parentElement;
                           if (parent) {
                             const placeholder = document.createElement("div");
-                            placeholder.className = "w-full h-full flex items-center justify-center";
-                            placeholder.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-muted-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`;
+                            placeholder.className = "cat-card-image-fallback";
+                            placeholder.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="cat-fallback-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`;
                             parent.appendChild(placeholder);
                           }
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-10 w-10 text-muted-foreground/30" />
+                      <div className="cat-card-image-fallback">
+                        <Package className="cat-fallback-icon" />
                       </div>
                     )}
 
-                    {/* Discount badge */}
                     {hasDiscount && (
-                      <div className="absolute top-2 right-2 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow">
+                      <div className="cat-discount-badge">
                         -{product.discountPercentage}%
                       </div>
                     )}
 
-                    {/* Out of stock overlay */}
                     {product.stock === 0 && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <span className="bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-full">
-                          Out of stock
-                        </span>
+                      <div className="cat-out-of-stock-overlay">
+                        <span className="cat-out-of-stock-label">Out of stock</span>
                       </div>
                     )}
                   </div>
 
                   {/* Info */}
-                  <div className="p-3 flex flex-col flex-1">
+                  <div className="cat-card-body">
                     {product.brand && (
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 font-ui">
-                        {product.brand}
-                      </p>
+                      <p className="cat-card-brand">{product.brand}</p>
                     )}
-                    <p className="text-xs md:text-sm font-semibold text-foreground leading-snug line-clamp-2 mb-2 flex-1 font-satoshi">
-                      {product.name}
-                    </p>
+                    <p className="cat-card-name">{product.name}</p>
 
-                    {/* Price */}
-                    <div className="flex items-center gap-1.5 mb-2.5">
-                      <span className="text-sm font-bold text-primary font-ui">
+                    <div className="cat-card-price-row">
+                      <span className="cat-card-price">
                         GHS {Number(displayPrice).toFixed(2)}
                       </span>
                       {hasDiscount && (
-                        <span className="text-[10px] text-muted-foreground line-through">
+                        <span className="cat-card-original-price">
                           GHS {Number(product.price).toFixed(2)}
                         </span>
                       )}
                     </div>
 
-                    {/* Action Buttons */}
                     {product.stock !== 0 && (
-                      <div className="flex gap-1.5">
+                      <div className="cat-card-actions">
                         <button
                           onClick={(e) => handleAddToCart(e, product.id)}
                           disabled={addingToCart === product.id}
-                          className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-orange-500/10 text-orange-600 text-[10px] font-semibold border border-orange-500/20 hover:bg-orange-500/20 transition-colors disabled:opacity-60"
+                          className="cat-btn-cart"
                         >
-                          <ShoppingCart className="h-3 w-3" />
+                          <ShoppingCart className="cat-btn-icon" />
                           {addingToCart === product.id ? "…" : "Cart"}
                         </button>
                         <button
                           onClick={(e) => handleOrder(e, product.id)}
-                          className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-primary text-white text-[10px] font-semibold hover:bg-orange-700 transition-colors"
+                          className="cat-btn-order"
                         >
-                          <ArrowRight className="h-3 w-3" />
+                          <ArrowRight className="cat-btn-icon" />
                           Order
                         </button>
                       </div>
@@ -222,6 +206,303 @@ const CategoryProducts = () => {
           </div>
         )}
       </div>
+
+      <style>{`
+        .cat-page-root {
+          min-height: 100vh;
+          background: #ffffff;
+          font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        .cat-page-container {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 24px 16px;
+        }
+        .cat-header-skeleton {
+          margin-bottom: 24px;
+        }
+        .cat-skeleton-icon-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 4px;
+        }
+        .cat-skeleton-icon {
+          width: 24px;
+          height: 24px;
+          border-radius: 8px;
+          background: #f0f0f0;
+          animation: cat-shimmer 1.4s infinite;
+        }
+        .cat-skeleton-label {
+          width: 64px;
+          height: 12px;
+          border-radius: 9999px;
+          background: #f0f0f0;
+          animation: cat-shimmer 1.4s infinite;
+        }
+        .cat-skeleton-title {
+          width: 192px;
+          height: 32px;
+          border-radius: 8px;
+          background: #f0f0f0;
+          animation: cat-shimmer 1.4s infinite;
+          margin-top: 8px;
+        }
+        @keyframes cat-shimmer {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+        .cat-page-header {
+          margin-bottom: 24px;
+        }
+        .cat-header-eyebrow {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 4px;
+        }
+        .cat-eyebrow-icon-wrap {
+          width: 24px;
+          height: 24px;
+          border-radius: 8px;
+          background: rgba(249, 115, 22, 0.12);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .cat-eyebrow-icon {
+          width: 14px;
+          height: 14px;
+          color: #f97316;
+        }
+        .cat-eyebrow-text {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #9ca3af;
+        }
+        .cat-page-title {
+          font-size: clamp(22px, 4vw, 30px);
+          font-weight: 800;
+          color: #111827;
+          line-height: 1.2;
+          margin: 0 0 4px;
+        }
+        .cat-page-subtitle {
+          font-size: 13px;
+          color: #6b7280;
+          margin: 0;
+        }
+        .cat-empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 80px 0;
+        }
+        .cat-empty-icon {
+          width: 64px;
+          height: 64px;
+          color: #d1d5db;
+          margin-bottom: 16px;
+        }
+        .cat-empty-text {
+          font-size: 16px;
+          font-weight: 500;
+          color: #6b7280;
+          margin: 0 0 8px;
+        }
+        .cat-empty-link {
+          font-size: 13px;
+          color: #f97316;
+          text-decoration: none;
+        }
+        .cat-empty-link:hover {
+          text-decoration: underline;
+        }
+        .cat-product-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        @media (min-width: 640px) {
+          .cat-product-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (min-width: 768px) {
+          .cat-product-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        }
+        @media (min-width: 1024px) {
+          .cat-product-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+        .cat-product-card {
+          border-radius: 14px;
+          background: #ffffff;
+          border: 1.5px solid #f3f4f6;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          text-decoration: none;
+          transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
+        }
+        .cat-product-card:hover {
+          box-shadow: 0 8px 24px rgba(249, 115, 22, 0.12);
+          border-color: rgba(249, 115, 22, 0.3);
+          transform: translateY(-2px);
+        }
+        .cat-card-image-wrap {
+          position: relative;
+          aspect-ratio: 1 / 1;
+          background: #f9fafb;
+          overflow: hidden;
+        }
+        .cat-card-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s;
+        }
+        .cat-product-card:hover .cat-card-image {
+          transform: scale(1.05);
+        }
+        .cat-card-image-fallback {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .cat-fallback-icon {
+          width: 40px;
+          height: 40px;
+          color: #d1d5db;
+        }
+        .cat-fallback-svg {
+          width: 40px;
+          height: 40px;
+          color: #d1d5db;
+        }
+        .cat-discount-badge {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background: #ef4444;
+          color: #ffffff;
+          font-size: 9px;
+          font-weight: 800;
+          padding: 2px 8px;
+          border-radius: 9999px;
+          box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+        }
+        .cat-out-of-stock-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .cat-out-of-stock-label {
+          background: rgba(0, 0, 0, 0.75);
+          color: #ffffff;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 4px 10px;
+          border-radius: 9999px;
+        }
+        .cat-card-body {
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+        }
+        .cat-card-brand {
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: #9ca3af;
+          margin: 0 0 2px;
+        }
+        .cat-card-name {
+          font-size: 13px;
+          font-weight: 600;
+          color: #111827;
+          line-height: 1.4;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          flex: 1;
+          margin: 0 0 8px;
+        }
+        .cat-card-price-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 10px;
+        }
+        .cat-card-price {
+          font-size: 14px;
+          font-weight: 800;
+          color: #f97316;
+        }
+        .cat-card-original-price {
+          font-size: 10px;
+          color: #9ca3af;
+          text-decoration: line-through;
+        }
+        .cat-card-actions {
+          display: flex;
+          gap: 6px;
+        }
+        .cat-btn-cart {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          padding: 6px 0;
+          border-radius: 8px;
+          background: rgba(249, 115, 22, 0.08);
+          color: #ea580c;
+          font-size: 10px;
+          font-weight: 700;
+          border: 1.5px solid rgba(249, 115, 22, 0.2);
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .cat-btn-cart:hover:not(:disabled) {
+          background: rgba(249, 115, 22, 0.18);
+        }
+        .cat-btn-cart:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .cat-btn-order {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          padding: 6px 0;
+          border-radius: 8px;
+          background: #f97316;
+          color: #ffffff;
+          font-size: 10px;
+          font-weight: 700;
+          border: none;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .cat-btn-order:hover {
+          background: #c2410c;
+        }
+        .cat-btn-icon {
+          width: 12px;
+          height: 12px;
+        }
+      `}</style>
     </div>
   );
 };
