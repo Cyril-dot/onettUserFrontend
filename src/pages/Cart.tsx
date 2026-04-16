@@ -22,7 +22,6 @@ function normaliseCart(data: any) {
     discountedTotal: Number(data.discountedTotal ?? 0),
     items: Array.isArray(data.items)
       ? data.items.map((item: any) => {
-          // ✅ FIX: ensure quantity is always a valid positive integer (default 1)
           const rawQty = Number(item.quantity);
           const quantity = Number.isFinite(rawQty) && rawQty >= 1
             ? Math.floor(rawQty)
@@ -52,6 +51,27 @@ function cartHasPreOrder(items: any[]) {
 // ── Step types ────────────────────────────────────────────────────────────────
 type Step = "cart" | "address" | "payment" | "submitted";
 
+const HIDDEN_ORDERS_KEY = "hidden_submitted_orders";
+
+function getHiddenOrders(): Set<string> {
+  try {
+    const raw = localStorage.getItem(HIDDEN_ORDERS_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function hideOrder(orderId: string) {
+  try {
+    const existing = getHiddenOrders();
+    existing.add(orderId);
+    localStorage.setItem(HIDDEN_ORDERS_KEY, JSON.stringify([...existing]));
+  } catch {
+    // ignore storage errors
+  }
+}
+
 const Cart = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -76,7 +96,17 @@ const Cart = () => {
   const [submitting, setSubmitting]               = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ FIX: refs that block duplicate in-flight requests
+  // ── submitted step: hide/delete order ──────────────────────────────────────
+  const [orderHidden, setOrderHidden] = useState(false);
+
+  const handleDeleteOrder = () => {
+    if (currentOrder?.orderId) {
+      hideOrder(String(currentOrder.orderId));
+    }
+    setOrderHidden(true);
+  };
+
+  // refs that block duplicate in-flight requests
   const initiatingRef = useRef(false);
   const submittingRef = useRef(false);
 
@@ -120,7 +150,6 @@ const Cart = () => {
       return;
     }
 
-    // ✅ FIX: block if already in-flight (ref check beats state race condition)
     if (initiatingRef.current) return;
     initiatingRef.current = true;
     setInitiating(true);
@@ -173,7 +202,6 @@ const Cart = () => {
     if (!screenshot)         { toast.error("Upload your payment screenshot"); return; }
     if (!currentOrder?.orderId) { toast.error("No order found. Please restart checkout."); return; }
 
-    // ✅ FIX: block if already in-flight
     if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
@@ -211,7 +239,6 @@ const Cart = () => {
   const remainingAmount = isPreOrder && depositAmount != null
     ? Math.round((displayTotal - depositAmount) * 100) / 100 : null;
 
-  // what the user actually pays today
   const chargeAmount = currentOrder?.chargeAmount != null
     ? Number(currentOrder.chargeAmount)
     : (isPreOrder && depositAmount != null ? depositAmount : displayTotal);
@@ -620,7 +647,10 @@ const Cart = () => {
             STEP: SUBMITTED
         ════════════════════════════════════════════════════════ */}
         {step === "submitted" && (
-          <div className="flex flex-col items-center text-center py-16 space-y-5">
+          <div
+            style={{ display: orderHidden ? "none" : undefined }}
+            className="flex flex-col items-center text-center py-16 space-y-5"
+          >
             <div className="h-20 w-20 rounded-full bg-green-100 flex items-center justify-center">
               <CheckCircle2 className="h-10 w-10 text-green-600" />
             </div>
@@ -643,6 +673,14 @@ const Cart = () => {
             <Link to="/" className="text-sm text-primary hover:underline">
               Continue shopping
             </Link>
+            {/* Delete / hide this order confirmation */}
+            <button
+              onClick={handleDeleteOrder}
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors mt-2"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete order confirmation
+            </button>
           </div>
         )}
 
