@@ -6,6 +6,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
 import { notificationApi } from "@/lib/api";
+import "./Navbar.css";
 
 function OnettLogo({ size = 32 }: { size?: number }) {
   return (
@@ -17,8 +18,8 @@ function OnettLogo({ size = 32 }: { size?: number }) {
       alignItems: "center", justifyContent: "center",
       flexShrink: 0, boxShadow: "0 2px 8px rgba(230,100,10,0.35)",
     }}>
-      <span style={{ color: "#fff", fontFamily: "'Satoshi', sans-serif", fontWeight: 800, fontSize: size * 0.3, lineHeight: 1, letterSpacing: "-0.5px" }}>ON</span>
-      <span style={{ color: "rgba(255,255,255,0.75)", fontFamily: "'Satoshi', sans-serif", fontWeight: 700, fontSize: size * 0.22, lineHeight: 1, letterSpacing: "0.5px" }}>ETT</span>
+      <span style={{ color: "#fff", fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: size * 0.3, lineHeight: 1, letterSpacing: "-0.5px" }}>ON</span>
+      <span style={{ color: "rgba(255,255,255,0.75)", fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, fontSize: size * 0.22, lineHeight: 1, letterSpacing: "0.5px" }}>ETT</span>
     </div>
   );
 }
@@ -51,9 +52,22 @@ const Navbar = () => {
     catch { /* silent */ }
   }, [isAuthenticated]);
 
-  useEffect(() => { fetchUnreadCount(); const id = setInterval(fetchUnreadCount, 30_000); return () => clearInterval(id); }, [fetchUnreadCount]);
-  useEffect(() => { (window as any).__refreshNotifBadge = fetchUnreadCount; return () => { delete (window as any).__refreshNotifBadge; }; }, [fetchUnreadCount]);
-  useEffect(() => { document.body.style.overflow = mobileOpen ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [mobileOpen]);
+  useEffect(() => {
+    fetchUnreadCount();
+    const id = setInterval(fetchUnreadCount, 30_000);
+    return () => clearInterval(id);
+  }, [fetchUnreadCount]);
+
+  useEffect(() => {
+    (window as any).__refreshNotifBadge = fetchUnreadCount;
+    return () => { delete (window as any).__refreshNotifBadge; };
+  }, [fetchUnreadCount]);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", h, { passive: true });
@@ -64,42 +78,52 @@ const Navbar = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery(""); setMobileOpen(false);
+      setSearchQuery("");
+      setMobileOpen(false);
     }
   };
   const closeMobile = () => setMobileOpen(false);
 
+  /* ── Bell button — reused in desktop + drawer ── */
   const BellBtn = ({ mobile = false }: { mobile?: boolean }) =>
     mobile ? (
-      <Link to="/notifications" onClick={closeMobile} className="mob-menu-item">
+      <Link to="/notifications" onClick={closeMobile} className="onett-nav__menu-item">
         <Bell size={18} style={{ color: "#888", flexShrink: 0 }} />
         <span>Notifications</span>
-        {unreadCount > 0 && <span className="nb-pill">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+        {unreadCount > 0 && (
+          <span className="onett-nav__notif-pill">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </Link>
     ) : (
-      <Link to="/notifications" className="n-icon-btn" title="Notifications" style={{ position: "relative" }}>
+      <Link to="/notifications" className="onett-nav__icon-btn" title="Notifications">
         <Bell size={17} />
-        {unreadCount > 0 && <span className="n-dot">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+        {unreadCount > 0 && (
+          <span className="onett-nav__dot">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </Link>
     );
 
   return (
     <>
       <nav className={`onett-nav${scrolled ? " scrolled" : ""}`}>
-        <div className="n-inner">
+        <div className="onett-nav__inner">
 
-          {/* Brand */}
-          <Link to="/" className="n-brand" onClick={closeMobile}>
+          {/* ── Brand ── */}
+          <Link to="/" className="onett-nav__brand" onClick={closeMobile}>
             <OnettLogo size={34} />
-            <span className="n-brand-name">ONETT<em>.</em></span>
+            <span className="onett-nav__brand-name">ONETT<em>.</em></span>
           </Link>
 
-          {/* Desktop search */}
-          <form onSubmit={handleSearch} className="n-search-form">
-            <div className="n-search-wrap">
-              <Search size={15} className="n-search-ico" />
+          {/* ── Desktop search ── */}
+          <form onSubmit={handleSearch} className="onett-nav__search-form">
+            <div className="onett-nav__search-wrap">
+              <Search size={15} className="onett-nav__search-ico" />
               <input
-                className="n-search-input"
+                className="onett-nav__search-input"
                 placeholder="Search products, brands, categories…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -107,67 +131,103 @@ const Navbar = () => {
             </div>
           </form>
 
-          {/* Desktop actions */}
-          <div className="n-actions">
-            <Link to="/" className="n-icon-btn" title="Home"><Home size={17} /></Link>
-            <Link to="/ai-assistant" className="n-icon-btn" title="AI Assistant"><Sparkles size={17} /></Link>
+          {/* ── Desktop actions ── */}
+          <div className="onett-nav__actions">
+            <Link to="/" className="onett-nav__icon-btn" title="Home">
+              <Home size={17} />
+            </Link>
+            <Link to="/ai-assistant" className="onett-nav__icon-btn" title="AI Assistant">
+              <Sparkles size={17} />
+            </Link>
             <button
               onClick={() => setDarkMode(d => !d)}
-              className="n-icon-btn"
+              className="onett-nav__icon-btn"
               title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
               aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
               {darkMode ? <Sun size={17} /> : <Moon size={17} />}
             </button>
+
             {isAuthenticated && (
               <>
-                <Link to="/messages" className="n-icon-btn" title="Messages"><MessageCircle size={17} /></Link>
+                <Link to="/messages" className="onett-nav__icon-btn" title="Messages">
+                  <MessageCircle size={17} />
+                </Link>
                 <BellBtn />
-                {!isSeller && <Link to="/orders" className="n-icon-btn" title="Orders"><Package size={17} /></Link>}
-                {!isSeller && <Link to="/cart" className="n-icon-btn" title="Cart"><ShoppingCart size={17} /></Link>}
+                {!isSeller && (
+                  <Link to="/orders" className="onett-nav__icon-btn" title="Orders">
+                    <Package size={17} />
+                  </Link>
+                )}
+                {!isSeller && (
+                  <Link to="/cart" className="onett-nav__icon-btn" title="Cart">
+                    <ShoppingCart size={17} />
+                  </Link>
+                )}
               </>
             )}
-            <div className="n-sep" />
+
+            <div className="onett-nav__sep" />
+
             {isAuthenticated ? (
               <>
-                <Link to={isSeller ? "/seller/dashboard" : "/profile"} className="n-user-btn">
-                  <div className="n-user-av"><User size={14} color="#E6640A" /></div>
-                  <span className="n-user-name">{user?.fullName?.split(" ")[0]}</span>
+                <Link
+                  to={isSeller ? "/seller/dashboard" : "/profile"}
+                  className="onett-nav__user-btn"
+                >
+                  <div className="onett-nav__user-av">
+                    <User size={14} color="#E6640A" />
+                  </div>
+                  <span className="onett-nav__user-name">
+                    {user?.fullName?.split(" ")[0]}
+                  </span>
                 </Link>
-                <button className="n-icon-btn" title="Log out" onClick={logout}><LogOut size={16} /></button>
+                <button
+                  className="onett-nav__icon-btn"
+                  title="Log out"
+                  onClick={logout}
+                >
+                  <LogOut size={16} />
+                </button>
               </>
             ) : (
               <>
-                <Link to="/login" className="n-btn-in">Sign In</Link>
-                <Link to="/register" className="n-btn-reg">Get Started</Link>
+                <Link to="/login"    className="onett-nav__btn-signin">Sign In</Link>
+                <Link to="/register" className="onett-nav__btn-register">Get Started</Link>
               </>
             )}
           </div>
 
-          {/* Mobile icon row — messages, cart, notifications, hamburger */}
-          <div className="n-mob">
-            <Link to="/search" className="n-mob-btn" title="Search"><Search size={19} /></Link>
+          {/* ── Mobile icon row ── */}
+          <div className="onett-nav__mob">
+            <Link to="/search" className="onett-nav__mob-btn" title="Search">
+              <Search size={19} />
+            </Link>
             {isAuthenticated && (
-              <Link to="/messages" className="n-mob-btn" title="Messages">
+              <Link to="/messages" className="onett-nav__mob-btn" title="Messages">
                 <MessageCircle size={19} />
               </Link>
             )}
             {isAuthenticated && !isSeller && (
-              <Link to="/cart" className="n-mob-btn" title="Cart">
+              <Link to="/cart" className="onett-nav__mob-btn" title="Cart">
                 <ShoppingCart size={19} />
               </Link>
             )}
             {isAuthenticated && (
-              <Link to="/notifications" className="n-mob-btn" title="Notifications">
+              <Link to="/notifications" className="onett-nav__mob-btn" title="Notifications">
                 <Bell size={19} />
                 {unreadCount > 0 && (
-                  <span className="n-dot" style={{ top: 5, right: 5, fontSize: 8, minWidth: 14, height: 14 }}>
+                  <span className="onett-nav__dot" style={{ top: 5, right: 5, fontSize: 8, minWidth: 14, height: 14 }}>
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </Link>
             )}
-            <button className="n-menu-btn" onClick={() => setMobileOpen(o => !o)}>
+            <button
+              className="onett-nav__menu-btn"
+              onClick={() => setMobileOpen(o => !o)}
+              aria-label="Toggle menu"
+            >
               {mobileOpen ? <X size={21} /> : <Menu size={21} />}
             </button>
           </div>
@@ -175,21 +235,28 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Drawer */}
+      {/* ── Mobile Drawer ── */}
       {mobileOpen && (
         <>
-          <div className="n-overlay" onClick={closeMobile} />
-          <div className="n-drawer">
-            <div className="n-drawer-head">
-              <span className="n-drawer-title">ONETT<em>.</em></span>
-              <button className="n-drawer-close" onClick={closeMobile}><X size={15} /></button>
+          <div className="onett-nav__overlay" onClick={closeMobile} />
+          <div className="onett-nav__drawer">
+
+            {/* head */}
+            <div className="onett-nav__drawer-head">
+              <span className="onett-nav__drawer-title">ONETT<em>.</em></span>
+              <button className="onett-nav__drawer-close" onClick={closeMobile} aria-label="Close menu">
+                <X size={15} />
+              </button>
             </div>
 
-            <div className="n-drawer-body">
-              <form onSubmit={handleSearch} className="n-drawer-search">
-                <Search size={15} className="n-drawer-search-ico" />
+            {/* body */}
+            <div className="onett-nav__drawer-body">
+
+              {/* search */}
+              <form onSubmit={handleSearch} className="onett-nav__drawer-search">
+                <Search size={15} className="onett-nav__drawer-search-ico" />
                 <input
-                  className="n-drawer-search-input"
+                  className="onett-nav__drawer-search-input"
                   placeholder="Search products…"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
@@ -197,81 +264,105 @@ const Navbar = () => {
                 />
               </form>
 
-              <div className="n-sec-label">Explore</div>
-              <Link to="/" onClick={closeMobile} className="mob-menu-item">
-                <Home size={18} style={{ color: "#E6640A", flexShrink: 0 }} /><span>Home</span>
+              {/* explore links */}
+              <div className="onett-nav__sec-label">Explore</div>
+              <Link to="/" onClick={closeMobile} className="onett-nav__menu-item">
+                <Home size={18} style={{ color: "#E6640A", flexShrink: 0 }} />
+                <span>Home</span>
               </Link>
-              <Link to="/ai-assistant" onClick={closeMobile} className="mob-menu-item">
-                <Sparkles size={18} style={{ color: "#E6640A", flexShrink: 0 }} /><span>AI Assistant</span><span className="mob-badge-new">New</span>
+              <Link to="/ai-assistant" onClick={closeMobile} className="onett-nav__menu-item">
+                <Sparkles size={18} style={{ color: "#E6640A", flexShrink: 0 }} />
+                <span>AI Assistant</span>
+                <span className="onett-nav__badge-new">New</span>
               </Link>
               <button
                 onClick={() => { setDarkMode(d => !d); closeMobile(); }}
-                className="mob-menu-item"
+                className="onett-nav__menu-item"
               >
                 {darkMode
-                  ? <Sun size={18} style={{ color: "#E6640A", flexShrink: 0 }} />
-                  : <Moon size={18} style={{ color: "#888", flexShrink: 0 }} />}
+                  ? <Sun  size={18} style={{ color: "#E6640A", flexShrink: 0 }} />
+                  : <Moon size={18} style={{ color: "#888",    flexShrink: 0 }} />}
                 <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
               </button>
-              <Link to="/search?keyword=" onClick={closeMobile} className="mob-menu-item">
-                <Search size={18} style={{ color: "#888", flexShrink: 0 }} /><span>All Products</span>
+              <Link to="/search?keyword=" onClick={closeMobile} className="onett-nav__menu-item">
+                <Search  size={18} style={{ color: "#888", flexShrink: 0 }} />
+                <span>All Products</span>
               </Link>
-              <Link to="/categories" onClick={closeMobile} className="mob-menu-item">
-                <Package size={18} style={{ color: "#888", flexShrink: 0 }} /><span>Categories</span>
+              <Link to="/categories" onClick={closeMobile} className="onett-nav__menu-item">
+                <Package size={18} style={{ color: "#888", flexShrink: 0 }} />
+                <span>Categories</span>
               </Link>
 
+              {/* account links */}
               {isAuthenticated && (
                 <>
-                  <div className="n-sec-label">Account</div>
-                  <Link to={isSeller ? "/seller/dashboard" : "/profile"} onClick={closeMobile} className="mob-user-card">
-                    <div className="mob-user-av"><User size={18} color="#E6640A" /></div>
+                  <div className="onett-nav__sec-label">Account</div>
+                  <Link
+                    to={isSeller ? "/seller/dashboard" : "/profile"}
+                    onClick={closeMobile}
+                    className="onett-nav__user-card"
+                  >
+                    <div className="onett-nav__user-card-av">
+                      <User size={18} color="#E6640A" />
+                    </div>
                     <div>
-                      <div className="mob-user-name">{user?.fullName ?? "Profile"}</div>
-                      <div className="mob-user-sub">{isSeller ? "Seller Dashboard" : "View profile"}</div>
+                      <div className="onett-nav__user-card-name">{user?.fullName ?? "Profile"}</div>
+                      <div className="onett-nav__user-card-sub">
+                        {isSeller ? "Seller Dashboard" : "View profile"}
+                      </div>
                     </div>
                   </Link>
-                  <Link to="/messages" onClick={closeMobile} className="mob-menu-item">
-                    <MessageCircle size={18} style={{ color: "#888", flexShrink: 0 }} /><span>Messages</span>
+                  <Link to="/messages" onClick={closeMobile} className="onett-nav__menu-item">
+                    <MessageCircle size={18} style={{ color: "#888", flexShrink: 0 }} />
+                    <span>Messages</span>
                   </Link>
                   <BellBtn mobile />
                   {!isSeller && (
-                    <Link to="/orders" onClick={closeMobile} className="mob-menu-item">
-                      <Package size={18} style={{ color: "#888", flexShrink: 0 }} /><span>My Orders</span>
+                    <Link to="/orders" onClick={closeMobile} className="onett-nav__menu-item">
+                      <Package size={18} style={{ color: "#888", flexShrink: 0 }} />
+                      <span>My Orders</span>
                     </Link>
                   )}
                   {!isSeller && (
-                    <Link to="/cart" onClick={closeMobile} className="mob-menu-item">
-                      <ShoppingCart size={18} style={{ color: "#888", flexShrink: 0 }} /><span>Cart</span>
+                    <Link to="/cart" onClick={closeMobile} className="onett-nav__menu-item">
+                      <ShoppingCart size={18} style={{ color: "#888", flexShrink: 0 }} />
+                      <span>Cart</span>
                     </Link>
                   )}
                 </>
               )}
             </div>
 
-            <div className="n-drawer-footer">
+            {/* footer */}
+            <div className="onett-nav__drawer-footer">
               {isAuthenticated ? (
-                <button className="mob-logout-btn" onClick={() => { logout(); closeMobile(); }}>
-                  <LogOut size={18} /><span>Log out</span>
+                <button
+                  className="onett-nav__logout-btn"
+                  onClick={() => { logout(); closeMobile(); }}
+                >
+                  <LogOut size={18} />
+                  <span>Log out</span>
                 </button>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div className="onett-nav__drawer-footer-auth">
                   <Link
                     to="/login"
                     onClick={closeMobile}
-                    style={{ display: "block", textAlign: "center", padding: "12px", borderRadius: 99, border: "1px solid #ddd", fontSize: 14, fontFamily: "'Manrope',sans-serif", fontWeight: 600, color: "#111", textDecoration: "none" }}
+                    className="onett-nav__drawer-btn-signin"
                   >
                     Sign In
                   </Link>
                   <Link
                     to="/register"
                     onClick={closeMobile}
-                    style={{ display: "block", textAlign: "center", padding: "12px", borderRadius: 99, background: "#E6640A", fontSize: 14, fontFamily: "'Manrope',sans-serif", fontWeight: 700, color: "#fff", textDecoration: "none", boxShadow: "0 3px 12px rgba(230,100,10,0.35)" }}
+                    className="onett-nav__drawer-btn-register"
                   >
                     Get Started Free
                   </Link>
                 </div>
               )}
             </div>
+
           </div>
         </>
       )}
