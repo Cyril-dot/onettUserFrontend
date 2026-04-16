@@ -46,7 +46,7 @@ const App = () => {
   return (
     <AnimatePresence>
       {showLoader && (
-        <LoadingScreen onComplete={() => setShowLoader(false)} minDuration={2200} />
+        <LoadingScreen onComplete={() => setShowLoader(false)} minDuration={500} />
       )}
 
       <QueryClientProvider client={queryClient} key="app">
