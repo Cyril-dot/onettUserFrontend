@@ -12,8 +12,8 @@ const TOKEN = {
   brandGlow: "rgba(230,100,10,0.18)",
   white:     "#FFFFFF",
   offWhite:  "#F8F7F4",
-  surface:   "#FFFFFF",
-  surfaceEl: "#F5F3EF",
+  surface:   "#F8F7F4",
+  surfaceEl: "#F0EDE8",
   border:    "rgba(0,0,0,0.07)",
   borderMid: "rgba(0,0,0,0.12)",
   text:      "#1A1A1A",
@@ -64,7 +64,7 @@ const GLOBAL_CSS = `
 
   /* ── SKELETON ── */
   .skeleton {
-    background: linear-gradient(90deg, #f0ede8 25%, #e8e4de 50%, #f0ede8 75%);
+    background: linear-gradient(90deg, #ede9e3 25%, #e5e0d9 50%, #ede9e3 75%);
     background-size: 200% 100%;
     animation: shimmer 1.6s infinite;
     border-radius: 10px;
@@ -74,18 +74,16 @@ const GLOBAL_CSS = `
   /* ── PRODUCT CARD ── */
   .pcard {
     width: 158px; flex-shrink: 0;
-    background: #FFFFFF;
-    border: 1px solid rgba(0,0,0,0.07);
+    background: #F8F7F4;
+    border: 1px solid rgba(0,0,0,0.09);
     border-radius: 18px; overflow: hidden;
     display: flex; flex-direction: column;
     cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s;
     position: relative;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
   .pcard:hover {
-    border-color: rgba(230,100,10,0.3);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(230,100,10,0.15);
+    border-color: rgba(230,100,10,0.35);
   }
   @media (min-width: 480px)  { .pcard { width: 190px; } }
   @media (min-width: 768px)  { .pcard { width: 218px; } }
@@ -94,7 +92,7 @@ const GLOBAL_CSS = `
   .pcard-img {
     width: 100%; aspect-ratio: 1 / 1;
     position: relative; overflow: hidden;
-    background: #F5F3EF; flex-shrink: 0;
+    background: #EDEAE4; flex-shrink: 0;
   }
   .pcard-img img {
     width: 100%; height: 100%;
@@ -110,19 +108,18 @@ const GLOBAL_CSS = `
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 9px; font-weight: 800; letter-spacing: 0.3px;
     padding: 3px 8px; border-radius: 99px;
-    backdrop-filter: blur(4px);
   }
 
   .pcard-wish {
     position: absolute; top: 10px; right: 10px; z-index: 2;
     width: 30px; height: 30px; border-radius: 9px;
-    background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.08);
+    background: rgba(248,247,244,0.9); border: 1px solid rgba(0,0,0,0.09);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; color: #9A9A9A; transition: all 0.15s;
-    backdrop-filter: blur(8px); flex-shrink: 0;
+    flex-shrink: 0;
   }
-  .pcard-wish:hover { color: #EF4444; border-color: rgba(239,68,68,0.35); background: rgba(255,255,255,0.95); }
-  .pcard-wish.active { color: #EF4444; background: rgba(255,255,255,0.95); border-color: rgba(239,68,68,0.35); }
+  .pcard-wish:hover { color: #EF4444; border-color: rgba(239,68,68,0.35); }
+  .pcard-wish.active { color: #EF4444; border-color: rgba(239,68,68,0.35); }
 
   .pcard-body {
     padding: 12px 13px 14px;
@@ -189,12 +186,11 @@ const GLOBAL_CSS = `
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 10px; font-weight: 800; cursor: pointer;
     white-space: nowrap; flex-shrink: 0;
-    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-    box-shadow: 0 2px 8px rgba(230,100,10,0.3);
+    transition: background 0.15s, transform 0.1s;
   }
-  .pcard-cart:hover { background: #C4520A; box-shadow: 0 4px 16px rgba(230,100,10,0.4); transform: translateY(-1px); }
+  .pcard-cart:hover { background: #C4520A; transform: translateY(-1px); }
   .pcard-cart:active { transform: translateY(0); }
-  .pcard-cart:disabled { background: #E5E5E5; color: #A0A0A0; box-shadow: none; cursor: not-allowed; }
+  .pcard-cart:disabled { background: #E5E5E5; color: #A0A0A0; cursor: not-allowed; }
   @media (min-width: 480px)  { .pcard-cart { padding: 9px 13px; font-size: 11px; } }
   @media (min-width: 1024px) { .pcard-cart { padding: 10px 14px; font-size: 11.5px; } }
 
@@ -295,10 +291,9 @@ const GLOBAL_CSS = `
     border-radius: 13px; padding: 15px 26px;
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer;
-    transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
-    box-shadow: 0 4px 20px rgba(230,100,10,0.35);
+    transition: background 0.15s, transform 0.1s;
   }
-  .btn-primary:hover { background: #C4520A; box-shadow: 0 8px 32px rgba(230,100,10,0.45); transform: translateY(-1px); }
+  .btn-primary:hover { background: #C4520A; transform: translateY(-1px); }
 
   .btn-ghost {
     display: inline-flex; align-items: center; gap: 8px;
@@ -340,14 +335,13 @@ const GLOBAL_CSS = `
   }
   .cat-pill-ico {
     width: 64px; height: 64px; border-radius: 18px;
-    background: #FFFFFF; border: 1px solid rgba(0,0,0,0.08);
+    background: #EDEAE4; border: 1px solid rgba(0,0,0,0.08);
     display: flex; align-items: center; justify-content: center;
-    overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
   }
   .cat-pill:hover .cat-pill-ico {
     border-color: rgba(230,100,10,0.35);
-    box-shadow: 0 6px 20px rgba(230,100,10,0.15);
     transform: translateY(-3px);
   }
   .cat-pill-ico img { width: 100%; height: 100%; object-fit: cover; }
@@ -419,21 +413,19 @@ const GLOBAL_CSS = `
   /* ── UPCOMING CARD ── */
   .hs-card {
     width: 168px; flex-shrink: 0;
-    background: #FFFFFF; border: 1px solid rgba(0,0,0,0.07);
+    background: #F8F7F4; border: 1px solid rgba(0,0,0,0.09);
     border-radius: 18px; overflow: hidden;
     display: flex; flex-direction: column;
     text-decoration: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s;
   }
   .hs-card:hover {
-    border-color: rgba(139,92,246,0.3);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+    border-color: rgba(139,92,246,0.35);
   }
   @media (min-width: 480px) { .hs-card { width: 196px; } }
   @media (min-width: 768px) { .hs-card { width: 220px; } }
 
-  .hs-img { width: 100%; aspect-ratio: 1; position: relative; overflow: hidden; background: #F5F3EF; }
+  .hs-img { width: 100%; aspect-ratio: 1; position: relative; overflow: hidden; background: #EDEAE4; }
   .hs-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; display: block; }
   .hs-card:hover .hs-img img { transform: scale(1.06); }
 
@@ -480,12 +472,11 @@ const GLOBAL_CSS = `
   @media (min-width: 900px) { .ai-grid { grid-template-columns: repeat(4, 1fr); } }
 
   .ai-card {
-    background: #FFFFFF; border: 1px solid rgba(0,0,0,0.07);
+    background: #F8F7F4; border: 1px solid rgba(0,0,0,0.09);
     border-radius: 18px; padding: 18px 16px;
-    cursor: pointer; transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    cursor: pointer; transition: border-color 0.2s, transform 0.2s;
   }
-  .ai-card:hover { border-color: rgba(0,0,0,0.12); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); }
+  .ai-card:hover { border-color: rgba(0,0,0,0.15); transform: translateY(-4px); }
   .ai-card-ico { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
   .ai-card-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; font-weight: 700; color: #1A1A1A; margin-bottom: 5px; }
   .ai-card-desc { font-size: 11.5px; color: #8A8A8A; line-height: 1.6; }
@@ -495,9 +486,8 @@ const GLOBAL_CSS = `
   @media (min-width: 900px) { .trust-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; } }
 
   .trust-card {
-    background: #FFFFFF; border: 1px solid rgba(0,0,0,0.07);
+    background: #F8F7F4; border: 1px solid rgba(0,0,0,0.09);
     border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     transition: border-color 0.2s;
   }
   .trust-card:hover { border-color: rgba(230,100,10,0.25); }
@@ -533,7 +523,6 @@ const GLOBAL_CSS = `
     width: 72px; height: 72px; border-radius: 20px;
     background: linear-gradient(135deg, #E6640A, #C4520A);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    box-shadow: 0 12px 40px rgba(230,100,10,0.4);
   }
   .cta-logo-name { font-family: 'Bricolage Grotesque', sans-serif; font-size: 17px; font-weight: 800; color: rgba(255,255,255,0.7); letter-spacing: -0.5px; }
 
@@ -551,7 +540,6 @@ const GLOBAL_CSS = `
     width: 36px; height: 36px; border-radius: 10px;
     background: linear-gradient(135deg, #E6640A, #C4520A);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    box-shadow: 0 2px 10px rgba(230,100,10,0.3);
   }
   .footer-logo-on  { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 900; font-size: 11px; color: #fff; line-height: 1; letter-spacing: -0.5px; }
   .footer-logo-ett { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 8px; color: rgba(255,255,255,0.6); line-height: 1; letter-spacing: 0.5px; }
@@ -588,21 +576,20 @@ const GLOBAL_CSS = `
   @media (min-width: 600px) { .wp-overlay { align-items: center; } }
   .wp-sheet {
     width: 100%; max-width: 460px; border-radius: 28px 28px 0 0;
-    background: #FFFFFF; border: 1px solid rgba(0,0,0,0.08);
+    background: #F8F7F4; border: 1px solid rgba(0,0,0,0.08);
     border-bottom: none; max-height: 90dvh; overflow-y: auto;
-    box-shadow: 0 -40px 80px rgba(0,0,0,0.15);
   }
   @media (min-width: 600px) { .wp-sheet { border-radius: 28px; border-bottom: 1px solid rgba(0,0,0,0.08); } }
   .wp-visual {
     height: 210px; position: relative; display: flex; align-items: center; justify-content: center;
     overflow: hidden;
     background: radial-gradient(ellipse at 50% 130%, var(--sc,#E6640A) 0%, transparent 65%),
-                linear-gradient(180deg, #F5F3EF, #FFFFFF);
+                linear-gradient(180deg, #EDEAE4, #F8F7F4);
     transition: background 0.4s;
   }
   .wp-orb {
     width: 100px; height: 100px; border-radius: 28px;
-    border: 1.5px solid var(--sc,#E6640A); background: rgba(255,255,255,0.7);
+    border: 1.5px solid var(--sc,#E6640A); background: rgba(248,247,244,0.85);
     display: flex; align-items: center; justify-content: center;
     position: relative; z-index: 2; backdrop-filter: blur(12px);
   }
@@ -622,7 +609,7 @@ const GLOBAL_CSS = `
   .wp-close:hover { background: rgba(0,0,0,0.1); }
   .wp-chip {
     position: absolute; top: 14px; left: 14px; z-index: 10;
-    background: rgba(255,255,255,0.8); border: 1px solid rgba(0,0,0,0.08);
+    background: rgba(248,247,244,0.9); border: 1px solid rgba(0,0,0,0.08);
     border-radius: 8px; padding: 4px 10px;
     font-family: 'Bricolage Grotesque', sans-serif;
     font-weight: 800; font-size: 13px; color: #1A1A1A; letter-spacing: -0.3px;
@@ -654,11 +641,11 @@ const GLOBAL_CSS = `
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     background: rgba(248,247,244,0.9); border-bottom: 1px solid rgba(0,0,0,0.08);
     backdrop-filter: blur(20px) saturate(1.5);
-    transition: background 0.3s, box-shadow 0.3s;
+    transition: background 0.3s;
   }
   @media (min-width: 640px) { .navbar { padding: 0 24px; height: 66px; } }
   @media (min-width: 1024px) { .navbar { padding: 0 48px; } }
-  .navbar.scrolled { background: rgba(248,247,244,0.97); box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+  .navbar.scrolled { background: rgba(248,247,244,0.97); }
   .nav-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; flex-shrink: 0; }
   .nav-logo-box {
     width: 32px; height: 32px; border-radius: 9px;
@@ -726,10 +713,10 @@ const GLOBAL_CSS = `
     cursor: pointer; color: #fff; font-weight: 800; font-size: 14px;
     font-family: 'Bricolage Grotesque', sans-serif;
     border: none; position: relative;
-    transition: box-shadow 0.15s;
+    transition: opacity 0.15s;
     flex-shrink: 0;
   }
-  .nav-avatar:hover { box-shadow: 0 4px 16px rgba(230,100,10,0.4); }
+  .nav-avatar:hover { opacity: 0.88; }
   .nav-avatar-online {
     position: absolute; bottom: -2px; right: -2px;
     width: 10px; height: 10px; border-radius: 50%;
@@ -753,7 +740,7 @@ const GLOBAL_CSS = `
   .mobile-drawer {
     position: fixed; top: 0; right: 0; bottom: 0; z-index: 1200;
     width: min(320px, 88vw);
-    background: #FFFFFF; box-shadow: -20px 0 60px rgba(0,0,0,0.12);
+    background: #F8F7F4;
     display: flex; flex-direction: column;
     overflow-y: auto;
   }
@@ -957,8 +944,8 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
           </a>
           {hasDiscount && <div className="pcard-disc">-{product.discountPercentage}%</div>}
           {!inStock && (
-            <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ background: "#fff", color: "#8A8A8A", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)" }}>Out of Stock</span>
+            <div style={{ position: "absolute", inset: 0, background: "rgba(248,247,244,0.75)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ background: "#F8F7F4", color: "#8A8A8A", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)" }}>Out of Stock</span>
             </div>
           )}
           <button className={`pcard-wish${wishlisted ? " active" : ""}`} onClick={e => { e.preventDefault(); e.stopPropagation(); setWishlisted(w => !w); }} aria-label="Add to wishlist">
@@ -1238,20 +1225,17 @@ function Navbar({ cartCount, onCartUpdate }: { cartCount: number; onCartUpdate: 
         </div>
 
         <div className="nav-right">
-          {/* Notifications (authenticated only) */}
           {isAuthenticated && (
             <a href="/notifications" className="nav-icon-btn" title="Notifications" style={{ display: "flex" }}>
               <Ico.Notif style={{ width: 15, height: 15 }} />
             </a>
           )}
 
-          {/* Cart */}
           <a href="/cart" className="nav-icon-btn" title="Cart">
             <Ico.Cart style={{ width: 15, height: 15 }} />
             {cartCount > 0 && <span className="nav-cart-badge">{cartCount > 99 ? "99+" : cartCount}</span>}
           </a>
 
-          {/* Auth */}
           {isAuthenticated ? (
             <button className="nav-avatar" title={`Signed in as ${displayName}`} onClick={() => window.location.href = "/profile"}>
               {initial}
@@ -1261,7 +1245,6 @@ function Navbar({ cartCount, onCartUpdate }: { cartCount: number; onCartUpdate: 
             <a href="/login" className="nav-sign-btn">Sign in</a>
           )}
 
-          {/* Hamburger */}
           <button className="nav-menu-btn" onClick={() => setDrawerOpen(true)} aria-label="Open menu">
             <Ico.Menu />
           </button>
@@ -1285,7 +1268,6 @@ function WelcomePopup() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    // Only show once per session
     const seen = sessionStorage.getItem("onett-welcome-seen");
     if (!seen) {
       setTimeout(() => setVisible(true), 900);
@@ -1346,63 +1328,53 @@ function WelcomePopup() {
 export default function ONETTHomepage() {
   const [adIdx, setAdIdx] = useState(0);
 
-  // ── Live data state ────────────────────────────────────────────
-  const [categories,   setCategories]   = useState<any[]>([]);
-  const [flashItems,   setFlashItems]   = useState<any[]>([]);
-  const [newArrivals,  setNewArrivals]  = useState<any[]>([]);
-  const [homeItems,    setHomeItems]    = useState<any[]>([]);
-  const [upcomingItems,setUpcomingItems]= useState<any[]>([]);
-  const [cartCount,    setCartCount]    = useState(0);
+  const [categories,    setCategories]    = useState<any[]>([]);
+  const [flashItems,    setFlashItems]    = useState<any[]>([]);
+  const [newArrivals,   setNewArrivals]   = useState<any[]>([]);
+  const [homeItems,     setHomeItems]     = useState<any[]>([]);
+  const [upcomingItems, setUpcomingItems] = useState<any[]>([]);
+  const [cartCount,     setCartCount]     = useState(0);
 
-  const [loadingCats,    setLoadingCats]    = useState(true);
-  const [loadingFlash,   setLoadingFlash]   = useState(true);
-  const [loadingNew,     setLoadingNew]     = useState(true);
-  const [loadingHome,    setLoadingHome]    = useState(true);
-  const [loadingUpcoming,setLoadingUpcoming]= useState(true);
+  const [loadingCats,     setLoadingCats]     = useState(true);
+  const [loadingFlash,    setLoadingFlash]    = useState(true);
+  const [loadingNew,      setLoadingNew]      = useState(true);
+  const [loadingHome,     setLoadingHome]     = useState(true);
+  const [loadingUpcoming, setLoadingUpcoming] = useState(true);
 
-  // ── Fetch cart count ────────────────────────────────────────────
   const refreshCartCount = useCallback(async () => {
     try {
       const res = await cartApi.getCount();
-      // API may return { count: N } or just a number
       const count = typeof res === "number" ? res : res?.count ?? res?.totalItems ?? 0;
       setCartCount(count);
     } catch {
-      // not logged in or error — silently ignore
+      // not logged in — silently ignore
     }
   }, []);
 
-  // ── Fetch all data on mount ──────────────────────────────────────
   useEffect(() => {
-    // Categories
     productApi.getCategories()
       .then(data => setCategories(Array.isArray(data) ? data : []))
       .catch(() => setCategories([]))
       .finally(() => setLoadingCats(false));
 
-    // Flash / discounted
     productApi.getDiscounted()
       .then(data => setFlashItems(Array.isArray(data) ? data : []))
       .catch(() => setFlashItems([]))
       .finally(() => setLoadingFlash(false));
 
-    // New arrivals
     productApi.getNewArrivals()
       .then(data => setNewArrivals(Array.isArray(data) ? data : []))
       .catch(() => setNewArrivals([]))
       .finally(() => setLoadingNew(false));
 
-    // Home / Just Dropped (may return object with sections)
     productApi.getHome()
       .then(data => {
-        // Backend might return { products: [...] } or an array directly
         const arr = Array.isArray(data) ? data : data?.products ?? data?.items ?? [];
         setHomeItems(arr);
       })
       .catch(() => setHomeItems([]))
       .finally(() => setLoadingHome(false));
 
-    // Upcoming: combine coming soon + pre-order
     Promise.allSettled([
       productApi.getComingSoon(),
       productApi.getPreOrder(),
@@ -1412,11 +1384,9 @@ export default function ONETTHomepage() {
       setUpcomingItems([...preOrder, ...comingSoon]);
     }).finally(() => setLoadingUpcoming(false));
 
-    // Cart count (best-effort)
     refreshCartCount();
   }, [refreshCartCount]);
 
-  // ── Ad auto-rotate ──────────────────────────────────────────────
   useEffect(() => {
     const iv = setInterval(() => setAdIdx(i => (i + 1) % ADS.length), 5000);
     return () => clearInterval(iv);
