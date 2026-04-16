@@ -364,7 +364,6 @@ function FlowbiteGridSection({
     <div ref={sectionRef}>
       {/* Section Header */}
       <div className="fb-sec-header">
-        {/* Left: icon + text stacked properly */}
         <div className="fb-sec-header-left">
           <div className="fb-sec-icon" style={{ background: `${accent}18` }}>
             <Icon size={17} style={{ color: accent }} />
@@ -374,7 +373,6 @@ function FlowbiteGridSection({
             <div className="fb-sec-sub">{subtitle}</div>
           </div>
         </div>
-        {/* Right: see all + nav */}
         <div className="fb-sec-header-right">
           {seeAllLink && (
             <Link to={seeAllLink} className="fb-sec-see-all">
@@ -399,7 +397,7 @@ function FlowbiteGridSection({
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.4), ease: [0.22, 1, 0.36, 1] }}
             whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
-            style={{ flexShrink: 0, alignSelf: "stretch" }}
+            className="fb-prod-card-wrap"
           >
             <FlowbiteProductCard product={item} />
           </motion.div>
@@ -579,7 +577,7 @@ function AdBanner({ ad }: { ad: typeof adBanners[0] }) {
   );
 }
 
-// ─── Welcome Popup — Premium redesign ────────────────────────────────────────
+// ─── Welcome Popup ────────────────────────────────────────────────────────────
 const WELCOME_KEY = "onett_welcome_v6";
 
 function WelcomePopup() {
@@ -664,7 +662,7 @@ function WelcomePopup() {
               <IconX size={14} />
             </button>
 
-            {/* Top orb / visual */}
+            {/* Top visual */}
             <div className="wp-visual" style={{ "--slide-color": current.color } as any}>
               <motion.div
                 key={step}
@@ -679,7 +677,6 @@ function WelcomePopup() {
                   <span className="wp-emoji">{current.emoji}</span>
                 </div>
               </motion.div>
-              {/* Logo top-left */}
               <div className="wp-logo-chip">
                 <span className="wp-logo-on">ON</span><span className="wp-logo-ett">ETT</span>
               </div>
@@ -755,13 +752,10 @@ const MOBILE_STYLES = `
   @media (min-width: 640px)  { .pg { padding-left: 24px; padding-right: 24px; } }
   @media (min-width: 1024px) { .pg { padding-left: 40px; padding-right: 40px; } }
 
-  /* ── SECTION WRAPPER — no card, blends with page bg ── */
-  .section-wrap {
-    /* no background, no shadow, no border — sections live on the page */
-    padding: 0;
-  }
+  /* ── SECTION WRAPPER ── */
+  .section-wrap { padding: 0; }
 
-  /* ── SECTION HEADER — always two rows on mobile ── */
+  /* ── SECTION HEADER ── */
   .fb-sec-header {
     display: flex;
     flex-direction: column;
@@ -799,9 +793,8 @@ const MOBILE_STYLES = `
   .fb-sec-header-right {
     display: flex; align-items: center; gap: 8px;
     flex-shrink: 0;
-    /* on mobile: align to left under title */
     align-self: flex-start;
-    padding-left: 48px; /* indent under icon */
+    padding-left: 48px;
   }
   @media (min-width: 480px) {
     .fb-sec-header-right { align-self: center; padding-left: 0; }
@@ -875,14 +868,28 @@ const MOBILE_STYLES = `
   .fb-prod-track::-webkit-scrollbar { display: none; }
 
   /* ══════════════════════════════════════════
-     PRODUCT CARD
+     PRODUCT CARD — equal height fix
   ══════════════════════════════════════════ */
+
+  /* The motion wrapper must stretch to full track height */
+  .fb-prod-card-wrap {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
   .fb-product-card {
-    width: 155px; flex-shrink: 0;
-    display: flex; flex-direction: column;
-    border-radius: 16px; background: #fff;
+    width: 155px;
+    /* Fill the height of .fb-prod-card-wrap so all cards are equal height */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    background: #fff;
     box-shadow: 0 1px 8px rgba(0,0,0,0.08);
-    overflow: hidden; transition: box-shadow 0.2s, transform 0.2s;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
     position: relative;
   }
   @media (prefers-color-scheme: dark) { .fb-product-card { background: #1a1d27; box-shadow: 0 1px 8px rgba(0,0,0,0.3); } }
@@ -912,7 +919,7 @@ const MOBILE_STYLES = `
     padding: 3px 7px; border-radius: 20px; z-index: 1;
   }
 
-  /* Wishlist button on image */
+  /* Wishlist button */
   .fb-wish-btn {
     position: absolute; top: 8px; right: 8px; z-index: 2;
     width: 28px; height: 28px; border-radius: 8px;
@@ -925,9 +932,12 @@ const MOBILE_STYLES = `
   .fb-wish-btn:hover { background: #fff; color: #ef4444; }
   .fb-wish-active { background: #fee2e2 !important; color: #ef4444 !important; }
 
+  /* Body grows to fill remaining card height */
   .fb-product-body {
     padding: 10px 11px 12px;
-    display: flex; flex-direction: column; flex: 1;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* ← key: pushes footer to bottom */
   }
   @media (min-width: 480px)  { .fb-product-body { padding: 11px 13px 13px; } }
   @media (min-width: 1024px) { .fb-product-body { padding: 13px 15px 15px; } }
@@ -943,20 +953,25 @@ const MOBILE_STYLES = `
     letter-spacing: 0.7px; color: #9ca3af; margin-bottom: 4px;
   }
 
+  /* Name grows to fill space — pushes badge + footer down */
   .fb-product-name {
     font-size: 12px; font-weight: 600; color: #111827;
     line-height: 1.4; text-decoration: none;
     display: -webkit-box; -webkit-line-clamp: 2;
     -webkit-box-orient: vertical; overflow: hidden;
-    margin-bottom: 7px; flex: 1;
+    margin-bottom: 7px;
+    flex: 1; /* ← pushes footer to bottom */
   }
   @media (min-width: 480px)  { .fb-product-name { font-size: 13px; } }
   @media (min-width: 1024px) { .fb-product-name { font-size: 13.5px; } }
   .fb-product-name:hover { text-decoration: underline; }
   @media (prefers-color-scheme: dark) { .fb-product-name { color: #f3f4f6; } }
 
+  /* Footer always pinned to bottom */
   .fb-product-footer {
-    margin-top: auto; padding-top: 8px; display: flex; align-items: center;
+    margin-top: auto;
+    padding-top: 8px;
+    display: flex; align-items: center;
     justify-content: space-between; gap: 6px;
     border-top: 1px solid #f3f4f6;
   }
@@ -989,6 +1004,7 @@ const MOBILE_STYLES = `
     overflow-x: auto; -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding-bottom: 6px;
+    /* stretch children to same height */
     align-items: stretch;
   }
   @media (min-width: 640px)  { .fb-prod-track { gap: 12px; } }
@@ -1119,7 +1135,7 @@ const MOBILE_STYLES = `
   }
 
   /* ══════════════════════════════════════════
-     WELCOME POPUP — Premium multi-step
+     WELCOME POPUP
   ══════════════════════════════════════════ */
   .wp-sheet {
     position: relative;
@@ -1137,7 +1153,6 @@ const MOBILE_STYLES = `
     .wp-sheet { border-radius: 28px; border-bottom: 1px solid rgba(255,255,255,0.1); max-height: 88vh; }
   }
 
-  /* Visual panel */
   .wp-visual {
     position: relative;
     height: 200px;
@@ -1149,7 +1164,6 @@ const MOBILE_STYLES = `
   }
   @media (min-width: 400px) { .wp-visual { height: 220px; } }
 
-  /* Noise grain overlay */
   .wp-visual::after {
     content: "";
     position: absolute; inset: 0;
@@ -1175,7 +1189,7 @@ const MOBILE_STYLES = `
     border-radius: 8px; padding: 4px 9px; gap: 1px;
   }
   .wp-logo-on  { font-family: 'Satoshi', sans-serif; font-weight: 900; font-size: 13px; color: #fff; line-height: 1; letter-spacing: -0.5px; }
-  .wp-logo-ett { font-family: 'Satoshi', sans-serif; font-weight: 600; font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1; letter-spacing: 0px; }
+  .wp-logo-ett { font-family: 'Satoshi', sans-serif; font-weight: 600; font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1; }
 
   .wp-emoji-wrap { position: relative; z-index: 5; }
   .wp-orb {
@@ -1193,7 +1207,6 @@ const MOBILE_STYLES = `
   .wp-emoji { font-size: 44px; position: relative; z-index: 2; line-height: 1; }
   @media (min-width: 400px) { .wp-emoji { font-size: 52px; } }
 
-  /* Body */
   .wp-body { padding: 22px 22px 20px; }
   @media (min-width: 400px) { .wp-body { padding: 24px 26px 22px; } }
   .wp-sub-label {
@@ -1212,7 +1225,6 @@ const MOBILE_STYLES = `
     line-height: 1.7; margin: 0 0 24px;
   }
 
-  /* Progress dots */
   .wp-dots { display: flex; align-items: center; gap: 7px; margin-bottom: 20px; }
   .wp-dot {
     height: 6px; width: 6px; border-radius: 99px;
@@ -1222,7 +1234,6 @@ const MOBILE_STYLES = `
   }
   .wp-dot.active { width: 24px; }
 
-  /* CTA button */
   .wp-cta {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     width: 100%; border: none;
@@ -1235,7 +1246,6 @@ const MOBILE_STYLES = `
   }
   .wp-cta:hover { opacity: 0.9; transform: scale(0.99); }
 
-  /* Skip */
   .wp-skip {
     display: block; width: 100%; text-align: center;
     font-size: 12.5px; color: rgba(255,255,255,0.2);
@@ -1244,7 +1254,7 @@ const MOBILE_STYLES = `
   .wp-skip:hover { color: rgba(255,255,255,0.35); }
   .wp-safe { height: env(safe-area-inset-bottom, 0px); }
 
-  /* ── SECTION HEADERS (Categories, Flash Sale) ── */
+  /* ── SECTION HEADERS ── */
   .sec-hdr-row {
     display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;
   }
@@ -1424,7 +1434,6 @@ const Index = () => {
 
         {/* ── CATEGORIES ── */}
         <div className="pg">
-          {/* Header — two rows on mobile */}
           <div className="sec-hdr-row">
             <div className="sec-hdr-left">
               <div className="sec-hdr-icon" style={{ background: "rgba(230,100,10,0.08)" }}>
@@ -1458,7 +1467,6 @@ const Index = () => {
         {/* ── FLASH SALE ── */}
         {flashSale.length > 0 && (
           <div className="pg">
-            {/* Header */}
             <div className="sec-hdr-row">
               <div className="sec-hdr-left">
                 <div className="sec-hdr-icon" style={{ background: "rgba(239,68,68,0.08)" }}>
@@ -1485,7 +1493,7 @@ const Index = () => {
               {flashSale.map(item => (
                 <motion.div
                   key={item.id}
-                  style={{ flexShrink: 0, alignSelf: "stretch" }}
+                  className="fb-prod-card-wrap"
                   whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
                 >
                   <FlowbiteProductCard product={item} />
@@ -1577,7 +1585,6 @@ const Index = () => {
 
         {/* ── AI FEATURES ── */}
         <div className="pg">
-          {/* Header */}
           <div className="sec-hdr-row" style={{ marginBottom: 16 }}>
             <div className="sec-hdr-left">
               <div className="sec-hdr-icon" style={{ background: "rgba(230,100,10,0.08)" }}>
