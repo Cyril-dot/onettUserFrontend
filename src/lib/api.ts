@@ -283,20 +283,98 @@ export const orderApi = {
 };
 
 // ─── Payments ─────────────────────────────────────────────────────────────────
+// ─── Payments ─────────────────────────────────────────────────────────────────
+//
+// OrderPaymentController → /api/v1/payments/orders
+// Payment is MoMo screenshot-based (not Paystack).
+// All endpoints wrap responses in ApiResponse<T> — use unwrap().
+//
+// Flow:
+//   1. Customer sends MoMo transfer manually
+//   2. POST /{orderId}/submit  (multipart: senderAccountName, senderPhoneNumber, screenshot)
+//   3. Admin reviews screenshot and confirms/rejects via their panel
+
 export const paymentApi = {
   /**
-   * POST /payments/orders/{orderId}/initialize
-   * Returns PaymentInitResponse — caller should redirect to res.authorizationUrl
+   * POST /payments/orders/{orderId}/submit
+   * Multipart form — customer uploads MoMo transfer screenshot.
+   * Returns PaymentSubmitResponse { orderId, paymentStatus, amount, isPreOrder,
+   *   depositAmount, remainingAmount, screenshotUrl, message }
+   *
+   * Usage:
+   *   await paymentApi.submitOrderPayment(orderId, "Kofi Mensah", "0241234567", screenshotFile)
    */
-  initializeOrderPayment: (orderId: string) =>
-    unwrap<any>(`/payments/orders/${orderId}/initialize`, { method: "POST" }),
+  submitOrderPayment: (
+    orderId: string,
+    senderAccountName: string,
+    senderPhoneNumber: string,
+    screenshot: File,
+  ): Promise<any> => {
+    const formData = new FormData();
+    formData.append("senderAccountName", senderAccountName);
+    formData.append("senderPhoneNumber", senderPhoneNumber);
+    formData.append("screenshot", screenshot);
+
+    return unwrap<any>(`/payments/orders/${orderId}/submit`, {
+      method: "POST",
+      body: formData,
+      isFormData: true,
+    });
+  },
+
+  // ── Admin / Seller ─────────────────────────────────────────────────────────
 
   /**
-   * GET /payments/orders/verify/{reference}
-   * Returns PaymentVerifyResponse — check res.success and res.orderId
+   * GET /payments/orders/admin/all
+   * Returns List<PaymentAdminResponse> — all payments with order + user details.
+   * Requires SELLER role.
    */
-  verifyOrderPayment: (reference: string) =>
-    unwrap<any>(`/payments/orders/verify/${reference}`),
+  adminGetAll: (): Promise<any[]> =>
+    unwrap<any[]>("/payments/orders/admin/all"),
+
+  /**
+   * GET /payments/orders/admin?status=PENDING|CONFIRMED|REJECTED
+   * Returns List<PaymentAdminResponse> filtered by status.
+   * Requires SELLER role.
+   */
+  adminGetByStatus: (status: "PENDING" | "CONFIRMED" | "REJECTED"): Promise<any[]> =>
+    unwrap<any[]>(`/payments/orders/admin?status=${status}`),
+
+  /**
+   * GET /payments/orders/admin/order/{orderId}
+   * Returns PaymentAdminResponse for a specific order.
+   * Requires SELLER role.
+   */
+  adminGetByOrderId: (orderId: string): Promise<any> =>
+    unwrap<any>(`/payments/orders/admin/order/${orderId}`),
+
+  /**
+   * GET /payments/orders/admin/{paymentId}
+   * Returns PaymentAdminResponse for a specific payment ID.
+   * Requires SELLER role.
+   */
+  adminGetById: (paymentId: string): Promise<any> =>
+    unwrap<any>(`/payments/orders/admin/${paymentId}`),
+
+  /**
+   * POST /payments/orders/admin/{orderId}/confirm?adminNote=...
+   * Confirms a pending payment. Triggers order confirmation + stock deduction.
+   * Requires SELLER role.
+   */
+  adminConfirm: (orderId: string, adminNote?: string): Promise<void> => {
+    const qs = adminNote ? `?adminNote=${encodeURIComponent(adminNote)}` : "";
+    return unwrap<void>(`/payments/orders/admin/${orderId}/confirm${qs}`, { method: "POST" });
+  },
+
+  /**
+   * POST /payments/orders/admin/{orderId}/reject?adminNote=...
+   * Rejects a payment and marks the order as PAYMENT_FAILED.
+   * Requires SELLER role.
+   */
+  adminReject: (orderId: string, adminNote?: string): Promise<void> => {
+    const qs = adminNote ? `?adminNote=${encodeURIComponent(adminNote)}` : "";
+    return unwrap<void>(`/payments/orders/admin/${orderId}/reject${qs}`, { method: "POST" });
+  },
 };
 
 // ─── Pre-orders ───────────────────────────────────────────────────────────────
