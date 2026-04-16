@@ -1,8 +1,9 @@
-// ONETT — Redesigned Homepage
-// White + Orange theme · Mobile-first · Post-login nav fix · Mobile hamburger menu
+// ONETT — Homepage (Live API Integration · Real Auth · No Demo Data)
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { productApi, cartApi } from "@/lib/api";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const TOKEN = {
@@ -38,7 +39,6 @@ const GLOBAL_CSS = `
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
 
-  /* ── SCROLL TRACKS ── */
   .scroll-track {
     display: flex; gap: 12px; overflow-x: auto;
     -webkit-overflow-scrolling: touch; scrollbar-width: none;
@@ -51,7 +51,6 @@ const GLOBAL_CSS = `
     .scroll-track { margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; gap: 14px; }
   }
 
-  /* ── PAGE CONTAINER ── */
   .pg {
     padding-left: max(16px, env(safe-area-inset-left));
     padding-right: max(16px, env(safe-area-inset-right));
@@ -60,9 +59,17 @@ const GLOBAL_CSS = `
   @media (min-width: 640px)  { .pg { padding-left: 24px; padding-right: 24px; } }
   @media (min-width: 1024px) { .pg { padding-left: 48px; padding-right: 48px; } }
 
-  /* ── SECTION DIVIDER ── */
   .sdiv { height: 40px; }
   @media (min-width: 768px) { .sdiv { height: 56px; } }
+
+  /* ── SKELETON ── */
+  .skeleton {
+    background: linear-gradient(90deg, #f0ede8 25%, #e8e4de 50%, #f0ede8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite;
+    border-radius: 10px;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
   /* ── PRODUCT CARD ── */
   .pcard {
@@ -305,7 +312,6 @@ const GLOBAL_CSS = `
   }
   .btn-ghost:hover { background: rgba(255,255,255,1); border-color: rgba(0,0,0,0.2); transform: translateY(-1px); }
 
-  /* ── HERO STATS ── */
   .hero-stats { display: flex; gap: 24px; margin-top: 40px; flex-wrap: wrap; }
   .hero-stat { display: flex; flex-direction: column; gap: 2px; }
   .hero-stat-num {
@@ -664,7 +670,6 @@ const GLOBAL_CSS = `
   .nav-name { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 17px; color: #1A1A1A; letter-spacing: -0.3px; }
   .nav-name em { color: #E6640A; font-style: normal; }
 
-  /* SEARCH */
   .nav-search {
     flex: 1; max-width: 400px;
     background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.09);
@@ -682,7 +687,6 @@ const GLOBAL_CSS = `
   }
   .nav-search input::placeholder { color: #A0A0A0; }
 
-  /* RIGHT SIDE */
   .nav-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
   .nav-icon-btn {
@@ -696,14 +700,14 @@ const GLOBAL_CSS = `
 
   .nav-cart-badge {
     position: absolute; top: -4px; right: -4px;
-    width: 16px; height: 16px; border-radius: 50%;
+    min-width: 16px; height: 16px; border-radius: 50%;
     background: #E6640A; color: #fff;
     font-size: 8.5px; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
     border: 1.5px solid #F8F7F4;
+    padding: 0 3px;
   }
 
-  /* SIGN IN BUTTON */
   .nav-sign-btn {
     display: inline-flex; align-items: center; gap: 6px;
     background: #E6640A; color: #fff; border: none;
@@ -715,7 +719,6 @@ const GLOBAL_CSS = `
   }
   .nav-sign-btn:hover { background: #C4520A; }
 
-  /* USER AVATAR (post-login) */
   .nav-avatar {
     width: 38px; height: 38px; border-radius: 10px;
     background: linear-gradient(135deg, #E6640A, #C4520A);
@@ -733,7 +736,6 @@ const GLOBAL_CSS = `
     background: #22C55E; border: 2px solid #F8F7F4;
   }
 
-  /* HAMBURGER / MOBILE MENU BUTTON */
   .nav-menu-btn {
     width: 38px; height: 38px; border-radius: 10px;
     background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08);
@@ -744,7 +746,6 @@ const GLOBAL_CSS = `
   .nav-menu-btn:hover { background: rgba(0,0,0,0.08); }
   @media (min-width: 768px) { .nav-menu-btn { display: none; } }
 
-  /* MOBILE DRAWER */
   .mobile-drawer-overlay {
     position: fixed; inset: 0; z-index: 1100;
     background: rgba(0,0,0,0.35); backdrop-filter: blur(6px);
@@ -784,9 +785,6 @@ const GLOBAL_CSS = `
   }
   .md-user-name { font-weight: 700; font-size: 14px; color: #1A1A1A; }
   .md-user-email { font-size: 12px; color: #8A8A8A; margin-top: 1px; }
-  .md-guest {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
-  }
   .md-search {
     display: flex; align-items: center; gap: 8px;
     background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.09);
@@ -808,7 +806,6 @@ const GLOBAL_CSS = `
   }
   .md-nav-link:hover { background: rgba(230,100,10,0.07); color: #E6640A; }
   .md-nav-link svg { flex-shrink: 0; }
-  .md-divider { height: 1px; background: rgba(0,0,0,0.07); margin: 16px 0; }
   .md-footer { padding: 16px 20px 32px; border-top: 1px solid rgba(0,0,0,0.07); }
   .md-signout {
     display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -819,15 +816,13 @@ const GLOBAL_CSS = `
   }
   .md-signout:hover { background: rgba(0,0,0,0.04); }
 
-  /* MOBILE SEARCH (visible on mobile in navbar) */
-  .nav-mobile-search-btn {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: #6A6A6A; transition: all 0.15s;
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 20px; gap: 10px; min-width: 200px;
   }
-  .nav-mobile-search-btn:hover { background: rgba(0,0,0,0.08); color: #1A1A1A; }
-  @media (min-width: 768px) { .nav-mobile-search-btn { display: none; } }
+  .empty-state-icon { font-size: 32px; opacity: 0.3; }
+  .empty-state-text { font-size: 13px; color: #A0A0A0; font-weight: 500; text-align: center; }
 `;
 
 function InjectCSS() {
@@ -844,36 +839,37 @@ function InjectCSS() {
 
 // ─── SVG ICONS ────────────────────────────────────────────────────────────────
 const Ico = {
-  Arrow:    (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 12h14M12 5l7 7-7 7"/></svg>,
-  Sparkles: (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M19 15l.75 2.25L22 18l-2.25.75L19 21l-.75-2.25L16 18l2.25-.75L19 15z"/></svg>,
-  Flame:    (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
-  Zap:      (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
-  Tag:      (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
-  Cart:     (p={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
-  Heart:    (p={}) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
-  Shield:   (p={}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>,
-  Truck:    (p={}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
-  Chat:     (p={}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-  Brain:    (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-1.04-4.83A3 3 0 0 1 4.5 9.5a3 3 0 0 1 1.5-2.6A2.5 2.5 0 0 1 9.5 2z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 1.04-4.83A3 3 0 0 0 19.5 9.5a3 3 0 0 0-1.5-2.6A2.5 2.5 0 0 0 14.5 2z"/></svg>,
-  Camera:   (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>,
-  Search:   (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
-  Clock:    (p={}) => <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>,
-  Calendar: (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5M16 2v4M8 2v4M3 10h5"/><circle cx="17" cy="17" r="4"/><path d="M17 15v2.2l1.4 1.4"/></svg>,
-  ChevR:    (p={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 18l6-6-6-6"/></svg>,
-  ChevL:    (p={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 18l-6-6 6-6"/></svg>,
-  X:        (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-  Menu:     (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
-  Home:     (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  Package:  (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>,
-  User:     (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-  LogOut:   (p={}) => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
-  Wa:       (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.508 5.836L.057 23.25a.75.75 0 00.916.943l5.638-1.479A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 01-4.962-1.355l-.356-.212-3.686.967.984-3.595-.232-.371A9.718 9.718 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>,
-  Pkg:      (p={}) => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
-  Wishlist: (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  Arrow:    (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 12h14M12 5l7 7-7 7"/></svg>,
+  Sparkles: (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M19 15l.75 2.25L22 18l-2.25.75L19 21l-.75-2.25L16 18l2.25-.75L19 15z"/></svg>,
+  Flame:    (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
+  Zap:      (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  Tag:      (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
+  Cart:     (p: any={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
+  Heart:    (p: any={}) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  Shield:   (p: any={}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>,
+  Truck:    (p: any={}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
+  Chat:     (p: any={}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  Brain:    (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-1.04-4.83A3 3 0 0 1 4.5 9.5a3 3 0 0 1 1.5-2.6A2.5 2.5 0 0 1 9.5 2z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 1.04-4.83A3 3 0 0 0 19.5 9.5a3 3 0 0 0-1.5-2.6A2.5 2.5 0 0 0 14.5 2z"/></svg>,
+  Camera:   (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>,
+  Search:   (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
+  Clock:    (p: any={}) => <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>,
+  Calendar: (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5M16 2v4M8 2v4M3 10h5"/><circle cx="17" cy="17" r="4"/><path d="M17 15v2.2l1.4 1.4"/></svg>,
+  ChevR:    (p: any={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 18l6-6-6-6"/></svg>,
+  ChevL:    (p: any={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 18l-6-6 6-6"/></svg>,
+  X:        (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  Menu:     (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
+  Home:     (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  Package:  (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>,
+  User:     (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  LogOut:   (p: any={}) => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+  Wa:       (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.508 5.836L.057 23.25a.75.75 0 00.916.943l5.638-1.479A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 01-4.962-1.355l-.356-.212-3.686.967.984-3.595-.232-.371A9.718 9.718 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>,
+  Pkg:      (p: any={}) => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
+  Wishlist: (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  Notif:    (p: any={}) => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
 };
 
 // ─── COUNTDOWN HOOK ───────────────────────────────────────────────────────────
-function useCountdown(id, days) {
+function useCountdown(id: string, days: number) {
   const [t, setT] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   useEffect(() => {
     if (!days || !id) return;
@@ -889,23 +885,60 @@ function useCountdown(id, days) {
   return t;
 }
 
+// ─── SKELETON CARDS ───────────────────────────────────────────────────────────
+function SkeletonProductCard() {
+  return (
+    <div className="pcard" style={{ flexShrink: 0 }}>
+      <div className="pcard-img skeleton" />
+      <div className="pcard-body" style={{ gap: 8 }}>
+        <div className="skeleton" style={{ height: 10, width: "40%", borderRadius: 6 }} />
+        <div className="skeleton" style={{ height: 13, width: "90%", borderRadius: 6 }} />
+        <div className="skeleton" style={{ height: 13, width: "70%", borderRadius: 6 }} />
+        <div className="skeleton" style={{ height: 18, width: "50%", borderRadius: 8, marginTop: 4 }} />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonCategoryPill() {
+  return (
+    <div className="cat-pill" style={{ flexShrink: 0 }}>
+      <div className="skeleton" style={{ width: 64, height: 64, borderRadius: 18 }} />
+      <div className="skeleton" style={{ width: 50, height: 10, borderRadius: 6 }} />
+    </div>
+  );
+}
+
 // ─── PRODUCT CARD ─────────────────────────────────────────────────────────────
-function ProductCard({ product, index = 0 }) {
+function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index?: number; onCartUpdate?: () => void }) {
   const [wishlisted, setWishlisted] = useState(false);
   const [addingCart, setAddingCart] = useState(false);
+  const [cartAdded, setCartAdded] = useState(false);
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
+
   const img = product.primaryImageUrl || null;
   const hasDiscount = product.isDiscounted && product.discountPrice;
   const displayPrice = hasDiscount ? product.discountPrice : product.price;
   const inStock = product.stock == null || product.stock > 0;
   const isNew = !product.isDiscounted && !product.stockStatus;
-  const handleCart = async (e) => {
+
+  const handleCart = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
+    if (addingCart || !inStock) return;
     setAddingCart(true);
-    await new Promise(r => setTimeout(r, 700));
-    setAddingCart(false);
+    try {
+      await cartApi.add(product.id, 1);
+      setCartAdded(true);
+      onCartUpdate?.();
+      setTimeout(() => setCartAdded(false), 2000);
+    } catch (err) {
+      console.error("[Cart] add failed:", err);
+    } finally {
+      setAddingCart(false);
+    }
   };
+
   return (
     <motion.div
       ref={ref}
@@ -918,7 +951,9 @@ function ProductCard({ product, index = 0 }) {
       <div className="pcard" style={{ flex: 1 }}>
         <div className="pcard-img">
           <a href={`/products/${product.id}`} style={{ display: "block", width: "100%", height: "100%" }}>
-            {img ? <img src={img} alt={product.name} loading="lazy" /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#C0C0C0" }}><Ico.Pkg /></div>}
+            {img
+              ? <img src={img} alt={product.name} loading="lazy" />
+              : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#C0C0C0" }}><Ico.Pkg /></div>}
           </a>
           {hasDiscount && <div className="pcard-disc">-{product.discountPercentage}%</div>}
           {!inStock && (
@@ -934,10 +969,14 @@ function ProductCard({ product, index = 0 }) {
           {product.brand && <div className="pcard-brand">{product.brand}</div>}
           <a href={`/products/${product.id}`} className="pcard-name">{product.name}</a>
           <div style={{ marginBottom: 8 }}>
-            {hasDiscount ? <span className="pcard-badge badge-sale">Sale</span>
-              : product.stockStatus === "PRE_ORDER" ? <span className="pcard-badge badge-pre">Pre-order</span>
-              : product.stockStatus === "COMING_SOON" ? <span className="pcard-badge badge-soon">Coming Soon</span>
-              : isNew ? <span className="pcard-badge badge-new">New</span>
+            {hasDiscount
+              ? <span className="pcard-badge badge-sale">Sale</span>
+              : product.stockStatus === "PRE_ORDER"
+              ? <span className="pcard-badge badge-pre">Pre-order</span>
+              : product.stockStatus === "COMING_SOON"
+              ? <span className="pcard-badge badge-soon">Coming Soon</span>
+              : isNew
+              ? <span className="pcard-badge badge-new">New</span>
               : <span className="pcard-badge badge-stock">In Stock</span>}
           </div>
           <div className="pcard-footer">
@@ -945,8 +984,15 @@ function ProductCard({ product, index = 0 }) {
               <div className="pcard-price">GHS {Number(displayPrice).toLocaleString()}</div>
               {hasDiscount && <div className="pcard-price-old">GHS {Number(product.price).toLocaleString()}</div>}
             </div>
-            <button className="pcard-cart" onClick={handleCart} disabled={addingCart || !inStock} aria-label="Add to cart">
-              <Ico.Cart />{!inStock ? "Sold out" : addingCart ? "…" : "Add"}
+            <button
+              className="pcard-cart"
+              onClick={handleCart}
+              disabled={addingCart || !inStock}
+              aria-label="Add to cart"
+              style={cartAdded ? { background: "#22C55E" } : {}}
+            >
+              <Ico.Cart />
+              {!inStock ? "Sold out" : addingCart ? "…" : cartAdded ? "Added!" : "Add"}
             </button>
           </div>
         </div>
@@ -956,8 +1002,8 @@ function ProductCard({ product, index = 0 }) {
 }
 
 // ─── SECTION HEADER ───────────────────────────────────────────────────────────
-function SectionHeader({ title, sub, accent, Icon, seeAllHref, trackId }) {
-  const scroll = (dir) => { document.getElementById(trackId)?.scrollBy({ left: dir * 280, behavior: "smooth" }); };
+function SectionHeader({ title, sub, accent, Icon, seeAllHref, trackId }: any) {
+  const scroll = (dir: number) => { document.getElementById(trackId)?.scrollBy({ left: dir * 280, behavior: "smooth" }); };
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   return (
@@ -982,19 +1028,23 @@ function SectionHeader({ title, sub, accent, Icon, seeAllHref, trackId }) {
   );
 }
 
-function ProductSection({ title, sub, accent, Icon, items, seeAllHref, id }) {
+function ProductSection({ title, sub, accent, Icon, items, loading, seeAllHref, id, onCartUpdate }: any) {
   return (
     <div className="pg">
       <SectionHeader title={title} sub={sub} accent={accent} Icon={Icon} seeAllHref={seeAllHref} trackId={id} />
       <div id={id} className="scroll-track">
-        {items.map((item, i) => <ProductCard key={item.id} product={item} index={i} />)}
+        {loading
+          ? Array.from({ length: 5 }).map((_, i) => <SkeletonProductCard key={i} />)
+          : items.length === 0
+          ? <div className="empty-state"><div className="empty-state-icon">📦</div><div className="empty-state-text">Nothing here yet — check back soon!</div></div>
+          : items.map((item: any, i: number) => <ProductCard key={item.id} product={item} index={i} onCartUpdate={onCartUpdate} />)}
       </div>
     </div>
   );
 }
 
 // ─── UPCOMING CARD ────────────────────────────────────────────────────────────
-function UpcomingCard({ product, index = 0 }) {
+function UpcomingCard({ product, index = 0 }: { product: any; index?: number }) {
   const { days, hours, minutes, seconds } = useCountdown(product.id, product.availableInDays || 7);
   const isPre = product.stockStatus === "PRE_ORDER";
   const ref = useRef(null);
@@ -1007,17 +1057,20 @@ function UpcomingCard({ product, index = 0 }) {
       whileHover={{ y: -5, transition: { type: "spring", stiffness: 360, damping: 22 } }}
     >
       <div className="hs-img">
-        {product.primaryImageUrl ? <img src={product.primaryImageUrl} alt={product.name} loading="lazy" /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#C0C0C0" }}><Ico.Pkg /></div>}
+        {product.primaryImageUrl
+          ? <img src={product.primaryImageUrl} alt={product.name} loading="lazy" />
+          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#C0C0C0" }}><Ico.Pkg /></div>}
         <div className={`hs-timer ${isPre ? "timer-amber" : "timer-purple"}`}>
-          {[{ v: days, l: "d" }, null, { v: hours, l: "h" }, null, { v: minutes, l: "m" }, null, { v: seconds, l: "s" }].map((u, i) =>
-            u === null ? <span key={i} className="hs-timer-sep">:</span>
-            : <div key={i} className="hs-timer-unit"><span className="hs-timer-num">{String(u.v).padStart(2,"0")}</span><span className="hs-timer-lbl">{u.l}</span></div>
+          {[{ v: days, l: "d" }, null, { v: hours, l: "h" }, null, { v: minutes, l: "m" }, null, { v: seconds, l: "s" }].map((u: any, i) =>
+            u === null
+              ? <span key={i} className="hs-timer-sep">:</span>
+              : <div key={i} className="hs-timer-unit"><span className="hs-timer-num">{String(u.v).padStart(2, "0")}</span><span className="hs-timer-lbl">{u.l}</span></div>
           )}
         </div>
       </div>
       <div className="hs-body">
         <div className={`hs-status ${isPre ? "badge-pre" : "badge-soon"}`} style={{ marginBottom: 7 }}><Ico.Calendar />{isPre ? "Pre-order" : "Coming Soon"}</div>
-        <div className="hs-brand">{product.brand}</div>
+        {product.brand && <div className="hs-brand">{product.brand}</div>}
         <div className="hs-name">{product.name}</div>
         <div className="hs-price-row"><span className="hs-price">GHS {product.price?.toLocaleString()}</span></div>
         <button className="hs-btn"><Ico.Cart />{isPre ? "Pre-order Now" : "Notify Me"}</button>
@@ -1026,14 +1079,14 @@ function UpcomingCard({ product, index = 0 }) {
   );
 }
 
-// ─── AD STRIP ────────────────────────────────────────────────────────────────
+// ─── AD STRIP ─────────────────────────────────────────────────────────────────
 const ADS = [
   { id: "a1", bg: "linear-gradient(135deg,#0e1f3e,#1a3877)", icon: "💳", title: "MTN MoMo — Pay & save 5%", sub: "Use MoMo at checkout for instant cashback on every order", cta: "Try it" },
   { id: "a2", bg: "linear-gradient(135deg,#052e1e,#064c30)", icon: "🚚", title: "Free Delivery over GHS 200", sub: "DHL Express — Accra & Kumasi same-day delivery available", cta: "Learn more" },
   { id: "a3", bg: "linear-gradient(135deg,#1c1040,#2d1f60)", icon: "🔐", title: "Sell on ONETT — It's free", sub: "Reach thousands of buyers across Ghana instantly today", cta: "Start selling" },
 ];
 
-function AdStrip({ adIdx, setAdIdx }) {
+function AdStrip({ adIdx, setAdIdx }: { adIdx: number; setAdIdx: (i: number) => void }) {
   return (
     <div className="pg">
       <AnimatePresence mode="wait">
@@ -1050,55 +1103,20 @@ function AdStrip({ adIdx, setAdIdx }) {
         </motion.div>
       </AnimatePresence>
       <div className="ad-dots">
-        {ADS.map((_, i) => <button key={i} className={`ad-dot${i === adIdx ? " on" : ""}`} onClick={() => setAdIdx(i)} aria-label={`Ad ${i+1}`} />)}
+        {ADS.map((_, i) => <button key={i} className={`ad-dot${i === adIdx ? " on" : ""}`} onClick={() => setAdIdx(i)} aria-label={`Ad ${i + 1}`} />)}
       </div>
     </div>
   );
 }
 
-// ─── SAMPLE DATA ──────────────────────────────────────────────────────────────
-const SAMPLE_CATEGORIES = [
-  { id: "c1", name: "Electronics", slug: "electronics", icon: { imageUrl: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=120&q=70" } },
-  { id: "c2", name: "Fashion",     slug: "fashion",     icon: { imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=120&q=70" } },
-  { id: "c3", name: "Shoes",       slug: "shoes",       icon: { imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&q=70" } },
-  { id: "c4", name: "Home",        slug: "home",        icon: { imageUrl: "https://images.unsplash.com/photo-1585412727339-54e4bae3bbf9?w=120&q=70" } },
-  { id: "c5", name: "Sports",      slug: "sports",      icon: { imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=120&q=70" } },
-  { id: "c6", name: "Gaming",      slug: "gaming",      icon: { imageUrl: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=120&q=70" } },
-  { id: "c7", name: "Beauty",      slug: "beauty",      icon: { imageUrl: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=120&q=70" } },
-  { id: "c8", name: "Books",       slug: "books",       icon: { imageUrl: "https://images.unsplash.com/photo-1535905557558-afc4877a26fc?w=120&q=70" } },
-  { id: "c9", name: "Kitchen",     slug: "kitchen",     icon: { imageUrl: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=120&q=70" } },
-  { id: "c10",name: "Watches",     slug: "watches",     icon: { imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=120&q=70" } },
-];
-const SAMPLE_FLASH = [
-  { id: "f1", name: "Samsung Galaxy S24 FE", brand: "Samsung", price: 5399, isDiscounted: true, discountPercentage: 35, discountPrice: 3499, primaryImageUrl: "https://images.unsplash.com/photo-1610945264803-c22b62d2a7b3?w=400&q=80" },
-  { id: "f2", name: "Sony WH-1000XM5 Headphones", brand: "Sony", price: 1499, isDiscounted: true, discountPercentage: 40, discountPrice: 899, primaryImageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80" },
-  { id: "f3", name: "Nike Air Max 270", brand: "Nike", price: 720, isDiscounted: true, discountPercentage: 25, discountPrice: 540, primaryImageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80" },
-  { id: "f4", name: "MacBook Air M3 13\"", brand: "Apple", price: 8499, isDiscounted: true, discountPercentage: 20, discountPrice: 6799, primaryImageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80" },
-  { id: "f5", name: "Kindle Paperwhite 7th Gen", brand: "Amazon", price: 499, isDiscounted: true, discountPercentage: 30, discountPrice: 349, primaryImageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80" },
-  { id: "f6", name: "Apple Watch Series 9", brand: "Apple", price: 2399, isDiscounted: true, discountPercentage: 18, discountPrice: 1969, primaryImageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80" },
-];
-const SAMPLE_NEW = [
-  { id: "n1", name: "AirPods Pro 3rd Gen", brand: "Apple", price: 1799, primaryImageUrl: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&q=80" },
-  { id: "n2", name: "Adidas Ultraboost 25", brand: "Adidas", price: 720, primaryImageUrl: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=400&q=80" },
-  { id: "n3", name: "Levi's 501 Original Fit", brand: "Levi's", price: 380, primaryImageUrl: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80" },
-  { id: "n4", name: "Instant Pot Duo 7-in-1", brand: "Instant Pot", price: 550, primaryImageUrl: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=400&q=80" },
-  { id: "n5", name: "GoPro Hero 13 Black", brand: "GoPro", price: 1899, primaryImageUrl: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&q=80" },
-  { id: "n6", name: "PlayStation 5 Slim Digital", brand: "Sony", price: 3899, primaryImageUrl: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=400&q=80" },
-  { id: "n7", name: "Dyson V15 Detect Absolute", brand: "Dyson", price: 3299, primaryImageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" },
-];
-const SAMPLE_UPCOMING = [
-  { id: "u1", name: "Sony WH-1000XM6", brand: "Sony", price: 1299, stockStatus: "PRE_ORDER", availableInDays: 5, primaryImageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80" },
-  { id: "u2", name: "Nike Air Max 2026", brand: "Nike", price: 680, stockStatus: "COMING_SOON", availableInDays: 14, primaryImageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80" },
-  { id: "u3", name: "MacBook Air M4", brand: "Apple", price: 8499, stockStatus: "PRE_ORDER", availableInDays: 3, primaryImageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80" },
-  { id: "u4", name: "Samsung Galaxy S25 Ultra", brand: "Samsung", price: 6499, stockStatus: "COMING_SOON", availableInDays: 21, primaryImageUrl: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&q=80" },
-  { id: "u5", name: "Dyson V16 Slim", brand: "Dyson", price: 2199, stockStatus: "PRE_ORDER", availableInDays: 7, primaryImageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" },
-];
+// ─── STATIC CONTENT ───────────────────────────────────────────────────────────
 const AI_FEATURES = [
-  { icon: Ico.Brain,   title: "Smart Picks",  desc: "AI learns your taste and curates products you'll love",           color: "#E6640A", bg: "rgba(230,100,10,0.08)" },
-  { icon: Ico.Camera,  title: "Image Search", desc: "Snap a photo and find matching products instantly",               color: "#F59E0B", bg: "rgba(245,158,11,0.08)" },
-  { icon: Ico.Chat,    title: "AI Advisor",   desc: "Chat for style advice, comparisons & budget tips",                color: "#3B82F6", bg: "rgba(59,130,246,0.08)" },
-  { icon: Ico.Search,  title: "Smart Search", desc: "Natural language that understands exactly what you mean",         color: "#22C55E", bg: "rgba(34,197,94,0.08)" },
+  { icon: Ico.Brain,   title: "Smart Picks",  desc: "AI learns your taste and curates products you'll love",         color: "#E6640A", bg: "rgba(230,100,10,0.08)" },
+  { icon: Ico.Camera,  title: "Image Search", desc: "Snap a photo and find matching products instantly",             color: "#F59E0B", bg: "rgba(245,158,11,0.08)" },
+  { icon: Ico.Chat,    title: "AI Advisor",   desc: "Chat for style advice, comparisons & budget tips",              color: "#3B82F6", bg: "rgba(59,130,246,0.08)" },
+  { icon: Ico.Search,  title: "Smart Search", desc: "Natural language that understands exactly what you mean",       color: "#22C55E", bg: "rgba(34,197,94,0.08)" },
 ];
+
 const TRUST = [
   { Icon: Ico.Shield,   title: "Secure Payments", desc: "Every transaction is encrypted and fully protected end-to-end" },
   { Icon: Ico.Truck,    title: "Fast Delivery",   desc: "Real-time tracking from purchase to your doorstep" },
@@ -1106,19 +1124,34 @@ const TRUST = [
   { Icon: Ico.Chat,     title: "24/7 Support",    desc: "Connect with sellers and get instant help any time" },
 ];
 
+const WP_SLIDES = [
+  { emoji: "✨", kicker: "Welcome to ONETT", title: "Ghana's Smartest Marketplace", desc: "Shop 10,000+ products with AI-powered recommendations tailored to your style and budget.", color: "#E6640A" },
+  { emoji: "🤖", kicker: "Meet Your AI Shopper", title: "Shop by Simply Chatting", desc: "Describe what you need in plain language — our AI finds the perfect match in seconds.", color: "#8B5CF6" },
+  { emoji: "🚀", kicker: "Deals Waiting for You", title: "Ready to Explore?", desc: "Exclusive flash sales, pre-orders, and new arrivals drop every day. Don't miss out.", color: "#22C55E" },
+];
+
 // ─── MOBILE DRAWER ────────────────────────────────────────────────────────────
-function MobileDrawer({ open, onClose, isLoggedIn, user, onLogout }) {
-  useEffect(() => { document.body.style.overflow = open ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [open]);
+function MobileDrawer({ open, onClose, isAuthenticated, user, onLogout }: any) {
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
   const navLinks = [
-    { icon: Ico.Home,     label: "Home",        href: "/" },
-    { icon: Ico.Tag,      label: "Categories",  href: "/categories" },
-    { icon: Ico.Flame,    label: "Flash Sales", href: "/search?discount=true" },
-    { icon: Ico.Zap,      label: "New Arrivals",href: "/search?keyword=new" },
-    { icon: Ico.Calendar, label: "Upcoming",    href: "/upcoming" },
-    { icon: Ico.Sparkles, label: "AI Assistant",href: "/ai-assistant" },
-    { icon: Ico.Package,  label: "My Orders",   href: "/orders" },
-    { icon: Ico.Wishlist, label: "Wishlist",    href: "/wishlist" },
+    { icon: Ico.Home,     label: "Home",         href: "/" },
+    { icon: Ico.Tag,      label: "Categories",   href: "/categories" },
+    { icon: Ico.Flame,    label: "Flash Sales",  href: "/search?discount=true" },
+    { icon: Ico.Zap,      label: "New Arrivals", href: "/search?keyword=new" },
+    { icon: Ico.Calendar, label: "Upcoming",     href: "/upcoming" },
+    { icon: Ico.Sparkles, label: "AI Assistant", href: "/ai-assistant" },
+    { icon: Ico.Package,  label: "My Orders",    href: "/orders" },
+    { icon: Ico.Wishlist, label: "Wishlist",     href: "/wishlist" },
   ];
+
+  const displayName = user?.fullName || user?.storeName || "Account";
+  const displayEmail = user?.email || "";
+  const initial = displayName.charAt(0).toUpperCase();
+
   return (
     <AnimatePresence>
       {open && <>
@@ -1132,27 +1165,24 @@ function MobileDrawer({ open, onClose, isLoggedIn, user, onLogout }) {
             <button className="md-close" onClick={onClose}><Ico.X /></button>
           </div>
           <div className="md-body">
-            {/* Search */}
             <div className="md-search">
               <Ico.Search style={{ color: "#A0A0A0", width: 14, height: 14, flexShrink: 0 }} />
               <input type="text" placeholder="Search 10,000+ products…" />
             </div>
-            {/* User panel */}
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <div className="md-user">
-                <div className="md-user-avatar">{user.name.charAt(0).toUpperCase()}</div>
+                <div className="md-user-avatar">{initial}</div>
                 <div>
-                  <div className="md-user-name">{user.name}</div>
-                  <div className="md-user-email">{user.email}</div>
+                  <div className="md-user-name">{displayName}</div>
+                  <div className="md-user-email">{displayEmail}</div>
                 </div>
               </div>
             ) : (
-              <div className="md-guest" style={{ gap: 8, marginBottom: 20 }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
                 <a href="/login" onClick={onClose} className="btn-primary" style={{ flex: 1, justifyContent: "center", padding: "11px 16px", fontSize: 13, borderRadius: 11 }}>Sign In</a>
                 <a href="/register" onClick={onClose} className="btn-ghost" style={{ flex: 1, justifyContent: "center", padding: "11px 16px", fontSize: 13, borderRadius: 11 }}>Register</a>
               </div>
             )}
-            {/* Nav links */}
             <div className="md-nav-label">Navigation</div>
             <div className="md-nav-links">
               {navLinks.map(link => (
@@ -1162,7 +1192,7 @@ function MobileDrawer({ open, onClose, isLoggedIn, user, onLogout }) {
               ))}
             </div>
           </div>
-          {isLoggedIn && (
+          {isAuthenticated && (
             <div className="md-footer">
               <button className="md-signout" onClick={() => { onLogout(); onClose(); }}>
                 <Ico.LogOut />Sign Out
@@ -1177,7 +1207,8 @@ function MobileDrawer({ open, onClose, isLoggedIn, user, onLogout }) {
 }
 
 // ─── NAVBAR ───────────────────────────────────────────────────────────────────
-function Navbar({ isLoggedIn, user, onLogout }) {
+function Navbar({ cartCount, onCartUpdate }: { cartCount: number; onCartUpdate: () => void }) {
+  const { isAuthenticated, user, logout } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -1187,10 +1218,12 @@ function Navbar({ isLoggedIn, user, onLogout }) {
     return () => window.removeEventListener("scroll", h);
   }, []);
 
+  const displayName = user?.fullName || user?.storeName || "";
+  const initial = displayName ? displayName.charAt(0).toUpperCase() : "?";
+
   return (
     <>
       <nav className={`navbar${scrolled ? " scrolled" : ""}`}>
-        {/* Logo */}
         <a href="/" className="nav-logo">
           <div className="nav-logo-box">
             <div className="nav-logo-on">ON</div>
@@ -1199,37 +1232,36 @@ function Navbar({ isLoggedIn, user, onLogout }) {
           <span className="nav-name">ONETT<em>.</em></span>
         </a>
 
-        {/* Desktop Search */}
         <div className="nav-search">
           <Ico.Search style={{ color: "#A0A0A0", width: 14, height: 14, flexShrink: 0 }} />
           <input type="text" placeholder="Search 10,000+ products…" />
         </div>
 
-        {/* Right side */}
         <div className="nav-right">
-          {/* AI (desktop only) */}
-          <a href="/ai-assistant" className="nav-icon-btn" title="AI Assistant" style={{ display: "none" }}
-            ref={el => { if (el) { el.style.display = window.innerWidth >= 768 ? "flex" : "none"; } }}>
-            <Ico.Sparkles style={{ width: 15, height: 15 }} />
-          </a>
+          {/* Notifications (authenticated only) */}
+          {isAuthenticated && (
+            <a href="/notifications" className="nav-icon-btn" title="Notifications" style={{ display: "flex" }}>
+              <Ico.Notif style={{ width: 15, height: 15 }} />
+            </a>
+          )}
 
           {/* Cart */}
           <a href="/cart" className="nav-icon-btn" title="Cart">
             <Ico.Cart style={{ width: 15, height: 15 }} />
-            <span className="nav-cart-badge">3</span>
+            {cartCount > 0 && <span className="nav-cart-badge">{cartCount > 99 ? "99+" : cartCount}</span>}
           </a>
 
-          {/* Auth: show Sign in OR avatar based on login state */}
-          {isLoggedIn ? (
-            <button className="nav-avatar" title={`Signed in as ${user.name}`} onClick={() => {}}>
-              {user.name.charAt(0).toUpperCase()}
+          {/* Auth */}
+          {isAuthenticated ? (
+            <button className="nav-avatar" title={`Signed in as ${displayName}`} onClick={() => window.location.href = "/profile"}>
+              {initial}
               <span className="nav-avatar-online" />
             </button>
           ) : (
             <a href="/login" className="nav-sign-btn">Sign in</a>
           )}
 
-          {/* Hamburger — always visible on mobile */}
+          {/* Hamburger */}
           <button className="nav-menu-btn" onClick={() => setDrawerOpen(true)} aria-label="Open menu">
             <Ico.Menu />
           </button>
@@ -1239,35 +1271,46 @@ function Navbar({ isLoggedIn, user, onLogout }) {
       <MobileDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        isLoggedIn={isLoggedIn}
+        isAuthenticated={isAuthenticated}
         user={user}
-        onLogout={onLogout}
+        onLogout={logout}
       />
     </>
   );
 }
 
 // ─── WELCOME POPUP ────────────────────────────────────────────────────────────
-const WP_SLIDES = [
-  { emoji: "✨", kicker: "Welcome to ONETT", title: "Ghana's Smartest Marketplace", desc: "Shop 10,000+ products with AI-powered recommendations tailored to your style and budget.", color: "#E6640A" },
-  { emoji: "🤖", kicker: "Meet Your AI Shopper", title: "Shop by Simply Chatting", desc: "Describe what you need in plain language — our AI finds the perfect match in seconds.", color: "#8B5CF6" },
-  { emoji: "🚀", kicker: "Deals Waiting for You", title: "Ready to Explore?", desc: "Exclusive flash sales, pre-orders, and new arrivals drop every day. Don't miss out.", color: "#22C55E" },
-];
-
 function WelcomePopup() {
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
-  useEffect(() => { setTimeout(() => setVisible(true), 900); }, []);
-  const close = useCallback(() => setVisible(false), []);
-  useEffect(() => { document.body.style.overflow = visible ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [visible]);
+
+  useEffect(() => {
+    // Only show once per session
+    const seen = sessionStorage.getItem("onett-welcome-seen");
+    if (!seen) {
+      setTimeout(() => setVisible(true), 900);
+    }
+  }, []);
+
+  const close = useCallback(() => {
+    setVisible(false);
+    sessionStorage.setItem("onett-welcome-seen", "1");
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = visible ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [visible]);
+
   if (!visible) return null;
   const s = WP_SLIDES[step];
   const isLast = step === WP_SLIDES.length - 1;
+
   return (
     <AnimatePresence>
       <motion.div className="wp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close}>
         <motion.div className="wp-sheet" initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }} onClick={e => e.stopPropagation()}>
-          <div className="wp-visual" style={{ "--sc": s.color }}>
+          <div className="wp-visual" style={{ "--sc": s.color } as any}>
             <motion.div className="wp-orb" key={step} initial={{ scale: 0.65, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.65, opacity: 0 }} transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}>
               <span className="wp-emoji">{s.emoji}</span>
             </motion.div>
@@ -1283,7 +1326,9 @@ function WelcomePopup() {
               </motion.div>
             </AnimatePresence>
             <div className="wp-dots">
-              {WP_SLIDES.map((_, i) => <button key={i} className={`wp-dot${i === step ? " on" : ""}`} style={i === step ? { background: s.color } : {}} onClick={() => setStep(i)} />)}
+              {WP_SLIDES.map((_, i) => (
+                <button key={i} className={`wp-dot${i === step ? " on" : ""}`} style={i === step ? { background: s.color } : {}} onClick={() => setStep(i)} />
+              ))}
             </div>
             {isLast
               ? <a href="/search?keyword=" onClick={close} className="wp-cta" style={{ background: s.color }}>Start Shopping <Ico.Arrow /></a>
@@ -1297,19 +1342,81 @@ function WelcomePopup() {
   );
 }
 
-// ─── DEMO LOGIN TOGGLE ────────────────────────────────────────────────────────
-// In production, replace with real auth state (context, store, etc.)
-const DEMO_USER = { name: "Kofi Mensah", email: "kofi@example.com" };
-
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function ONETTHomepage() {
   const [adIdx, setAdIdx] = useState(0);
 
-  // ── Auth state ──────────────────────────────────────────────────
-  // Toggle this to true to simulate being logged in
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const user = isLoggedIn ? DEMO_USER : null;
+  // ── Live data state ────────────────────────────────────────────
+  const [categories,   setCategories]   = useState<any[]>([]);
+  const [flashItems,   setFlashItems]   = useState<any[]>([]);
+  const [newArrivals,  setNewArrivals]  = useState<any[]>([]);
+  const [homeItems,    setHomeItems]    = useState<any[]>([]);
+  const [upcomingItems,setUpcomingItems]= useState<any[]>([]);
+  const [cartCount,    setCartCount]    = useState(0);
 
+  const [loadingCats,    setLoadingCats]    = useState(true);
+  const [loadingFlash,   setLoadingFlash]   = useState(true);
+  const [loadingNew,     setLoadingNew]     = useState(true);
+  const [loadingHome,    setLoadingHome]    = useState(true);
+  const [loadingUpcoming,setLoadingUpcoming]= useState(true);
+
+  // ── Fetch cart count ────────────────────────────────────────────
+  const refreshCartCount = useCallback(async () => {
+    try {
+      const res = await cartApi.getCount();
+      // API may return { count: N } or just a number
+      const count = typeof res === "number" ? res : res?.count ?? res?.totalItems ?? 0;
+      setCartCount(count);
+    } catch {
+      // not logged in or error — silently ignore
+    }
+  }, []);
+
+  // ── Fetch all data on mount ──────────────────────────────────────
+  useEffect(() => {
+    // Categories
+    productApi.getCategories()
+      .then(data => setCategories(Array.isArray(data) ? data : []))
+      .catch(() => setCategories([]))
+      .finally(() => setLoadingCats(false));
+
+    // Flash / discounted
+    productApi.getDiscounted()
+      .then(data => setFlashItems(Array.isArray(data) ? data : []))
+      .catch(() => setFlashItems([]))
+      .finally(() => setLoadingFlash(false));
+
+    // New arrivals
+    productApi.getNewArrivals()
+      .then(data => setNewArrivals(Array.isArray(data) ? data : []))
+      .catch(() => setNewArrivals([]))
+      .finally(() => setLoadingNew(false));
+
+    // Home / Just Dropped (may return object with sections)
+    productApi.getHome()
+      .then(data => {
+        // Backend might return { products: [...] } or an array directly
+        const arr = Array.isArray(data) ? data : data?.products ?? data?.items ?? [];
+        setHomeItems(arr);
+      })
+      .catch(() => setHomeItems([]))
+      .finally(() => setLoadingHome(false));
+
+    // Upcoming: combine coming soon + pre-order
+    Promise.allSettled([
+      productApi.getComingSoon(),
+      productApi.getPreOrder(),
+    ]).then(([cs, po]) => {
+      const comingSoon = cs.status === "fulfilled" && Array.isArray(cs.value) ? cs.value : [];
+      const preOrder   = po.status === "fulfilled" && Array.isArray(po.value) ? po.value : [];
+      setUpcomingItems([...preOrder, ...comingSoon]);
+    }).finally(() => setLoadingUpcoming(false));
+
+    // Cart count (best-effort)
+    refreshCartCount();
+  }, [refreshCartCount]);
+
+  // ── Ad auto-rotate ──────────────────────────────────────────────
   useEffect(() => {
     const iv = setInterval(() => setAdIdx(i => (i + 1) % ADS.length), 5000);
     return () => clearInterval(iv);
@@ -1320,25 +1427,7 @@ export default function ONETTHomepage() {
       <InjectCSS />
       <div style={{ background: "#F8F7F4", minHeight: "100vh" }}>
         <WelcomePopup />
-
-        <Navbar isLoggedIn={isLoggedIn} user={user} onLogout={() => setIsLoggedIn(false)} />
-
-        {/* DEMO LOGIN TOGGLE — remove in production */}
-        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 500 }}>
-          <button
-            onClick={() => setIsLoggedIn(v => !v)}
-            style={{
-              background: isLoggedIn ? "#22C55E" : "#E6640A",
-              color: "#fff", border: "none", borderRadius: 12,
-              padding: "10px 18px", fontSize: 12, fontWeight: 800,
-              fontFamily: "'Plus Jakarta Sans',sans-serif",
-              cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-              transition: "background 0.2s",
-            }}
-          >
-            {isLoggedIn ? "✓ Signed In (click to sign out)" : "Demo: Sign In"}
-          </button>
-        </div>
+        <Navbar cartCount={cartCount} onCartUpdate={refreshCartCount} />
 
         {/* ════ HERO ════ */}
         <section className="hero-section">
@@ -1372,12 +1461,22 @@ export default function ONETTHomepage() {
         <div className="pg">
           <SectionHeader title="Browse Categories" sub="Find exactly what you're looking for" accent="#E6640A" Icon={Ico.Tag} seeAllHref="/categories" />
           <div className="cat-grid">
-            {SAMPLE_CATEGORIES.map((cat, i) => (
-              <motion.a key={cat.id} href={`/categories/${cat.slug}`} className="cat-pill" initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.38, delay: i * 0.04 }}>
-                <div className="cat-pill-ico">{cat.icon?.imageUrl ? <img src={cat.icon.imageUrl} alt={cat.name} loading="lazy" /> : <Ico.Pkg style={{ width: 22, height: 22, color: "#C0C0C0" }} />}</div>
-                <span className="cat-pill-lbl">{cat.name}</span>
-              </motion.a>
-            ))}
+            {loadingCats
+              ? Array.from({ length: 8 }).map((_, i) => <SkeletonCategoryPill key={i} />)
+              : categories.length === 0
+              ? <div className="empty-state"><div className="empty-state-icon">🗂️</div><div className="empty-state-text">Categories coming soon</div></div>
+              : categories.map((cat, i) => (
+                  <motion.a key={cat.id} href={`/categories/${cat.slug}`} className="cat-pill"
+                    initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }} transition={{ duration: 0.38, delay: i * 0.04 }}>
+                    <div className="cat-pill-ico">
+                      {cat.icon?.imageUrl
+                        ? <img src={cat.icon.imageUrl} alt={cat.name} loading="lazy" />
+                        : <Ico.Pkg style={{ width: 22, height: 22, color: "#C0C0C0" }} />}
+                    </div>
+                    <span className="cat-pill-lbl">{cat.name}</span>
+                  </motion.a>
+                ))}
           </div>
         </div>
 
@@ -1387,7 +1486,9 @@ export default function ONETTHomepage() {
         <div className="pg">
           <div className="sec-hdr">
             <div className="sec-hdr-l">
-              <div className="sec-ico" style={{ background: "rgba(239,68,68,0.08)" }}><Ico.Flame style={{ color: "#EF4444", width: 18, height: 18 }} /></div>
+              <div className="sec-ico" style={{ background: "rgba(239,68,68,0.08)" }}>
+                <Ico.Flame style={{ color: "#EF4444", width: 18, height: 18 }} />
+              </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
                   <span className="sec-title">Flash Sale</span>
@@ -1403,7 +1504,11 @@ export default function ONETTHomepage() {
             </div>
           </div>
           <div id="flash-track" className="scroll-track">
-            {SAMPLE_FLASH.map((item, i) => <ProductCard key={item.id} product={item} index={i} />)}
+            {loadingFlash
+              ? Array.from({ length: 5 }).map((_, i) => <SkeletonProductCard key={i} />)
+              : flashItems.length === 0
+              ? <div className="empty-state"><div className="empty-state-icon">🔥</div><div className="empty-state-text">No flash deals right now — check back soon!</div></div>
+              : flashItems.map((item, i) => <ProductCard key={item.id} product={item} index={i} onCartUpdate={refreshCartCount} />)}
           </div>
         </div>
 
@@ -1415,7 +1520,17 @@ export default function ONETTHomepage() {
         <div className="sdiv" />
 
         {/* ════ NEW ARRIVALS ════ */}
-        <ProductSection id="new-track" title="New Arrivals" sub="Fresh products added this week" accent="#F59E0B" Icon={Ico.Zap} items={SAMPLE_NEW} seeAllHref="/search?keyword=new" />
+        <ProductSection
+          id="new-track"
+          title="New Arrivals"
+          sub="Fresh products added this week"
+          accent="#F59E0B"
+          Icon={Ico.Zap}
+          items={newArrivals}
+          loading={loadingNew}
+          seeAllHref="/search?keyword=new"
+          onCartUpdate={refreshCartCount}
+        />
 
         <div className="sdiv" />
 
@@ -1423,7 +1538,9 @@ export default function ONETTHomepage() {
         <div className="pg">
           <div className="sec-hdr">
             <div className="sec-hdr-l">
-              <div className="sec-ico" style={{ background: "rgba(139,92,246,0.08)" }}><Ico.Calendar style={{ color: "#8B5CF6", width: 18, height: 18 }} /></div>
+              <div className="sec-ico" style={{ background: "rgba(139,92,246,0.08)" }}>
+                <Ico.Calendar style={{ color: "#8B5CF6", width: 18, height: 18 }} />
+              </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
                   <span className="sec-title">Upcoming Drops</span>
@@ -1438,7 +1555,11 @@ export default function ONETTHomepage() {
             </div>
           </div>
           <div id="upcoming-track" className="scroll-track">
-            {SAMPLE_UPCOMING.map((item, i) => <UpcomingCard key={item.id} product={item} index={i} />)}
+            {loadingUpcoming
+              ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
+              : upcomingItems.length === 0
+              ? <div className="empty-state"><div className="empty-state-icon">🚀</div><div className="empty-state-text">No upcoming drops yet</div></div>
+              : upcomingItems.map((item, i) => <UpcomingCard key={item.id} product={item} index={i} />)}
           </div>
         </div>
 
@@ -1449,7 +1570,9 @@ export default function ONETTHomepage() {
           <SectionHeader title="Shopping, Reimagined" sub="Powered by AI · Built for you" accent="#E6640A" Icon={Ico.Sparkles} />
           <div className="ai-grid">
             {AI_FEATURES.map((f, i) => (
-              <motion.div key={f.title} className="ai-card" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.42, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}>
+              <motion.div key={f.title} className="ai-card"
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.42, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}>
                 <div className="ai-card-ico" style={{ background: f.bg }}><f.icon style={{ color: f.color, width: 18, height: 18 }} /></div>
                 <div className="ai-card-title">{f.title}</div>
                 <div className="ai-card-desc">{f.desc}</div>
@@ -1471,7 +1594,17 @@ export default function ONETTHomepage() {
         <div className="sdiv" />
 
         {/* ════ JUST DROPPED ════ */}
-        <ProductSection id="dropped-track" title="Just Dropped" sub="Browse all the latest products" accent="#E6640A" Icon={Ico.Flame} items={[...SAMPLE_FLASH.slice(0,3), ...SAMPLE_NEW.slice(0,4)]} seeAllHref="/search?keyword=" />
+        <ProductSection
+          id="dropped-track"
+          title="Just Dropped"
+          sub="Browse all the latest products"
+          accent="#E6640A"
+          Icon={Ico.Flame}
+          items={homeItems}
+          loading={loadingHome}
+          seeAllHref="/search?keyword="
+          onCartUpdate={refreshCartCount}
+        />
 
         <div className="sdiv" />
 
@@ -1504,7 +1637,9 @@ export default function ONETTHomepage() {
         <div className="pg">
           <div className="trust-grid">
             {TRUST.map((t, i) => (
-              <motion.div key={t.title} className="trust-card" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.42, delay: i * 0.08 }}>
+              <motion.div key={t.title} className="trust-card"
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.42, delay: i * 0.08 }}>
                 <div className="trust-ico"><t.Icon style={{ color: "#E6640A" }} /></div>
                 <div><div className="trust-title">{t.title}</div><div className="trust-desc">{t.desc}</div></div>
               </motion.div>
