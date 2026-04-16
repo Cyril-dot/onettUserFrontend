@@ -129,12 +129,6 @@ const IconStar = ({ size = 12, filled = true }: { size?: number; filled?: boolea
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   </svg>
 );
-const IconEye = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
 
 // ─── Logo Mark ────────────────────────────────────────────────────────────────
 function OnettLogoMark({ size = 36 }: { size?: number }) {
@@ -245,7 +239,7 @@ function useCountdown(productId: string, days: number | null | undefined) {
   return t;
 }
 
-// ─── Unified Product Card — NO ratings, clean layout ─────────────────────────
+// ─── Product Card ─────────────────────────────────────────────────────────────
 function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCardData }) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -270,7 +264,7 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
   };
 
   return (
-    <div className="fb-product-card" style={{ height: "100%" }}>
+    <div className="fb-product-card">
       {/* IMAGE */}
       <div className="fb-product-img">
         <Link to={`/products/${product.id}`} style={{ display: "block", width: "100%", height: "100%" }}>
@@ -290,23 +284,20 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
             <span style={{ background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>Out of stock</span>
           </div>
         )}
+        {/* Wishlist */}
+        <button
+          className={`fb-wish-btn${wishlisted ? " fb-wish-active" : ""}`}
+          title="Favourite"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWishlisted(w => !w); }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        </button>
       </div>
 
       {/* BODY */}
       <div className="fb-product-body">
-        {/* Wishlist icon top-right */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
-          <button
-            className={`fb-icon-btn${wishlisted ? " fb-icon-btn-fav" : ""}`}
-            title="Favourite"
-            onClick={() => setWishlisted(w => !w)}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
-          </button>
-        </div>
-
         {/* Brand */}
         {(product as any).brand && (
           <div className="fb-product-brand">{(product as any).brand}</div>
@@ -318,7 +309,7 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
         </Link>
 
         {/* Status badge */}
-        <div style={{ marginBottom: 6 }}>
+        <div style={{ marginBottom: 8 }}>
           {hasDiscount ? (
             <span className="fb-badge fb-badge-red">Sale</span>
           ) : (product as CarouselProduct).stockStatus === "PRE_ORDER" ? (
@@ -344,11 +335,11 @@ function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCa
             onClick={handleCart}
             className="fb-cart-btn"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
             </svg>
-            {!inStock ? "Sold out" : cartLoading ? "Adding…" : "Add"}
+            {!inStock ? "Sold out" : cartLoading ? "…" : "Add"}
           </button>
         </div>
       </div>
@@ -371,29 +362,27 @@ function FlowbiteGridSection({
 
   return (
     <div ref={sectionRef}>
-      {/* Section Header — mobile-first, clean */}
+      {/* Section Header */}
       <div className="fb-sec-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: `${accent}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        {/* Left: icon + text stacked properly */}
+        <div className="fb-sec-header-left">
+          <div className="fb-sec-icon" style={{ background: `${accent}18` }}>
             <Icon size={17} style={{ color: accent }} />
           </div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: "#111827", letterSpacing: "-0.3px", lineHeight: 1.2 }}>{title}</div>
-            <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 2 }}>{subtitle}</div>
+          <div className="fb-sec-text">
+            <div className="fb-sec-title">{title}</div>
+            <div className="fb-sec-sub">{subtitle}</div>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {/* Right: see all + nav */}
+        <div className="fb-sec-header-right">
           {seeAllLink && (
-            <Link to={seeAllLink} style={{ fontSize: 12.5, fontWeight: 700, color: "#E6640A", textDecoration: "none", whiteSpace: "nowrap" }}>
+            <Link to={seeAllLink} className="fb-sec-see-all">
               See all →
             </Link>
           )}
-          <button onClick={() => scroll(-1)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#f3f4f6", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151", flexShrink: 0 }}>
-            <IconChevronLeft size={13} />
-          </button>
-          <button onClick={() => scroll(1)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#f3f4f6", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#374151", flexShrink: 0 }}>
-            <IconChevronRight size={13} />
-          </button>
+          <button onClick={() => scroll(-1)} className="hs-nav-btn"><IconChevronLeft size={13} /></button>
+          <button onClick={() => scroll(1)} className="hs-nav-btn"><IconChevronRight size={13} /></button>
         </div>
       </div>
 
@@ -420,7 +409,7 @@ function FlowbiteGridSection({
   );
 }
 
-// ─── HScroll Card (upcoming / flash-style cards) ──────────────────────────────
+// ─── HScroll Card ─────────────────────────────────────────────────────────────
 function HScrollCard({ product, showTimer }: { product: CarouselProduct; showTimer?: boolean }) {
   const navigate = useNavigate();
   const { days, hours, minutes, seconds } = useCountdown(product.id, product.availableInDays);
@@ -448,7 +437,6 @@ function HScrollCard({ product, showTimer }: { product: CarouselProduct; showTim
           {hasDiscount && !showTimer && (
             <div className="hs-disc-badge">-{product.discountPercentage}%</div>
           )}
-          {/* ── FIXED TIMER — always visible on mobile, clear layout ── */}
           {showTimer && hasStatus && (
             <div className={`hs-timer-wrap${isPreOrder ? " tb-orange" : " tb-blue"}`}>
               <div className="hs-timer-inner">
@@ -531,7 +519,7 @@ function HScrollSection({ title, subtitle, accent, icon: Icon, items, showTimer,
           >
             <Icon size={16} style={{ color: accent }} />
           </motion.div>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <motion.div
               style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
               initial={{ opacity: 0, x: -10 }}
@@ -591,15 +579,16 @@ function AdBanner({ ad }: { ad: typeof adBanners[0] }) {
   );
 }
 
-// ─── Welcome Popup ────────────────────────────────────────────────────────────
-const WELCOME_KEY = "onett_welcome_v5";
+// ─── Welcome Popup — Premium redesign ────────────────────────────────────────
+const WELCOME_KEY = "onett_welcome_v6";
 
 function WelcomePopup() {
   const [visible, setVisible] = useState(false);
+  const [step, setStep]       = useState(0);
 
   useEffect(() => {
     if (!sessionStorage.getItem(WELCOME_KEY)) {
-      const t = setTimeout(() => setVisible(true), 800);
+      const t = setTimeout(() => setVisible(true), 900);
       return () => clearTimeout(t);
     }
   }, []);
@@ -616,11 +605,32 @@ function WelcomePopup() {
 
   if (!visible) return null;
 
-  const perks = [
-    { icon: IconBrain,       label: "AI-Powered Picks", desc: "Curated just for you" },
-    { icon: IconShieldCheck, label: "Secure Checkout",  desc: "Encrypted & trusted" },
-    { icon: IconTruck,       label: "Fast Delivery",    desc: "Across all of Ghana" },
+  const slides = [
+    {
+      emoji: "✨",
+      title: "Welcome to ONETT",
+      sub: "Ghana's smartest marketplace",
+      body: "Shop 10,000+ products with AI-powered recommendations tailored to your style and budget.",
+      color: "#E6640A",
+    },
+    {
+      emoji: "🤖",
+      title: "Meet Your AI Shopper",
+      sub: "Shop by chatting",
+      body: "Describe what you need in plain language — our AI finds the perfect match in seconds.",
+      color: "#8b5cf6",
+    },
+    {
+      emoji: "🚀",
+      title: "Ready to explore?",
+      sub: "Deals waiting for you",
+      body: "Exclusive flash sales, pre-orders, and new arrivals drop every day. Don't miss out.",
+      color: "#22c55e",
+    },
   ];
+
+  const current = slides[step];
+  const isLast  = step === slides.length - 1;
 
   return (
     <AnimatePresence>
@@ -630,70 +640,92 @@ function WelcomePopup() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
+          transition={{ duration: 0.3 }}
           onClick={close}
           style={{
             position: "fixed", inset: 0, zIndex: 9999,
-            background: "rgba(5,8,18,0.85)",
-            backdropFilter: "blur(8px) saturate(0.6)",
-            display: "flex", alignItems: "flex-end", justifyContent: "center",
+            background: "rgba(0,0,0,0.75)",
+            backdropFilter: "blur(12px) saturate(0.5)",
+            display: "flex", alignItems: "flex-end",
+            justifyContent: "center",
           }}
         >
           <motion.div
-            key="popup-sheet"
-            initial={{ opacity: 0, y: 72 }}
+            key="popup-card"
+            initial={{ opacity: 0, y: 80 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 56 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: 60 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             onClick={e => e.stopPropagation()}
-            className="popup-sheet"
+            className="wp-sheet"
           >
-            <div className="popup-hero-strip">
-              <div className="popup-hero-overlay" />
-              <div className="popup-logo-wrap">
-                <div className="popup-logo-box">
-                  <span className="popup-logo-on">ON</span>
-                  <span className="popup-logo-ett">ETT</span>
+            {/* Close */}
+            <button onClick={close} className="wp-close">
+              <IconX size={14} />
+            </button>
+
+            {/* Top orb / visual */}
+            <div className="wp-visual" style={{ "--slide-color": current.color } as any}>
+              <motion.div
+                key={step}
+                initial={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.7, opacity: 0 }}
+                transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+                className="wp-emoji-wrap"
+              >
+                <div className="wp-orb" style={{ background: `${current.color}22`, borderColor: `${current.color}44` }}>
+                  <div className="wp-orb-glow" style={{ background: current.color }} />
+                  <span className="wp-emoji">{current.emoji}</span>
                 </div>
+              </motion.div>
+              {/* Logo top-left */}
+              <div className="wp-logo-chip">
+                <span className="wp-logo-on">ON</span><span className="wp-logo-ett">ETT</span>
               </div>
-              <button onClick={close} className="popup-close-btn">
-                <IconX size={13} />
-              </button>
             </div>
-            <div className="popup-body">
-              <div style={{ textAlign: "center", marginBottom: 12 }}>
-                <span className="popup-badge"><IconSparkles size={10} />Welcome to ONETT</span>
-              </div>
-              <h2 className="popup-h2">
-                Shop Smarter,<br />
-                <span style={{ color: "#E6640A" }}>Every Day.</span>
-              </h2>
-              <p className="popup-sub">
-                Ghana's AI-powered marketplace.<br />
-                Personalized picks & unbeatable deals.
-              </p>
-              <div className="popup-perks">
-                {perks.map(({ icon: Icon, label, desc }) => (
-                  <div key={label} className="popup-perk">
-                    <div className="popup-perk-icon">
-                      <Icon size={16} style={{ color: "#E6640A" }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div className="popup-perk-label">{label}</div>
-                      <div className="popup-perk-desc">{desc}</div>
-                    </div>
-                    <div className="popup-perk-arrow">
-                      <IconChevronRight size={10} />
-                    </div>
-                  </div>
+
+            {/* Body */}
+            <div className="wp-body">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={step}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -14 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <div className="wp-sub-label" style={{ color: current.color }}>{current.sub}</div>
+                  <h2 className="wp-title">{current.title}</h2>
+                  <p className="wp-desc">{current.body}</p>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Dots */}
+              <div className="wp-dots">
+                {slides.map((_, i) => (
+                  <button
+                    key={i}
+                    className={`wp-dot${i === step ? " active" : ""}`}
+                    style={i === step ? { background: current.color, width: 24 } : {}}
+                    onClick={() => setStep(i)}
+                  />
                 ))}
               </div>
-              <Link to="/search?keyword=" onClick={close} className="popup-cta-btn">
-                Start Shopping <IconArrowRight size={16} />
-              </Link>
-              <button onClick={close} className="popup-skip-btn">Maybe later</button>
+
+              {/* CTA */}
+              {isLast ? (
+                <Link to="/search?keyword=" onClick={close} className="wp-cta" style={{ background: current.color }}>
+                  Start Shopping <IconArrowRight size={16} />
+                </Link>
+              ) : (
+                <button className="wp-cta" style={{ background: current.color }} onClick={() => setStep(s => s + 1)}>
+                  Next <IconArrowRight size={16} />
+                </button>
+              )}
+              <button onClick={close} className="wp-skip">Skip intro</button>
             </div>
-            <div className="popup-safe-bottom" />
+            <div className="wp-safe" />
           </motion.div>
         </motion.div>
       )}
@@ -706,13 +738,13 @@ const MOBILE_STYLES = `
   * { box-sizing: border-box; }
   button, a { -webkit-tap-highlight-color: transparent; }
 
-  /* ── PAGE BACKGROUND — soft warm off-white ── */
+  /* ── PAGE BACKGROUND ── */
   .onett-page { background: #f5f5f0; }
   @media (prefers-color-scheme: dark) { .onett-page { background: #0f1117; } }
 
-  /* ── SECTION DIVIDER — generous spacing ── */
-  .sdiv { height: 20px; }
-  @media (min-width: 640px) { .sdiv { height: 28px; } }
+  /* ── DIVIDERS ── */
+  .sdiv { height: 28px; }
+  @media (min-width: 640px) { .sdiv { height: 36px; } }
 
   /* ── PAGE GUTTERS ── */
   .pg {
@@ -723,19 +755,63 @@ const MOBILE_STYLES = `
   @media (min-width: 640px)  { .pg { padding-left: 24px; padding-right: 24px; } }
   @media (min-width: 1024px) { .pg { padding-left: 40px; padding-right: 40px; } }
 
-  /* ── SECTION CARD — no border, soft shadow only ── */
-  .section-card {
-    background: #fff;
-    border-radius: 20px;
-    padding: 20px 16px 24px;
-    margin: 0;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  /* ── SECTION WRAPPER — no card, blends with page bg ── */
+  .section-wrap {
+    /* no background, no shadow, no border — sections live on the page */
+    padding: 0;
   }
-  @media (prefers-color-scheme: dark) { .section-card { background: #1a1d27; box-shadow: 0 2px 12px rgba(0,0,0,0.3); } }
-  @media (min-width: 640px) { .section-card { border-radius: 24px; padding: 24px 24px 28px; } }
+
+  /* ── SECTION HEADER — always two rows on mobile ── */
+  .fb-sec-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  @media (min-width: 480px) {
+    .fb-sec-header {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+  }
+  .fb-sec-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+  .fb-sec-icon {
+    width: 38px; height: 38px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .fb-sec-text { min-width: 0; flex: 1; }
+  .fb-sec-title {
+    font-family: 'Satoshi', sans-serif;
+    font-size: 16px; font-weight: 800;
+    color: #111827; letter-spacing: -0.3px; line-height: 1.2;
+  }
+  @media (prefers-color-scheme: dark) { .fb-sec-title { color: #f9fafb; } }
+  .fb-sec-sub { font-size: 12px; color: #9ca3af; margin-top: 2px; line-height: 1.4; }
+  .fb-sec-header-right {
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+    /* on mobile: align to left under title */
+    align-self: flex-start;
+    padding-left: 48px; /* indent under icon */
+  }
+  @media (min-width: 480px) {
+    .fb-sec-header-right { align-self: center; padding-left: 0; }
+  }
+  .fb-sec-see-all {
+    font-size: 12.5px; font-weight: 700; color: #E6640A;
+    text-decoration: none; white-space: nowrap;
+  }
 
   /* ── CATEGORIES ── */
-  .cats-wrap { padding: 0; }
   .cats-scroll {
     display: flex; gap: 12px;
     overflow-x: auto; -webkit-overflow-scrolling: touch;
@@ -747,35 +823,44 @@ const MOBILE_STYLES = `
     .cats-scroll { margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; flex-wrap: wrap; overflow-x: visible; }
   }
   .cats-scroll::-webkit-scrollbar { display: none; }
-  .cat-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; min-width: 64px; text-decoration: none; }
+  .cat-item { display: flex; flex-direction: column; align-items: center; gap: 7px; flex-shrink: 0; min-width: 68px; text-decoration: none; }
   .cat-icon-box {
-    width: 60px; height: 60px; border-radius: 16px;
+    width: 62px; height: 62px; border-radius: 17px;
     background: #fff;
     display: flex; align-items: center; justify-content: center;
     overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.09);
   }
-  .cat-item:active .cat-icon-box { transform: scale(0.93); }
-  @media (min-width: 640px) { .cat-icon-box { width: 66px; height: 66px; } }
+  @media (prefers-color-scheme: dark) { .cat-icon-box { background: #1e2130; } }
+  .cat-item:active .cat-icon-box { transform: scale(0.92); }
   .cat-icon-img { width: 100%; height: 100%; object-fit: cover; }
-  .cat-lbl { font-size: 10.5px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 68px; color: #374151; }
+  .cat-lbl {
+    font-size: 11px; font-weight: 600; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 70px; color: #374151;
+  }
   @media (prefers-color-scheme: dark) { .cat-lbl { color: #d1d5db; } }
 
   /* ── HSCROLL SECTION ── */
-  .hs-section { width: 100%; padding: 0; }
   .hs-section-inner { width: 100%; }
   .hs-header {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: flex-start; justify-content: space-between;
     padding: 0 0 14px; gap: 8px;
   }
   .hs-header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-  .hs-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .hs-title { font-family: 'Satoshi', sans-serif; font-size: 15px; font-weight: 800; color: #111; letter-spacing: -0.3px; }
+  .hs-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .hs-title { font-family: 'Satoshi', sans-serif; font-size: 16px; font-weight: 800; color: #111; letter-spacing: -0.3px; }
   @media (prefers-color-scheme: dark) { .hs-title { color: #f9fafb; } }
-  .hs-sub { font-size: 11.5px; color: #888; margin-top: 2px; }
-  .hs-nav-btns { display: flex; gap: 6px; flex-shrink: 0; }
-  .hs-nav-btn { width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #111; transition: background 0.15s; }
-  .hs-nav-btn:hover { background: rgba(0,0,0,0.08); }
+  .hs-sub { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+  .hs-nav-btns { display: flex; gap: 6px; flex-shrink: 0; margin-top: 4px; }
+  .hs-nav-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,0,0,0.06); border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #374151; transition: background 0.15s;
+  }
+  @media (prefers-color-scheme: dark) { .hs-nav-btn { background: rgba(255,255,255,0.08); color: #d1d5db; } }
+  .hs-nav-btn:hover { background: rgba(0,0,0,0.1); }
 
   .hs-track {
     display: flex; gap: 10px; align-items: stretch;
@@ -790,108 +875,110 @@ const MOBILE_STYLES = `
   .fb-prod-track::-webkit-scrollbar { display: none; }
 
   /* ══════════════════════════════════════════
-     PRODUCT CARD — no ratings, clean
+     PRODUCT CARD
   ══════════════════════════════════════════ */
   .fb-product-card {
-    width: 152px;
-    flex-shrink: 0; display: flex; flex-direction: column;
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    width: 155px; flex-shrink: 0;
+    display: flex; flex-direction: column;
+    border-radius: 16px; background: #fff;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.08);
     overflow: hidden; transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
   }
-  @media (prefers-color-scheme: dark) { .fb-product-card { background: #1a1d27; } }
-  @media (min-width: 480px)  { .fb-product-card { width: 185px; } }
+  @media (prefers-color-scheme: dark) { .fb-product-card { background: #1a1d27; box-shadow: 0 1px 8px rgba(0,0,0,0.3); } }
+  @media (min-width: 480px)  { .fb-product-card { width: 188px; } }
   @media (min-width: 768px)  { .fb-product-card { width: 220px; } }
-  @media (min-width: 1024px) { .fb-product-card { width: 245px; } }
-  .fb-product-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.12); transform: translateY(-3px); }
+  @media (min-width: 1024px) { .fb-product-card { width: 248px; } }
+  .fb-product-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.13); transform: translateY(-3px); }
 
   .fb-product-img {
-    width: 100%; height: 128px; flex-shrink: 0;
+    width: 100%; height: 130px; flex-shrink: 0;
     position: relative; overflow: hidden; background: #f3f4f6;
   }
-  @media (min-width: 480px)  { .fb-product-img { height: 148px; } }
-  @media (min-width: 768px)  { .fb-product-img { height: 168px; } }
-  @media (min-width: 1024px) { .fb-product-img { height: 185px; } }
+  @media (min-width: 480px)  { .fb-product-img { height: 150px; } }
+  @media (min-width: 768px)  { .fb-product-img { height: 170px; } }
+  @media (min-width: 1024px) { .fb-product-img { height: 188px; } }
   .fb-product-img-el {
     width: 100%; height: 100%;
     object-fit: cover; object-position: center;
-    display: block; transition: transform 0.3s;
+    display: block; transition: transform 0.35s;
   }
-  .fb-product-card:hover .fb-product-img-el { transform: scale(1.05); }
+  .fb-product-card:hover .fb-product-img-el { transform: scale(1.06); }
 
-  /* discount pill on image */
   .fb-disc-pill {
     position: absolute; top: 8px; left: 8px;
     background: #ef4444; color: #fff;
     font-size: 9px; font-weight: 800;
-    padding: 3px 7px; border-radius: 20px;
+    padding: 3px 7px; border-radius: 20px; z-index: 1;
   }
+
+  /* Wishlist button on image */
+  .fb-wish-btn {
+    position: absolute; top: 8px; right: 8px; z-index: 2;
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(255,255,255,0.9);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #9ca3af; transition: all 0.15s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  }
+  .fb-wish-btn:hover { background: #fff; color: #ef4444; }
+  .fb-wish-active { background: #fee2e2 !important; color: #ef4444 !important; }
 
   .fb-product-body {
-    padding: 8px 10px 10px;
+    padding: 10px 11px 12px;
     display: flex; flex-direction: column; flex: 1;
   }
-  @media (min-width: 480px)  { .fb-product-body { padding: 10px 12px 12px; } }
-  @media (min-width: 1024px) { .fb-product-body { padding: 12px 14px 14px; } }
+  @media (min-width: 480px)  { .fb-product-body { padding: 11px 13px 13px; } }
+  @media (min-width: 1024px) { .fb-product-body { padding: 13px 15px 15px; } }
 
-  .fb-badge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; display: inline-block; }
-  @media (min-width: 480px) { .fb-badge { font-size: 10px; } }
+  .fb-badge { font-size: 9.5px; font-weight: 700; padding: 2px 8px; border-radius: 5px; white-space: nowrap; display: inline-block; }
   .fb-badge-red    { background: #fee2e2; color: #b91c1c; }
   .fb-badge-blue   { background: #dbeafe; color: #1e40af; }
   .fb-badge-orange { background: #ffedd5; color: #9a3412; }
   .fb-badge-green  { background: #dcfce7; color: #166534; }
 
-  .fb-icon-btn {
-    width: 26px; height: 26px; border-radius: 7px;
-    background: #f9fafb; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: #9ca3af; transition: all 0.15s;
-  }
-  .fb-icon-btn:hover { background: #f3f4f6; color: #6b7280; }
-  .fb-icon-btn-fav { background: #fee2e2 !important; color: #ef4444 !important; }
-
   .fb-product-brand {
-    font-size: 8.5px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.6px; color: #9ca3af; margin-bottom: 3px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.7px; color: #9ca3af; margin-bottom: 4px;
   }
-  @media (min-width: 480px) { .fb-product-brand { font-size: 9.5px; } }
 
   .fb-product-name {
-    font-size: 11.5px; font-weight: 600; color: #111827;
-    line-height: 1.35; text-decoration: none;
+    font-size: 12px; font-weight: 600; color: #111827;
+    line-height: 1.4; text-decoration: none;
     display: -webkit-box; -webkit-line-clamp: 2;
     -webkit-box-orient: vertical; overflow: hidden;
-    margin-bottom: 6px; flex: 1;
+    margin-bottom: 7px; flex: 1;
   }
-  @media (min-width: 480px)  { .fb-product-name { font-size: 12.5px; } }
+  @media (min-width: 480px)  { .fb-product-name { font-size: 13px; } }
   @media (min-width: 1024px) { .fb-product-name { font-size: 13.5px; } }
   .fb-product-name:hover { text-decoration: underline; }
   @media (prefers-color-scheme: dark) { .fb-product-name { color: #f3f4f6; } }
 
   .fb-product-footer {
     margin-top: auto; padding-top: 8px; display: flex; align-items: center;
-    justify-content: space-between; gap: 6px; border-top: 1px solid #f3f4f6;
+    justify-content: space-between; gap: 6px;
+    border-top: 1px solid #f3f4f6;
   }
   @media (prefers-color-scheme: dark) { .fb-product-footer { border-top-color: rgba(255,255,255,0.06); } }
   .fb-product-price {
-    font-size: 13px; font-weight: 800;
+    font-size: 13.5px; font-weight: 800;
     color: #111827; letter-spacing: -0.3px; line-height: 1;
   }
   @media (min-width: 480px)  { .fb-product-price { font-size: 15px; } }
-  @media (min-width: 1024px) { .fb-product-price { font-size: 17px; } }
+  @media (min-width: 1024px) { .fb-product-price { font-size: 16px; } }
   @media (prefers-color-scheme: dark) { .fb-product-price { color: #f9fafb; } }
-  .fb-product-price-old { font-size: 9px; color: #d1d5db; text-decoration: line-through; margin-top: 2px; }
+  .fb-product-price-old { font-size: 9.5px; color: #d1d5db; text-decoration: line-through; margin-top: 2px; }
 
   .fb-cart-btn {
     display: inline-flex; align-items: center; gap: 4px;
     background: #E6640A; color: #fff; border: none;
-    border-radius: 8px; padding: 6px 8px;
-    font-size: 9.5px; font-weight: 700;
+    border-radius: 9px; padding: 7px 9px;
+    font-size: 10px; font-weight: 700;
     cursor: pointer; white-space: nowrap; flex-shrink: 0;
     transition: background 0.15s;
   }
-  @media (min-width: 480px)  { .fb-cart-btn { padding: 7px 10px; font-size: 10.5px; } }
+  @media (min-width: 480px)  { .fb-cart-btn { padding: 7px 11px; font-size: 11px; } }
   @media (min-width: 1024px) { .fb-cart-btn { padding: 9px 13px; font-size: 12px; } }
   .fb-cart-btn:hover { background: #d45a09; }
   .fb-cart-btn:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; }
@@ -907,24 +994,6 @@ const MOBILE_STYLES = `
   @media (min-width: 640px)  { .fb-prod-track { gap: 12px; } }
   @media (min-width: 1024px) { .fb-prod-track { gap: 14px; } }
 
-  /* ── SECTION HEADER — row on all sizes, wraps on tiny phones ── */
-  .fb-sec-header {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 14px;
-    flex-wrap: nowrap;
-  }
-  .fb-sec-header > div:first-child {
-    min-width: 0;
-    flex: 1;
-  }
-  @media (min-width: 540px) {
-    .fb-sec-header { margin-bottom: 16px; }
-  }
-
   /* ── HSCROLL CARD ── */
   .hs-card {
     width: 162px; flex-shrink: 0;
@@ -932,21 +1001,20 @@ const MOBILE_STYLES = `
     border-radius: 16px; overflow: hidden;
     text-decoration: none;
     display: flex; flex-direction: column;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     transition: box-shadow 0.2s;
   }
   @media (prefers-color-scheme: dark) { .hs-card { background: #1a1d27; } }
-  .hs-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+  .hs-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.13); }
   @media (max-width: 374px) { .hs-card { width: 148px; } }
-  @media (min-width: 640px) { .hs-card { width: 195px; } }
+  @media (min-width: 640px) { .hs-card { width: 198px; } }
 
-  .hs-img { width: 100%; height: 150px; position: relative; overflow: hidden; background: #f5f4f2; flex-shrink: 0; }
+  .hs-img { width: 100%; height: 152px; position: relative; overflow: hidden; background: #f5f4f2; flex-shrink: 0; }
   .hs-img-el { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: transform 0.35s ease; }
   .hs-card:hover .hs-img-el { transform: scale(1.05); }
   .hs-img-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #c8c5c0; }
   .hs-disc-badge { position: absolute; top: 8px; left: 8px; background: #ef4444; color: #fff; font-size: 9.5px; font-weight: 800; padding: 3px 7px; border-radius: 20px; }
 
-  /* ── FIXED LIVE TIMER — block layout, always readable ── */
   .hs-timer-wrap {
     position: absolute; bottom: 0; left: 0; right: 0;
     padding: 6px 8px 7px;
@@ -954,27 +1022,12 @@ const MOBILE_STYLES = `
   }
   .tb-orange { background: linear-gradient(to top, rgba(180,70,5,0.95), rgba(230,100,10,0.85)); }
   .tb-blue   { background: linear-gradient(to top, rgba(29,78,216,0.95), rgba(59,130,246,0.85)); }
-  .hs-timer-inner {
-    display: flex; align-items: center; justify-content: center; gap: 3px;
-  }
-  .hs-timer-unit {
-    display: flex; flex-direction: column; align-items: center;
-    min-width: 28px;
-  }
-  .hs-timer-num {
-    font-size: 14px; font-weight: 900; color: #fff;
-    font-variant-numeric: tabular-nums; line-height: 1;
-    letter-spacing: -0.5px;
-  }
+  .hs-timer-inner { display: flex; align-items: center; justify-content: center; gap: 3px; }
+  .hs-timer-unit { display: flex; flex-direction: column; align-items: center; min-width: 28px; }
+  .hs-timer-num { font-size: 14px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -0.5px; }
   @media (max-width: 374px) { .hs-timer-num { font-size: 12px; } }
-  .hs-timer-lbl {
-    font-size: 8px; font-weight: 600; color: rgba(255,255,255,0.65);
-    text-transform: uppercase; line-height: 1; margin-top: 1px;
-  }
-  .hs-timer-sep {
-    font-size: 13px; font-weight: 900; color: rgba(255,255,255,0.6);
-    margin-bottom: 8px; line-height: 1;
-  }
+  .hs-timer-lbl { font-size: 8px; font-weight: 600; color: rgba(255,255,255,0.65); text-transform: uppercase; line-height: 1; margin-top: 1px; }
+  .hs-timer-sep { font-size: 13px; font-weight: 900; color: rgba(255,255,255,0.6); margin-bottom: 8px; line-height: 1; }
 
   .hs-body { padding: 11px 11px 12px; display: flex; flex-direction: column; gap: 0; flex: 1; }
   .hs-status { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.3px; width: fit-content; margin-bottom: 6px; }
@@ -989,7 +1042,6 @@ const MOBILE_STYLES = `
   .hs-price-plain { font-size: 13px; font-weight: 800; color: #111; letter-spacing: -0.3px; }
   @media (prefers-color-scheme: dark) { .hs-price-plain { color: #f9fafb; } }
 
-  /* ── ACTION BUTTONS ── */
   .p-actions { display: flex; gap: 5px; margin-top: auto; }
   .p-btn-order { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; background: #E6640A; border: none; color: #fff; font-size: 10.5px; font-weight: 700; padding: 8px; border-radius: 9px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
   .p-btn-order:hover { background: #d45a09; }
@@ -1007,11 +1059,17 @@ const MOBILE_STYLES = `
   .ad-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(0,0,0,0.15); cursor: pointer; transition: background 0.2s, transform 0.2s; }
   .ad-dot.active { background: #E6640A; transform: scale(1.3); }
 
+  /* ── LIVE / SHIMMER BADGES ── */
+  .live-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.22); color: #ef4444; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.5px; }
+  .live-dot { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; animation: live-pulse 1.2s ease-in-out infinite; }
+  @keyframes live-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+  .shimmer-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.22); color: #8b5cf6; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.3px; }
+
   /* ── AI FEATURES ── */
   .ai-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
   @media (min-width: 900px) { .ai-grid { grid-template-columns: repeat(4,1fr); } }
-  .ai-card { background: #f9fafb; border-radius: 16px; padding: 15px 13px; cursor: pointer; transition: all 0.2s; }
-  @media (prefers-color-scheme: dark) { .ai-card { background: #111827; } }
+  .ai-card { background: rgba(0,0,0,0.03); border-radius: 16px; padding: 15px 13px; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(0,0,0,0.04); }
+  @media (prefers-color-scheme: dark) { .ai-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.06); } }
   .ai-card-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
   .ai-card-title { font-family: 'Satoshi', sans-serif; font-size: 13.5px; font-weight: 700; color: #111; margin-bottom: 4px; }
   @media (prefers-color-scheme: dark) { .ai-card-title { color: #f9fafb; } }
@@ -1020,7 +1078,11 @@ const MOBILE_STYLES = `
   /* ── TRUST GRID ── */
   .trust-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
   @media (min-width: 900px) { .trust-grid { grid-template-columns: repeat(4,1fr); } }
-  .trust-card { background: #fff; border-radius: 15px; padding: 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .trust-card {
+    background: #fff; border-radius: 15px; padding: 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+  }
   @media (prefers-color-scheme: dark) { .trust-card { background: #1a1d27; } }
   @media (min-width: 640px) { .trust-card { padding: 18px 16px; flex-direction: row; align-items: flex-start; gap: 12px; } }
   .trust-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(230,100,10,0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -1036,7 +1098,7 @@ const MOBILE_STYLES = `
   .cta-p { font-size: clamp(13px,3.5vw,14.5px); color: rgba(255,255,255,0.5); line-height: 1.65; margin: 0 0 20px; max-width: 380px; }
   .cta-btns { display: flex; gap: 10px; flex-wrap: wrap; }
   .cta-btn-w, .cta-btn-g { display: inline-flex; align-items: center; gap: 7px; padding: 13px 22px; border-radius: 12px; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 14px; text-decoration: none; cursor: pointer; }
-  .cta-btn-w { background: #E6640A; color: #fff; }
+  .cta-btn-w { background: #E6640A; color: #fff; border: none; }
   .cta-btn-g { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: #fff; }
   .cta-logo { display: none; }
   @media (min-width: 640px) { .cta-logo { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; position: relative; z-index: 1; } }
@@ -1056,37 +1118,147 @@ const MOBILE_STYLES = `
     .h-btn-primary, .h-btn-ghost { width: 100% !important; justify-content: center !important; padding: 15px 20px !important; font-size: 15px !important; }
   }
 
-  /* ── POPUP ── */
-  .popup-sheet { position: relative; width: 100%; max-width: 420px; border-radius: 26px 26px 0 0; overflow: hidden; background: #0f0f0f; border: 1px solid rgba(255,255,255,0.08); border-bottom: none; box-shadow: 0 -24px 60px rgba(0,0,0,0.55); max-height: 92dvh; overflow-y: auto; }
-  @media (min-width: 600px) { .popup-sheet { border-radius: 26px; border-bottom: 1px solid rgba(255,255,255,0.08); max-height: 90vh; } }
-  .popup-hero-strip { width: 100%; height: 138px; background: linear-gradient(135deg, #1c0900 0%, #3d1500 45%, #b84d08 100%); position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .popup-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15,15,15,0.25) 0%, rgba(15,15,15,0.92) 100%); }
-  .popup-logo-wrap { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; }
-  .popup-logo-box { width: 62px; height: 62px; border-radius: 18px; background: linear-gradient(135deg, #E6640A, #c14f06); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 0 8px rgba(230,100,10,0.16), 0 12px 40px rgba(230,100,10,0.45); }
-  .popup-logo-on  { font-family: 'Satoshi', sans-serif; font-weight: 900; font-size: 21px; color: #fff; line-height: 1; letter-spacing: -1px; }
-  .popup-logo-ett { font-family: 'Satoshi', sans-serif; font-weight: 700; font-size: 10px; color: rgba(255,255,255,0.6); line-height: 1; letter-spacing: 2px; }
-  .popup-close-btn { position: absolute; top: 12px; right: 12px; z-index: 10; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.12); cursor: pointer; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.7); transition: background 0.15s; }
-  .popup-body { padding: 20px 20px 22px; }
-  @media (min-width: 400px) { .popup-body { padding: 22px 24px 24px; } }
-  .popup-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(230,100,10,0.12); border: 1px solid rgba(230,100,10,0.22); color: #fb923c; font-size: 10.5px; font-weight: 700; padding: 4px 12px; border-radius: 99px; }
-  .popup-h2 { text-align: center; font-family: 'Satoshi', sans-serif; font-size: clamp(22px,6vw,26px); font-weight: 800; color: #fff; line-height: 1.18; margin: 10px 0 8px; letter-spacing: -0.5px; }
-  .popup-sub { text-align: center; font-size: 13px; color: rgba(255,255,255,0.38); line-height: 1.65; margin: 0 0 18px; }
-  .popup-perks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-  .popup-perk { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 11px 13px; }
-  .popup-perk-icon { width: 38px; height: 38px; border-radius: 11px; background: rgba(230,100,10,0.14); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .popup-perk-label { font-size: 13px; font-weight: 700; color: #fff; }
-  .popup-perk-desc { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
-  .popup-perk-arrow { width: 22px; height: 22px; border-radius: 50%; background: rgba(230,100,10,0.16); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: rgba(255,255,255,0.55); margin-left: auto; }
-  .popup-cta-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #E6640A; color: #fff; border-radius: 14px; padding: 15px 0; font-family: 'Manrope', sans-serif; font-weight: 800; font-size: clamp(14px,4vw,15px); text-decoration: none; margin-bottom: 10px; }
-  .popup-cta-btn:hover { background: #d45a09; }
-  .popup-skip-btn { display: block; width: 100%; text-align: center; font-size: 12px; color: rgba(255,255,255,0.22); background: transparent; border: none; cursor: pointer; padding: 6px 0; }
-  .popup-safe-bottom { height: env(safe-area-inset-bottom, 0px); }
+  /* ══════════════════════════════════════════
+     WELCOME POPUP — Premium multi-step
+  ══════════════════════════════════════════ */
+  .wp-sheet {
+    position: relative;
+    width: 100%; max-width: 440px;
+    border-radius: 28px 28px 0 0;
+    overflow: hidden;
+    background: #0c0c0e;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-bottom: none;
+    box-shadow: 0 -32px 80px rgba(0,0,0,0.6);
+    max-height: 90dvh;
+    overflow-y: auto;
+  }
+  @media (min-width: 600px) {
+    .wp-sheet { border-radius: 28px; border-bottom: 1px solid rgba(255,255,255,0.1); max-height: 88vh; }
+  }
 
-  /* ── LIVE / SHIMMER BADGES ── */
-  .live-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.22); color: #ef4444; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.5px; }
-  .live-dot { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; animation: live-pulse 1.2s ease-in-out infinite; }
-  @keyframes live-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
-  .shimmer-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.22); color: #8b5cf6; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.3px; }
+  /* Visual panel */
+  .wp-visual {
+    position: relative;
+    height: 200px;
+    background: radial-gradient(ellipse at 50% 130%, var(--slide-color, #E6640A) 0%, transparent 65%),
+                linear-gradient(180deg, #14141a 0%, #0c0c0e 100%);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    transition: background 0.4s;
+  }
+  @media (min-width: 400px) { .wp-visual { height: 220px; } }
+
+  /* Noise grain overlay */
+  .wp-visual::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; opacity: 0.5;
+  }
+
+  .wp-close {
+    position: absolute; top: 14px; right: 14px; z-index: 20;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.55); transition: background 0.15s;
+  }
+  .wp-close:hover { background: rgba(255,255,255,0.14); }
+
+  .wp-logo-chip {
+    position: absolute; top: 14px; left: 14px; z-index: 10;
+    display: inline-flex; align-items: center;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 4px 9px; gap: 1px;
+  }
+  .wp-logo-on  { font-family: 'Satoshi', sans-serif; font-weight: 900; font-size: 13px; color: #fff; line-height: 1; letter-spacing: -0.5px; }
+  .wp-logo-ett { font-family: 'Satoshi', sans-serif; font-weight: 600; font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1; letter-spacing: 0px; }
+
+  .wp-emoji-wrap { position: relative; z-index: 5; }
+  .wp-orb {
+    width: 96px; height: 96px; border-radius: 28px;
+    border: 1.5px solid;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    backdrop-filter: blur(12px);
+  }
+  @media (min-width: 400px) { .wp-orb { width: 108px; height: 108px; border-radius: 32px; } }
+  .wp-orb-glow {
+    position: absolute; inset: -20%; border-radius: 50%;
+    opacity: 0.25; filter: blur(24px); pointer-events: none;
+  }
+  .wp-emoji { font-size: 44px; position: relative; z-index: 2; line-height: 1; }
+  @media (min-width: 400px) { .wp-emoji { font-size: 52px; } }
+
+  /* Body */
+  .wp-body { padding: 22px 22px 20px; }
+  @media (min-width: 400px) { .wp-body { padding: 24px 26px 22px; } }
+  .wp-sub-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .wp-title {
+    font-family: 'Satoshi', sans-serif;
+    font-size: clamp(22px, 6vw, 27px);
+    font-weight: 800; color: #fff;
+    line-height: 1.15; letter-spacing: -0.5px;
+    margin: 0 0 10px;
+  }
+  .wp-desc {
+    font-size: 14px; color: rgba(255,255,255,0.42);
+    line-height: 1.7; margin: 0 0 24px;
+  }
+
+  /* Progress dots */
+  .wp-dots { display: flex; align-items: center; gap: 7px; margin-bottom: 20px; }
+  .wp-dot {
+    height: 6px; width: 6px; border-radius: 99px;
+    background: rgba(255,255,255,0.18);
+    border: none; cursor: pointer; padding: 0;
+    transition: background 0.25s, width 0.25s;
+  }
+  .wp-dot.active { width: 24px; }
+
+  /* CTA button */
+  .wp-cta {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; border: none;
+    border-radius: 15px; padding: 16px 0;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800; font-size: 15px;
+    color: #fff; text-decoration: none; cursor: pointer;
+    margin-bottom: 10px;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .wp-cta:hover { opacity: 0.9; transform: scale(0.99); }
+
+  /* Skip */
+  .wp-skip {
+    display: block; width: 100%; text-align: center;
+    font-size: 12.5px; color: rgba(255,255,255,0.2);
+    background: transparent; border: none; cursor: pointer; padding: 6px 0;
+  }
+  .wp-skip:hover { color: rgba(255,255,255,0.35); }
+  .wp-safe { height: env(safe-area-inset-bottom, 0px); }
+
+  /* ── SECTION HEADERS (Categories, Flash Sale) ── */
+  .sec-hdr-row {
+    display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;
+  }
+  @media (min-width: 480px) {
+    .sec-hdr-row { flex-direction: row; align-items: center; justify-content: space-between; }
+  }
+  .sec-hdr-left { display: flex; align-items: center; gap: 10px; }
+  .sec-hdr-right { display: flex; align-items: center; gap: 8px; padding-left: 48px; }
+  @media (min-width: 480px) { .sec-hdr-right { padding-left: 0; } }
+  .sec-hdr-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sec-hdr-title { font-family: 'Satoshi', sans-serif; font-size: 16px; font-weight: 800; color: #111827; letter-spacing: -0.3px; line-height: 1.2; }
+  @media (prefers-color-scheme: dark) { .sec-hdr-title { color: #f9fafb; } }
+  .sec-hdr-sub { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+  .sec-hdr-link { font-size: 12.5px; font-weight: 700; color: #E6640A; text-decoration: none; white-space: nowrap; }
 
   /* ── FOOTER ── */
   .footer { background: #fff; border-top: 1px solid rgba(0,0,0,0.06); margin-top: 4px; }
@@ -1252,33 +1424,32 @@ const Index = () => {
 
         {/* ── CATEGORIES ── */}
         <div className="pg">
-          <div className="section-card">
-            <div className="mb-4 flex items-end justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0" style={{ background: "rgba(230,100,10,0.08)" }}>
-                  <IconTag size={18} style={{ color: "#E6640A" }} />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-gray-900 dark:text-white" style={{ letterSpacing: "-0.2px" }}>Browse Categories</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Find exactly what you're looking for</p>
-                </div>
+          {/* Header — two rows on mobile */}
+          <div className="sec-hdr-row">
+            <div className="sec-hdr-left">
+              <div className="sec-hdr-icon" style={{ background: "rgba(230,100,10,0.08)" }}>
+                <IconTag size={18} style={{ color: "#E6640A" }} />
               </div>
-              <Link to="/categories" className="flex items-center gap-1 text-xs font-bold" style={{ color: "#E6640A" }}>
-                See all <IconChevronRight size={12} />
+              <div>
+                <div className="sec-hdr-title">Browse Categories</div>
+                <div className="sec-hdr-sub">Find exactly what you're looking for</div>
+              </div>
+            </div>
+            <div className="sec-hdr-right">
+              <Link to="/categories" className="sec-hdr-link">See all →</Link>
+            </div>
+          </div>
+          <div className="cats-scroll">
+            {(categories.length > 0 ? categories : sampleCategories).slice(0, 12).map((cat: any) => (
+              <Link key={cat.id} to={`/categories/${cat.slug}`} className="cat-item">
+                <div className="cat-icon-box">
+                  {cat.icon?.imageUrl
+                    ? <img src={cat.icon.imageUrl} alt={cat.name} className="cat-icon-img" loading="lazy" />
+                    : <IconPackage size={22} />}
+                </div>
+                <span className="cat-lbl">{cat.name}</span>
               </Link>
-            </div>
-            <div className="cats-scroll">
-              {(categories.length > 0 ? categories : sampleCategories).slice(0, 12).map((cat: any) => (
-                <Link key={cat.id} to={`/categories/${cat.slug}`} className="cat-item">
-                  <div className="cat-icon-box">
-                    {cat.icon?.imageUrl
-                      ? <img src={cat.icon.imageUrl} alt={cat.name} className="cat-icon-img" loading="lazy" />
-                      : <IconPackage size={22} />}
-                  </div>
-                  <span className="cat-lbl">{cat.name}</span>
-                </Link>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
 
@@ -1287,40 +1458,39 @@ const Index = () => {
         {/* ── FLASH SALE ── */}
         {flashSale.length > 0 && (
           <div className="pg">
-            <div className="section-card">
-              <div className="fb-sec-header">
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <IconFlame size={16} style={{ color: "#ef4444" }} />
-                  </div>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 15, fontWeight: 800, color: "#111827", letterSpacing: "-0.3px" }}>Flash Sale</span>
-                      <div className="live-badge"><div className="live-dot" />LIVE</div>
-                    </div>
-                    <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 2 }}>Limited time — grab it before it's gone</div>
-                  </div>
+            {/* Header */}
+            <div className="sec-hdr-row">
+              <div className="sec-hdr-left">
+                <div className="sec-hdr-icon" style={{ background: "rgba(239,68,68,0.08)" }}>
+                  <IconFlame size={17} style={{ color: "#ef4444" }} />
                 </div>
-                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                  <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -220, behavior: "smooth" })}>
-                    <IconChevronLeft size={13} />
-                  </button>
-                  <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 220, behavior: "smooth" })}>
-                    <IconChevronRight size={13} />
-                  </button>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span className="sec-hdr-title">Flash Sale</span>
+                    <div className="live-badge"><div className="live-dot" />LIVE</div>
+                  </div>
+                  <div className="sec-hdr-sub">Limited time — grab it before it's gone</div>
                 </div>
               </div>
-              <div id="flash-track" className="fb-prod-track" style={{ marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16 }}>
-                {flashSale.map(item => (
-                  <motion.div
-                    key={item.id}
-                    style={{ flexShrink: 0, alignSelf: "stretch" }}
-                    whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
-                  >
-                    <FlowbiteProductCard product={item} />
-                  </motion.div>
-                ))}
+              <div className="sec-hdr-right">
+                <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -220, behavior: "smooth" })}>
+                  <IconChevronLeft size={13} />
+                </button>
+                <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 220, behavior: "smooth" })}>
+                  <IconChevronRight size={13} />
+                </button>
               </div>
+            </div>
+            <div id="flash-track" className="fb-prod-track" style={{ marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16 }}>
+              {flashSale.map(item => (
+                <motion.div
+                  key={item.id}
+                  style={{ flexShrink: 0, alignSelf: "stretch" }}
+                  whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
+                >
+                  <FlowbiteProductCard product={item} />
+                </motion.div>
+              ))}
             </div>
           </div>
         )}
@@ -1352,16 +1522,14 @@ const Index = () => {
         {/* ── NEW ARRIVALS ── */}
         {newArrivalsCarousel.length > 0 && (
           <div className="pg">
-            <div className="section-card">
-              <FlowbiteGridSection
-                title="New Arrivals"
-                subtitle="Fresh products added this week"
-                accent="#f59e0b"
-                icon={IconZap}
-                items={newArrivalsCarousel}
-                seeAllLink="/search?keyword=new"
-              />
-            </div>
+            <FlowbiteGridSection
+              title="New Arrivals"
+              subtitle="Fresh products added this week"
+              accent="#f59e0b"
+              icon={IconZap}
+              items={newArrivalsCarousel}
+              seeAllLink="/search?keyword=new"
+            />
           </div>
         )}
 
@@ -1370,21 +1538,19 @@ const Index = () => {
         {/* ── UPCOMING DROPS ── */}
         {upcomingCarousel.length > 0 && (
           <div className="pg">
-            <div className="section-card">
-              <HScrollSection
-                title="Upcoming Drops"
-                subtitle="Pre-order & coming soon"
-                accent="#8b5cf6"
-                icon={IconCalendarClock}
-                items={upcomingCarousel}
-                showTimer
-                badge={
-                  <span className="shimmer-badge">
-                    <IconClock size={9} />Live timer
-                  </span>
-                }
-              />
-            </div>
+            <HScrollSection
+              title="Upcoming Drops"
+              subtitle="Pre-order & coming soon"
+              accent="#8b5cf6"
+              icon={IconCalendarClock}
+              items={upcomingCarousel}
+              showTimer
+              badge={
+                <span className="shimmer-badge">
+                  <IconClock size={9} />Live timer
+                </span>
+              }
+            />
           </div>
         )}
 
@@ -1393,19 +1559,17 @@ const Index = () => {
         {/* ── JUST DROPPED ── */}
         {newArrivals.length > 0 && (
           <div className="pg">
-            <div className="section-card">
-              <FlowbiteGridSection
-                title="Just Dropped"
-                subtitle="Browse all the latest products"
-                accent="#E6640A"
-                icon={IconFlame}
-                items={dedupeById(newArrivals.map(p => ({
-                  ...normaliseToCarousel(p),
-                  stock: (p as ProductCardData).stock,
-                })))}
-                seeAllLink="/search?keyword="
-              />
-            </div>
+            <FlowbiteGridSection
+              title="Just Dropped"
+              subtitle="Browse all the latest products"
+              accent="#E6640A"
+              icon={IconFlame}
+              items={dedupeById(newArrivals.map(p => ({
+                ...normaliseToCarousel(p),
+                stock: (p as ProductCardData).stock,
+              })))}
+              seeAllLink="/search?keyword="
+            />
           </div>
         )}
 
@@ -1413,46 +1577,47 @@ const Index = () => {
 
         {/* ── AI FEATURES ── */}
         <div className="pg">
-          <div className="section-card">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0" style={{ background: "rgba(230,100,10,0.08)" }}>
+          {/* Header */}
+          <div className="sec-hdr-row" style={{ marginBottom: 16 }}>
+            <div className="sec-hdr-left">
+              <div className="sec-hdr-icon" style={{ background: "rgba(230,100,10,0.08)" }}>
                 <IconSparkles size={18} style={{ color: "#E6640A" }} />
               </div>
               <div>
-                <h2 className="text-base font-bold text-gray-900 dark:text-white" style={{ letterSpacing: "-0.2px" }}>Shopping, Reimagined</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Powered by AI</p>
+                <div className="sec-hdr-title">Shopping, Reimagined</div>
+                <div className="sec-hdr-sub">Powered by AI</div>
               </div>
             </div>
-            <div className="ai-grid">
-              {aiFeatures.map((f, i) => (
-                <motion.div
-                  key={f.title}
-                  className="ai-card"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -5, scale: 1.03, transition: { type: "spring", stiffness: 400, damping: 18 } }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.45, delay: i * 0.09, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <div className="ai-card-icon" style={{ background: f.bg }}>
-                    <f.icon size={17} style={{ color: f.color }} />
-                  </div>
-                  <div className="ai-card-title">{f.title}</div>
-                  <div className="ai-card-desc">{f.desc}</div>
-                </motion.div>
-              ))}
-            </div>
-            <div style={{ textAlign: "center", paddingTop: 16 }}>
-              <Link to="/ai-assistant" style={{
-                display: "inline-flex", alignItems: "center", gap: 7,
-                background: "rgba(230,100,10,0.08)", border: "1px solid rgba(230,100,10,0.18)",
-                color: "#E6640A", fontFamily: "'Manrope',sans-serif",
-                fontSize: 13, fontWeight: 700,
-                padding: "11px 22px", borderRadius: 11, textDecoration: "none",
-              }}>
-                <IconSparkles size={13} />Try AI Assistant Now
-              </Link>
-            </div>
+          </div>
+          <div className="ai-grid">
+            {aiFeatures.map((f, i) => (
+              <motion.div
+                key={f.title}
+                className="ai-card"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -5, scale: 1.03, transition: { type: "spring", stiffness: 400, damping: 18 } }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: i * 0.09, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="ai-card-icon" style={{ background: f.bg }}>
+                  <f.icon size={17} style={{ color: f.color }} />
+                </div>
+                <div className="ai-card-title">{f.title}</div>
+                <div className="ai-card-desc">{f.desc}</div>
+              </motion.div>
+            ))}
+          </div>
+          <div style={{ textAlign: "center", paddingTop: 16 }}>
+            <Link to="/ai-assistant" style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              background: "rgba(230,100,10,0.08)", border: "1px solid rgba(230,100,10,0.18)",
+              color: "#E6640A", fontFamily: "'Manrope',sans-serif",
+              fontSize: 13, fontWeight: 700,
+              padding: "11px 22px", borderRadius: 11, textDecoration: "none",
+            }}>
+              <IconSparkles size={13} />Try AI Assistant Now
+            </Link>
           </div>
         </div>
 
