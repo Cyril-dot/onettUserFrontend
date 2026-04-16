@@ -74,14 +74,6 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 }
 
 // ─── Unwrap helpers ───────────────────────────────────────────────────────────
-//
-// All controllers (UserProductController, OrderController, OrderPaymentController)
-// wrap every response in:
-//   { success: boolean, message: string, data: T, timestamp: string }
-//
-// Use unwrap() for all wrapped endpoints so callers always receive T directly.
-// PreOrderController returns bare values — use preOrderRequest() for those.
-
 async function unwrap<T>(endpoint: string, options?: RequestOptions): Promise<T> {
   const res = await request<{ success: boolean; message: string; data: T }>(endpoint, options);
   return res.data;
@@ -112,11 +104,6 @@ export const sellerApi = {
 };
 
 // ─── Products - Public ────────────────────────────────────────────────────────
-//
-// All UserProductController endpoints wrap responses in ApiResponse<T>.
-// Using unwrap() here so every caller gets the inner data directly — no
-// more manual res?.data unwrapping in components.
-
 export const productApi = {
   getHome: () => unwrap<any>("/products/home"),
   getFeatured: () => unwrap<any[]>("/products/featured"),
@@ -186,16 +173,6 @@ export const sellerProductApi = {
 };
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
-//
-// CartController wraps every response in ApiResponse<CartResponse>.
-// Use unwrap() so callers receive CartResponse directly.
-//
-// PATCH /cart/{cartItemId} expects a JSON body { quantity: number },
-// NOT a query param — matches CartController.updateQuantity(Map<String,Integer>)
-//
-// DELETE /cart/{cartItemId} returns ApiResponse<CartResponse> (updated cart)
-// DELETE /cart             returns ApiResponse<Void>           (clear)
-
 export const cartApi = {
   get: () => unwrap<any>("/cart"),
   add: (productId: string, quantity: number) =>
@@ -209,101 +186,45 @@ export const cartApi = {
 };
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
-//
-// All OrderController endpoints are wrapped: { success, message, data, timestamp }
-// Use unwrap<T>() so callers always get the inner data directly.
-
 export const orderApi = {
-  // ── user ──────────────────────────────────────────────────────────────────
-
-  /** POST /orders/initiate → returns OrderInitResponse (orderId, total, …) */
   initiate: (data: { deliveryAddress?: string; notes?: string }) =>
     unwrap<any>("/orders/initiate", { method: "POST", body: data }),
-
-  /** GET /orders/my-orders → List<OrderResponse> */
   getMy: () =>
     unwrap<any[]>("/orders/my-orders"),
-
-  /** GET /orders/my-orders/{orderId} → OrderResponse */
   getMyById: (orderId: string) =>
     unwrap<any>(`/orders/my-orders/${orderId}`),
-
-  /** GET /orders/my-orders?status=SHIPPED → List<OrderResponse> */
   getMyByStatus: (status: string) =>
     unwrap<any[]>(`/orders/my-orders?status=${status}`),
-
-  /** PATCH /orders/my-orders/{orderId}/cancel → OrderResponse */
   cancelMy: (orderId: string) =>
     unwrap<any>(`/orders/my-orders/${orderId}/cancel`, { method: "PATCH" }),
-
-  // ── seller ────────────────────────────────────────────────────────────────
-
-  /** GET /orders/seller/orders[?status=] → List<OrderResponse> */
   getSellerOrders: (status?: string) =>
-    unwrap<any[]>(
-      status ? `/orders/seller/orders?status=${status}` : "/orders/seller/orders"
-    ),
-
-  /** GET /orders/seller/revenue → Map<String, Object> */
+    unwrap<any[]>(status ? `/orders/seller/orders?status=${status}` : "/orders/seller/orders"),
   getSellerRevenue: () =>
     unwrap<any>("/orders/seller/revenue"),
-
-  // ── admin ─────────────────────────────────────────────────────────────────
-
   adminGetAll: (status?: string) =>
     unwrap<any[]>(status ? `/orders/admin/all?status=${status}` : "/orders/admin/all"),
-
   adminGetById: (orderId: string) =>
     unwrap<any>(`/orders/admin/${orderId}`),
-
-  /** PATCH /orders/admin/{orderId}/status  body: { status: string } */
   adminUpdateStatus: (orderId: string, status: string) =>
     unwrap<any>(`/orders/admin/${orderId}/status`, { method: "PATCH", body: { status } }),
-
   adminCancelOrder: (orderId: string) =>
     unwrap<any>(`/orders/admin/${orderId}/cancel`, { method: "PATCH" }),
-
   adminGetSummary: () =>
     unwrap<any>("/orders/admin/summary"),
-
   adminGetToday: () =>
     unwrap<any[]>("/orders/admin/today"),
-
   adminGetThisWeek: () =>
     unwrap<any[]>("/orders/admin/this-week"),
-
   adminGetThisMonth: () =>
     unwrap<any[]>("/orders/admin/this-month"),
-
   adminGetByDateRange: (from: string, to: string) =>
     unwrap<any[]>(`/orders/admin/date-range?from=${from}&to=${to}`),
-
   adminGetDailyCounts: () =>
     unwrap<any>("/orders/admin/daily-counts"),
 };
 
 // ─── Payments ─────────────────────────────────────────────────────────────────
-// ─── Payments ─────────────────────────────────────────────────────────────────
-//
-// OrderPaymentController → /api/v1/payments/orders
-// Payment is MoMo screenshot-based (not Paystack).
-// All endpoints wrap responses in ApiResponse<T> — use unwrap().
-//
-// Flow:
-//   1. Customer sends MoMo transfer manually
-//   2. POST /{orderId}/submit  (multipart: senderAccountName, senderPhoneNumber, screenshot)
-//   3. Admin reviews screenshot and confirms/rejects via their panel
-
 export const paymentApi = {
-  /**
-   * POST /payments/orders/{orderId}/submit
-   * Multipart form — customer uploads MoMo transfer screenshot.
-   * Returns PaymentSubmitResponse { orderId, paymentStatus, amount, isPreOrder,
-   *   depositAmount, remainingAmount, screenshotUrl, message }
-   *
-   * Usage:
-   *   await paymentApi.submitOrderPayment(orderId, "Kofi Mensah", "0241234567", screenshotFile)
-   */
   submitOrderPayment: (
     orderId: string,
     senderAccountName: string,
@@ -314,63 +235,24 @@ export const paymentApi = {
     formData.append("senderAccountName", senderAccountName);
     formData.append("senderPhoneNumber", senderPhoneNumber);
     formData.append("screenshot", screenshot);
-
     return unwrap<any>(`/payments/orders/${orderId}/submit`, {
       method: "POST",
       body: formData,
       isFormData: true,
     });
   },
-
-  // ── Admin / Seller ─────────────────────────────────────────────────────────
-
-  /**
-   * GET /payments/orders/admin/all
-   * Returns List<PaymentAdminResponse> — all payments with order + user details.
-   * Requires SELLER role.
-   */
   adminGetAll: (): Promise<any[]> =>
     unwrap<any[]>("/payments/orders/admin/all"),
-
-  /**
-   * GET /payments/orders/admin?status=PENDING|CONFIRMED|REJECTED
-   * Returns List<PaymentAdminResponse> filtered by status.
-   * Requires SELLER role.
-   */
   adminGetByStatus: (status: "PENDING" | "CONFIRMED" | "REJECTED"): Promise<any[]> =>
     unwrap<any[]>(`/payments/orders/admin?status=${status}`),
-
-  /**
-   * GET /payments/orders/admin/order/{orderId}
-   * Returns PaymentAdminResponse for a specific order.
-   * Requires SELLER role.
-   */
   adminGetByOrderId: (orderId: string): Promise<any> =>
     unwrap<any>(`/payments/orders/admin/order/${orderId}`),
-
-  /**
-   * GET /payments/orders/admin/{paymentId}
-   * Returns PaymentAdminResponse for a specific payment ID.
-   * Requires SELLER role.
-   */
   adminGetById: (paymentId: string): Promise<any> =>
     unwrap<any>(`/payments/orders/admin/${paymentId}`),
-
-  /**
-   * POST /payments/orders/admin/{orderId}/confirm?adminNote=...
-   * Confirms a pending payment. Triggers order confirmation + stock deduction.
-   * Requires SELLER role.
-   */
   adminConfirm: (orderId: string, adminNote?: string): Promise<void> => {
     const qs = adminNote ? `?adminNote=${encodeURIComponent(adminNote)}` : "";
     return unwrap<void>(`/payments/orders/admin/${orderId}/confirm${qs}`, { method: "POST" });
   },
-
-  /**
-   * POST /payments/orders/admin/{orderId}/reject?adminNote=...
-   * Rejects a payment and marks the order as PAYMENT_FAILED.
-   * Requires SELLER role.
-   */
   adminReject: (orderId: string, adminNote?: string): Promise<void> => {
     const qs = adminNote ? `?adminNote=${encodeURIComponent(adminNote)}` : "";
     return unwrap<void>(`/payments/orders/admin/${orderId}/reject${qs}`, { method: "POST" });
@@ -378,113 +260,35 @@ export const paymentApi = {
 };
 
 // ─── Pre-orders ───────────────────────────────────────────────────────────────
-//
-// PreOrderController lives at /api/pre-orders (no /v1 in the mapping).
-// It does NOT use the ApiResponse wrapper — returns bare List<> or single object.
-// Use preOrderRequest<T>() here, not unwrap().
-
-const PRE_ORDER_BASE = "https://poikiloblastic-leeanne-gazeless.ngrok-free.dev/api/pre-orders";
-
-async function preOrderRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const token = localStorage.getItem("accessToken");
-  const headers: Record<string, string> = {
-    "ngrok-skip-browser-warning": "true",
-    ...options.headers,
-  };
-
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  if (!options.isFormData && options.body) headers["Content-Type"] = "application/json";
-
-  const res = await fetch(`${PRE_ORDER_BASE}${path}`, {
-    method: options.method || "GET",
-    headers,
-    body: options.isFormData
-      ? options.body
-      : options.body
-      ? JSON.stringify(options.body)
-      : undefined,
-  });
-
-  if (res.status === 204 || res.status === 205) return null as unknown as T;
-
-  if (!res.ok) {
-    let message = `Request failed: ${res.status} ${res.statusText}`;
-    let data: any = null;
-    const ct = res.headers.get("content-type") || "";
-    try {
-      if (ct.includes("application/json")) {
-        data = await res.json();
-        message = data?.message ?? JSON.stringify(data);
-      } else {
-        message = (await res.text()) || message;
-      }
-    } catch { /* keep default */ }
-    console.error(`[PRE-ORDER API ${res.status}] ${options.method ?? "GET"} ${path}`, data ?? message);
-    throw new ApiError(message, res.status, data);
-  }
-
-  const ct = res.headers.get("content-type") || "";
-  if (ct.includes("application/json")) return res.json();
-  const text = await res.text();
-  return (text || null) as unknown as T;
-}
-
 export const preOrderApi = {
-  // ── user ──────────────────────────────────────────────────────────────────
-
-  /** GET /api/pre-orders/my → List<PreOrderRecordResponse> (bare, no wrapper) */
   getMy: () =>
-    preOrderRequest<any[]>("/my"),
-
-  /** POST /api/pre-orders/{id}/request-delivery → PreOrderRecordResponse */
+    unwrap<any[]>("/pre-orders/my"),
   requestDelivery: (preOrderRecordId: string) =>
-    preOrderRequest<any>(`/${preOrderRecordId}/request-delivery`, { method: "POST" }),
-
-  // ── seller (role = SELLER) ────────────────────────────────────────────────
-
-  /** GET /api/pre-orders/seller/all → List<PreOrderRecordResponse> */
+    unwrap<any>(`/pre-orders/${preOrderRecordId}/request-delivery`, { method: "POST" }),
   adminGetAll: () =>
-    preOrderRequest<any[]>("/seller/all"),
-
-  /** GET /api/pre-orders/seller/product/{productId} */
+    unwrap<any[]>("/pre-orders/seller/all"),
   adminGetByProduct: (productId: string) =>
-    preOrderRequest<any[]>(`/seller/product/${productId}`),
-
-  /** GET /api/pre-orders/seller/status/{status} */
+    unwrap<any[]>(`/pre-orders/seller/product/${productId}`),
   adminGetByStatus: (status: string) =>
-    preOrderRequest<any[]>(`/seller/status/${status}`),
-
-  /**
-   * POST /api/pre-orders/seller/{id}/confirm-payment
-   * body: { adminNote?: string }
-   */
+    unwrap<any[]>(`/pre-orders/seller/status/${status}`),
   adminConfirmPayment: (preOrderRecordId: string, adminNote?: string) =>
-    preOrderRequest<any>(`/seller/${preOrderRecordId}/confirm-payment`, {
+    unwrap<any>(`/pre-orders/seller/${preOrderRecordId}/confirm-payment`, {
       method: "POST",
       body: adminNote ? { adminNote } : {},
     }),
 };
 
 // ─── Product Listing Requests ─────────────────────────────────────────────────
-//
-// ProductRequestController → /api/v1/product-requests
-// All responses wrapped in ApiResponse<T> — use unwrap().
-
 export const productRequestApi = {
   initiatePayment: () =>
     unwrap<any>("/product-requests/initiate", { method: "POST" }),
-
   verifyPayment: (reference: string) =>
     unwrap<any>(`/product-requests/verify/${reference}`),
-
   getById: (productRequestId: string) =>
     unwrap<any>(`/product-requests/${productRequestId}`),
 };
 
 // ─── User Product Requests ────────────────────────────────────────────────────
-//
-// UserAdvancedProductController → /api/v1/user-products
-
 export const userProductApi = {
   create: (requestId: string, formData: FormData) =>
     unwrap<any>(`/user-products/create?requestId=${requestId}`, {
@@ -492,35 +296,26 @@ export const userProductApi = {
       body: formData,
       isFormData: true,
     }),
-
   update: (productId: string, formData: FormData) =>
     unwrap<any>(`/user-products/${productId}`, {
       method: "PUT",
       body: formData,
       isFormData: true,
     }),
-
   getMyRequests: (page = 0, size = 10) =>
     unwrap<any>(`/user-products/my-requests?page=${page}&size=${size}`),
-
   getMyRequestById: (requestId: string) =>
     unwrap<any>(`/user-products/my-requests/${requestId}`),
-
   getMyProductsByStatus: (status: string, page = 0, size = 10) =>
     unwrap<any>(`/user-products/my-products?status=${status}&page=${page}&size=${size}`),
-
   sellerGetAll: () =>
     unwrap<any[]>("/user-products/seller/all"),
-
   sellerGetByStatus: (status: string, page = 0, size = 10) =>
     unwrap<any>(`/user-products/seller/by-status?status=${status}&page=${page}&size=${size}`),
-
   sellerGetRecent: (page = 0, size = 10) =>
     unwrap<any>(`/user-products/seller/recent?page=${page}&size=${size}`),
-
   sellerGetRequestById: (requestId: string) =>
     unwrap<any>(`/user-products/seller/requests/${requestId}`),
-
   sellerUpdateStatus: (productId: string, status: "PENDING" | "APPROVED" | "REJECTED") =>
     unwrap<any>(`/user-products/seller/requests/${productId}/status`, {
       method: "PATCH",
@@ -548,80 +343,21 @@ export const deliveryApi = {
 };
 
 // ─── Chat ─────────────────────────────────────────────────────────────────────
-//
-// ChatController → /api/v1/chat
-// All responses wrapped in ApiResponse<T> — use unwrap().
-//
-// Endpoint map (backend → frontend method):
-//
-//   POST   /chat/conversations                                → startConversation(productId)
-//   POST   /chat/conversations/{id}/messages/user            → userSendMessage(id, content, productImageId?)
-//   POST   /chat/conversations/{id}/messages/seller          → sellerSendMessage(id, content, productImageId?)
-//   POST   /chat/conversations/{id}/delivery                 → submitDeliveryDetails(id, details)
-//   GET    /chat/conversations/{id}/history                  → getChatHistory(id)
-//   GET    /chat/user/conversations[?unreadOnly=true]        → getUserConversations(unreadOnly?)
-//   GET    /chat/seller/conversations[?unreadOnly=true]      → getSellerConversations(unreadOnly?)
-//   GET    /chat/seller/inbox                                → getSellerInbox()
-//   GET    /chat/user/unread-count                           → getUserUnreadCount()
-//   GET    /chat/seller/unread-count                         → getSellerUnreadCount()
-//   PATCH  /chat/conversations/{id}/read?senderType=USER|SELLER → markAsRead(id, senderType)
-//   DELETE /chat/conversations/{id}                          → deleteConversation(id)
-
 export const chatApi = {
-  // ── Conversation lifecycle ────────────────────────────────────────────────
-
-  /**
-   * POST /chat/conversations
-   * body: { productId: string }
-   * Returns ConversationResponse
-   * Called by buyers to open a product enquiry chat.
-   */
   startConversation: (productId: string) =>
-    unwrap<any>("/chat/conversations", {
-      method: "POST",
-      body: { productId },
-    }),
-
-  /**
-   * DELETE /chat/conversations/{conversationId}
-   * Authenticated as UserPrincipal — only the conversation owner can delete.
-   * Returns ApiResponse<Void>
-   */
+    unwrap<any>("/chat/conversations", { method: "POST", body: { productId } }),
   deleteConversation: (conversationId: string) =>
     unwrap<void>(`/chat/conversations/${conversationId}`, { method: "DELETE" }),
-
-  // ── Messaging ─────────────────────────────────────────────────────────────
-
-  /**
-   * POST /chat/conversations/{conversationId}/messages/user
-   * body: { content: string, productImageId?: number }
-   * Authenticated as UserPrincipal.
-   * Returns MessageResponse
-   */
   userSendMessage: (conversationId: string, content: string, productImageId?: number) =>
     unwrap<any>(`/chat/conversations/${conversationId}/messages/user`, {
       method: "POST",
       body: { content, ...(productImageId != null && { productImageId }) },
     }),
-
-  /**
-   * POST /chat/conversations/{conversationId}/messages/seller
-   * body: { content: string, productImageId?: number }
-   * Authenticated as UserPrincipal (seller role).
-   * Returns MessageResponse
-   */
   sellerSendMessage: (conversationId: string, content: string, productImageId?: number) =>
     unwrap<any>(`/chat/conversations/${conversationId}/messages/seller`, {
       method: "POST",
       body: { content, ...(productImageId != null && { productImageId }) },
     }),
-
-  /**
-   * POST /chat/conversations/{conversationId}/delivery
-   * body: DeliveryDetailsRequest fields
-   * Authenticated as UserPrincipal — buyer submits delivery info.
-   * Returns MessageResponse
-   */
   submitDeliveryDetails: (
     conversationId: string,
     details: {
@@ -638,84 +374,22 @@ export const chatApi = {
       method: "POST",
       body: details,
     }),
-
-  // ── History ───────────────────────────────────────────────────────────────
-
-  /**
-   * GET /chat/conversations/{conversationId}/history
-   * Returns ChatHistoryResponse: { conversationId, productCard, messages[], totalMessages }
-   * Also auto-marks messages as read server-side based on viewer identity.
-   */
   getChatHistory: (conversationId: string) =>
     unwrap<any>(`/chat/conversations/${conversationId}/history`),
-
-  // ── User conversation lists ───────────────────────────────────────────────
-
-  /**
-   * GET /chat/user/conversations
-   * Returns List<ConversationResponse>
-   * Authenticated as UserPrincipal.
-   */
   getUserConversations: () =>
     unwrap<any[]>("/chat/user/conversations"),
-
-  /**
-   * GET /chat/user/conversations?unreadOnly=true
-   * Returns List<ConversationResponse> filtered to those with unread messages.
-   */
   getUserConversationsUnread: () =>
     unwrap<any[]>("/chat/user/conversations?unreadOnly=true"),
-
-  // ── Seller conversation lists ─────────────────────────────────────────────
-
-  /**
-   * GET /chat/seller/conversations
-   * Returns List<ConversationResponse>
-   * Authenticated as AdminPrincipal (seller).
-   */
   getSellerConversations: () =>
     unwrap<any[]>("/chat/seller/conversations"),
-
-  /**
-   * GET /chat/seller/conversations?unreadOnly=true
-   * Returns List<ConversationResponse> filtered to those with unread messages.
-   */
   getSellerConversationsUnread: () =>
     unwrap<any[]>("/chat/seller/conversations?unreadOnly=true"),
-
-  /**
-   * GET /chat/seller/inbox
-   * Returns List<SellerInboxResponse> — richer inbox view with last message + unread count.
-   * Authenticated as AdminPrincipal (seller).
-   */
   getSellerInbox: () =>
     unwrap<any[]>("/chat/seller/inbox"),
-
-  // ── Unread counts ─────────────────────────────────────────────────────────
-
-  /**
-   * GET /chat/user/unread-count
-   * Returns { unreadCount: number }
-   */
   getUserUnreadCount: () =>
     unwrap<{ unreadCount: number }>("/chat/user/unread-count"),
-
-  /**
-   * GET /chat/seller/unread-count
-   * Returns { unreadCount: number }
-   */
   getSellerUnreadCount: () =>
     unwrap<{ unreadCount: number }>("/chat/seller/unread-count"),
-
-  // ── Read state ────────────────────────────────────────────────────────────
-
-  /**
-   * PATCH /chat/conversations/{conversationId}/read?senderType=USER|SELLER
-   * senderType: the role whose messages should be marked as read.
-   *   - When the seller opens a conversation → senderType=USER  (mark buyer's msgs as read)
-   *   - When the user opens a conversation   → senderType=SELLER (mark seller's msgs as read)
-   * Returns ApiResponse<Void>
-   */
   markAsRead: (conversationId: string, senderType: "USER" | "SELLER") =>
     unwrap<void>(
       `/chat/conversations/${conversationId}/read?senderType=${senderType}`,
@@ -723,27 +397,22 @@ export const chatApi = {
     ),
 };
 
-
-
+// ─── Notifications ────────────────────────────────────────────────────────────
 export const notificationApi = {
   getAll: () => unwrap<any[]>("/notifications/user"),
-
   getUnread: () => unwrap<any[]>("/notifications/user?unreadOnly=true"),
-
   getUnreadCount: () => unwrap<{ unreadCount: number }>("/notifications/user/unread-count"),
-
   markAsRead: (id: string) =>
     unwrap<void>(`/notifications/user/${id}/read`, { method: "PATCH" }),
-
   markAllAsRead: () =>
     unwrap<void>("/notifications/user/read-all", { method: "PATCH" }),
-
   registerFcmToken: (fcmToken: string) =>
     unwrap<void>("/notifications/user/fcm-token", {
       method: "POST",
       body: { fcmToken },
     }),
 };
+
 // ─── AI ───────────────────────────────────────────────────────────────────────
 export const aiApi = {
   chat: (message: string, budget?: number) => {
