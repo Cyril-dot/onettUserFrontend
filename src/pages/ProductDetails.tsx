@@ -2,19 +2,17 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  ShoppingCart, MessageCircle, ArrowLeft, Store,
+  ShoppingCart, MessageCircle, Store,
   Minus, Plus, Play, Package, ChevronRight,
-  Tag, Star, Truck, ShieldCheck, ArrowRight,
+  Tag, Truck, ShieldCheck, ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { productApi, cartApi, chatApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import ProductDetailSkeleton from "@/components/ProductDetailSkeleton";
 import { toast } from "sonner";
 
-// ── Normalise discount fields that the API may return inconsistently ──────────
 function normaliseProduct(p: any) {
   if (!p) return p;
   return {
@@ -23,7 +21,6 @@ function normaliseProduct(p: any) {
     discountPrice: p.discountPrice != null ? Number(p.discountPrice) : undefined,
     discountPercentage: p.discountPercentage != null ? Number(p.discountPercentage) : undefined,
     price: Number(p.price),
-    // Also normalise any related products in the same pass
     relatedProducts: Array.isArray(p.relatedProducts)
       ? p.relatedProducts.map((rp: any) => ({
           ...rp,
@@ -53,7 +50,7 @@ const ProductDetails = () => {
     if (!id) return;
     productApi
       .getDetails(id)
-      .then(data => setProduct(normaliseProduct(data)))   // ← FIX applied here
+      .then(data => setProduct(normaliseProduct(data)))
       .catch(() => toast.error("Failed to load product"))
       .finally(() => setLoading(false));
   }, [id]);
@@ -91,10 +88,10 @@ const ProductDetails = () => {
   if (!product) return (
     <>
       <Navbar />
-      <div className="text-center py-20">
-        <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
-        <p className="text-muted-foreground">Product not found</p>
-        <Link to="/" className="text-sm text-primary hover:underline mt-2 inline-block">Go back home</Link>
+      <div className="pd-not-found">
+        <Package className="pd-not-found-icon" />
+        <p className="pd-not-found-text">Product not found</p>
+        <Link to="/" className="pd-not-found-link">Go back home</Link>
       </div>
     </>
   );
@@ -113,95 +110,86 @@ const ProductDetails = () => {
   const displayPrice = hasDiscount ? product.discountPrice : product.price;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="pd-page-root">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
+      <div className="pd-page-container">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4 md:mb-6">
-          <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-          <ChevronRight className="h-3 w-3" />
+        <div className="pd-breadcrumb">
+          <Link to="/" className="pd-breadcrumb-link">Home</Link>
+          <ChevronRight className="pd-breadcrumb-sep" />
           {product.category && (
             <>
-              <Link to={`/categories/${product.category.slug}`} className="hover:text-foreground transition-colors">
+              <Link to={`/categories/${product.category.slug}`} className="pd-breadcrumb-link">
                 {product.category.name}
               </Link>
-              <ChevronRight className="h-3 w-3" />
+              <ChevronRight className="pd-breadcrumb-sep" />
             </>
           )}
-          <span className="text-foreground line-clamp-1">{product.name}</span>
+          <span className="pd-breadcrumb-current">{product.name}</span>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 md:gap-10 lg:gap-16">
+        <div className="pd-product-layout">
 
-          {/* ── Media Column ──────────────────────────────────── */}
+          {/* ── Media Column ── */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            className="space-y-3"
+            className="pd-media-col"
           >
             {/* Main viewer */}
-            <div className="aspect-square overflow-hidden rounded-2xl bg-muted relative">
+            <div className="pd-main-viewer">
               {!current ? (
-                <div className="flex h-full w-full items-center justify-center">
-                  <Package className="h-20 w-20 text-muted-foreground/30" />
+                <div className="pd-main-viewer-empty">
+                  <Package className="pd-viewer-placeholder-icon" />
                 </div>
               ) : current.type === "image" ? (
-                <img
-                  src={current.url}
-                  alt={product.name}
-                  className="h-full w-full object-cover"
-                />
+                <img src={current.url} alt={product.name} className="pd-main-viewer-img" />
               ) : (
                 <video
                   key={current.url}
                   src={current.url}
                   controls
                   poster={current.thumbnailUrl ?? undefined}
-                  className="h-full w-full object-cover"
+                  className="pd-main-viewer-video"
                 />
               )}
 
-              {/* Badges on main image */}
               {hasDiscount && (
-                <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-md">
+                <div className="pd-main-discount-badge">
                   -{product.discountPercentage}% OFF
                 </div>
               )}
               {!inStock && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-2xl">
-                  <span className="bg-black/80 text-white text-sm font-bold px-4 py-2 rounded-full">Out of Stock</span>
+                <div className="pd-main-out-of-stock-overlay">
+                  <span className="pd-main-out-of-stock-label">Out of Stock</span>
                 </div>
               )}
             </div>
 
             {/* Thumbnails */}
             {mediaItems.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="pd-thumbnails-row">
                 {mediaItems.map((item, i) => (
                   <button
                     key={item.id ?? i}
                     onClick={() => setSelectedMedia({ type: item.type, index: i })}
-                    className={`relative h-16 w-16 md:h-20 md:w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
-                      i === selectedMedia.index
-                        ? "border-primary shadow-md"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`pd-thumbnail-btn ${i === selectedMedia.index ? "pd-thumbnail-btn--active" : ""}`}
                   >
                     {item.type === "image" ? (
-                      <img src={item.url} alt="" className="h-full w-full object-cover" />
+                      <img src={item.url} alt="" className="pd-thumbnail-img" />
                     ) : (
                       <>
                         {item.thumbnailUrl ? (
-                          <img src={item.thumbnailUrl} alt="video" className="h-full w-full object-cover" />
+                          <img src={item.thumbnailUrl} alt="video" className="pd-thumbnail-img" />
                         ) : (
-                          <div className="h-full w-full bg-muted flex items-center justify-center">
-                            <Play className="h-5 w-5 text-muted-foreground" />
+                          <div className="pd-thumbnail-video-placeholder">
+                            <Play className="pd-thumbnail-play" />
                           </div>
                         )}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                          <Play className="h-4 w-4 text-white fill-white" />
+                        <div className="pd-thumbnail-video-overlay">
+                          <Play className="pd-thumbnail-play-white" />
                         </div>
                       </>
                     )}
@@ -210,73 +198,64 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Trust signals — below image on desktop */}
-            <div className="hidden md:flex flex-col gap-2 mt-2">
-              <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                <ShieldCheck className="h-4 w-4 text-green-500 shrink-0" />
-                <span>Secure payment & buyer protection</span>
+            {/* Trust signals */}
+            <div className="pd-trust-signals">
+              <div className="pd-trust-row">
+                <ShieldCheck className="pd-trust-icon pd-trust-icon--green" />
+                <span className="pd-trust-text">Secure payment & buyer protection</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                <Truck className="h-4 w-4 text-blue-500 shrink-0" />
-                <span>Fast delivery across Ghana</span>
+              <div className="pd-trust-row">
+                <Truck className="pd-trust-icon pd-trust-icon--blue" />
+                <span className="pd-trust-text">Fast delivery across Ghana</span>
               </div>
             </div>
           </motion.div>
 
-          {/* ── Info Column ───────────────────────────────────── */}
+          {/* ── Info Column ── */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="space-y-5"
+            className="pd-info-col"
           >
             {/* Category pill */}
             {product.category && (
-              <Link
-                to={`/categories/${product.category.slug}`}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-orange-50 border border-orange-200 px-2.5 py-0.5 rounded-full hover:bg-orange-100 transition-colors"
-              >
-                <Tag className="h-3 w-3" />
+              <Link to={`/categories/${product.category.slug}`} className="pd-category-pill">
+                <Tag className="pd-category-pill-icon" />
                 {product.category.name}
               </Link>
             )}
 
             {/* Product name */}
-            <div>
-              <h1
-                className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground leading-tight font-satoshi"
-              >
-                {product.name}
-              </h1>
+            <div className="pd-name-block">
+              <h1 className="pd-product-name">{product.name}</h1>
               {product.brand && (
-                <p className="text-sm text-muted-foreground mt-1 font-inter">
-                  by <span className="font-semibold text-foreground">{product.brand}</span>
+                <p className="pd-product-brand">
+                  by <span className="pd-product-brand-name">{product.brand}</span>
                 </p>
               )}
             </div>
 
             {/* Price block */}
-            <div className="rounded-xl bg-card border border-border/50 p-4">
-              <div className="flex items-baseline gap-3 mb-1">
-                <span className="text-2xl md:text-3xl font-bold text-primary font-ui">
+            <div className="pd-price-card">
+              <div className="pd-price-row">
+                <span className="pd-price-main">
                   GHS {Number(displayPrice).toFixed(2)}
                 </span>
                 {hasDiscount && (
                   <>
-                    <span className="text-base text-muted-foreground line-through">
+                    <span className="pd-price-original">
                       GHS {Number(product.price).toFixed(2)}
                     </span>
-                    <span className="text-xs font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                    <span className="pd-price-save-badge">
                       Save GHS {(Number(product.price) - Number(product.discountPrice)).toFixed(2)}
                     </span>
                   </>
                 )}
               </div>
-
-              {/* Stock status */}
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className={`inline-block h-2 w-2 rounded-full ${inStock ? "bg-green-500" : "bg-red-400"}`} />
-                <span className="text-xs text-muted-foreground font-inter">
+              <div className="pd-stock-row">
+                <span className={`pd-stock-dot ${inStock ? "pd-stock-dot--in" : "pd-stock-dot--out"}`} />
+                <span className="pd-stock-text">
                   {inStock ? `${product.stock} in stock` : "Out of stock"}
                 </span>
               </div>
@@ -284,118 +263,95 @@ const ProductDetails = () => {
 
             {/* Description */}
             {product.productDescription && (
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-1.5 font-satoshi">
-                  About this product
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed font-inter">
-                  {product.productDescription}
-                </p>
+              <div className="pd-description-block">
+                <h3 className="pd-description-heading">About this product</h3>
+                <p className="pd-description-text">{product.productDescription}</p>
               </div>
             )}
 
             {/* Quantity + Actions */}
             {!isSeller && inStock && (
-              <div className="space-y-3">
-                {/* Quantity selector */}
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-foreground font-ui">
-                    Qty:
-                  </span>
-                  <div className="flex items-center rounded-xl border border-border overflow-hidden">
+              <div className="pd-actions-block">
+                <div className="pd-qty-row">
+                  <span className="pd-qty-label">Qty:</span>
+                  <div className="pd-qty-control">
                     <button
-                      className="h-9 w-9 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-40"
+                      className="pd-qty-btn"
                       onClick={() => setQuantity(q => Math.max(1, q - 1))}
                       disabled={quantity <= 1}
                     >
-                      <Minus className="h-3.5 w-3.5" />
+                      <Minus className="pd-qty-btn-icon" />
                     </button>
-                    <span className="w-10 text-center text-sm font-semibold">{quantity}</span>
+                    <span className="pd-qty-value">{quantity}</span>
                     <button
-                      className="h-9 w-9 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-40"
+                      className="pd-qty-btn"
                       onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
                       disabled={quantity >= product.stock}
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="pd-qty-btn-icon" />
                     </button>
                   </div>
                 </div>
 
-                {/* CTA Buttons */}
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1 gap-2 h-11 border-primary/30 text-primary hover:bg-orange-500/5 font-semibold font-ui"
+                <div className="pd-cta-row">
+                  <button
+                    className="pd-btn-add-cart"
                     onClick={handleAddToCart}
                     disabled={addingToCart}
                   >
-                    <ShoppingCart className="h-4 w-4" />
+                    <ShoppingCart className="pd-cta-icon" />
                     {addingToCart ? "Adding…" : "Add to Cart"}
-                  </Button>
-                  <Button
-                    className="flex-1 gap-2 h-11 bg-primary hover:bg-orange-700 text-white font-semibold shadow-md font-ui"
+                  </button>
+                  <button
+                    className="pd-btn-order-now"
                     onClick={handleOrderNow}
                   >
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="pd-cta-icon" />
                     Order Now
-                  </Button>
+                  </button>
                 </div>
               </div>
             )}
 
             {/* Mobile trust signals */}
-            <div className="flex md:hidden flex-col gap-2">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <ShieldCheck className="h-4 w-4 text-green-500" />
-                <span>Secure payment & buyer protection</span>
+            <div className="pd-trust-signals-mobile">
+              <div className="pd-trust-row">
+                <ShieldCheck className="pd-trust-icon pd-trust-icon--green" />
+                <span className="pd-trust-text">Secure payment & buyer protection</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Truck className="h-4 w-4 text-blue-500" />
-                <span>Fast delivery across Ghana</span>
+              <div className="pd-trust-row">
+                <Truck className="pd-trust-icon pd-trust-icon--blue" />
+                <span className="pd-trust-text">Fast delivery across Ghana</span>
               </div>
             </div>
 
             {/* Seller info */}
             {product.seller && (
-              <div className="rounded-xl border border-border bg-card/50 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 font-ui">
-                  Sold by
-                </p>
-                <div className="flex items-center justify-between">
-                  <Link
-                    to={`/store/${product.seller.id}`}
-                    className="flex items-center gap-3 group"
-                  >
-                    <div className="h-10 w-10 rounded-full overflow-hidden bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+              <div className="pd-seller-card">
+                <p className="pd-seller-label">Sold by</p>
+                <div className="pd-seller-row">
+                  <Link to={`/store/${product.seller.id}`} className="pd-seller-info">
+                    <div className="pd-seller-avatar">
                       {product.seller.profilePic?.imageUrl ? (
                         <img
                           src={product.seller.profilePic.imageUrl}
                           alt={product.seller.storeName}
-                          className="h-full w-full object-cover"
+                          className="pd-seller-avatar-img"
                         />
                       ) : (
-                        <Store className="h-5 w-5 text-primary" />
+                        <Store className="pd-seller-avatar-icon" />
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold group-hover:text-primary transition-colors font-satoshi">
-                        {product.seller.storeName}
-                      </p>
-                      <p className="text-xs text-muted-foreground font-inter">
-                        {product.seller.location ?? "Visit store →"}
-                      </p>
+                      <p className="pd-seller-store-name">{product.seller.storeName}</p>
+                      <p className="pd-seller-location">{product.seller.location ?? "Visit store →"}</p>
                     </div>
                   </Link>
                   {!isSeller && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-xs border-border hover:border-primary/40 hover:text-primary"
-                      onClick={handleContactSeller}
-                    >
-                      <MessageCircle className="h-3.5 w-3.5" />
+                    <button className="pd-btn-chat" onClick={handleContactSeller}>
+                      <MessageCircle className="pd-chat-icon" />
                       Chat
-                    </Button>
+                    </button>
                   )}
                 </div>
               </div>
@@ -403,62 +359,42 @@ const ProductDetails = () => {
           </motion.div>
         </div>
 
-        {/* ── Related Products ──────────────────────────────── */}
+        {/* Related Products */}
         {product.relatedProducts && product.relatedProducts.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-12 md:mt-16"
+            className="pd-related-section"
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg md:text-xl font-bold text-foreground font-satoshi">
-                You might also like
-              </h2>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <h2 className="pd-related-heading">You might also like</h2>
+            <div className="pd-related-grid">
               {product.relatedProducts.map((rp: any) => {
                 const rpHasDiscount = rp.isDiscounted && rp.discountPrice;
                 const rpDisplayPrice = rpHasDiscount ? rp.discountPrice : rp.price;
                 const rpImage = rp.primaryImageUrl || rp.images?.[0]?.imageUrl || null;
                 return (
-                  <Link
-                    key={rp.id}
-                    to={`/products/${rp.id}`}
-                    className="rounded-xl border bg-card overflow-hidden transition-shadow duration-200 hover:shadow-md flex flex-col"
-                  >
-                    <div className="relative aspect-square bg-muted overflow-hidden">
+                  <Link key={rp.id} to={`/products/${rp.id}`} className="pd-related-card">
+                    <div className="pd-related-image-wrap">
                       {rpImage ? (
-                        <img
-                          src={rpImage}
-                          alt={rp.name}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
+                        <img src={rpImage} alt={rp.name} className="pd-related-image" loading="lazy" />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center">
-                          <Package className="h-8 w-8 text-muted-foreground/30" />
+                        <div className="pd-related-image-fallback">
+                          <Package className="pd-related-placeholder-icon" />
                         </div>
                       )}
-                      {/* Discount badge on related products */}
                       {rpHasDiscount && (
-                        <div className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                        <div className="pd-related-discount-badge">
                           -{rp.discountPercentage}%
                         </div>
                       )}
                     </div>
-                    <div className="p-2.5 flex flex-col flex-1">
-                      <p className="text-xs font-medium line-clamp-2 leading-snug flex-1 font-satoshi">
-                        {rp.name}
-                      </p>
-                      <div className="flex items-baseline gap-1.5 mt-1.5">
-                        <p className="text-xs font-bold text-primary font-ui">
-                          GHS {Number(rpDisplayPrice).toFixed(2)}
-                        </p>
+                    <div className="pd-related-card-body">
+                      <p className="pd-related-card-name">{rp.name}</p>
+                      <div className="pd-related-price-row">
+                        <p className="pd-related-price">GHS {Number(rpDisplayPrice).toFixed(2)}</p>
                         {rpHasDiscount && (
-                          <p className="text-[10px] text-muted-foreground line-through">
-                            GHS {Number(rp.price).toFixed(2)}
-                          </p>
+                          <p className="pd-related-original-price">GHS {Number(rp.price).toFixed(2)}</p>
                         )}
                       </div>
                     </div>
@@ -469,6 +405,375 @@ const ProductDetails = () => {
           </motion.div>
         )}
       </div>
+
+      <style>{`
+        .pd-page-root {
+          min-height: 100vh;
+          background: #ffffff;
+          font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        .pd-page-container {
+          max-width: 1152px;
+          margin: 0 auto;
+          padding: 16px;
+        }
+        @media (min-width: 768px) {
+          .pd-page-container { padding: 24px 16px; }
+        }
+        .pd-not-found {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 80px 0;
+        }
+        .pd-not-found-icon { width: 64px; height: 64px; color: #d1d5db; margin-bottom: 16px; }
+        .pd-not-found-text { color: #6b7280; margin: 0 0 8px; }
+        .pd-not-found-link { font-size: 13px; color: #f97316; text-decoration: none; }
+        .pd-not-found-link:hover { text-decoration: underline; }
+
+        /* Breadcrumb */
+        .pd-breadcrumb {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 12px;
+          color: #9ca3af;
+          margin-bottom: 20px;
+          flex-wrap: wrap;
+        }
+        .pd-breadcrumb-link { color: #9ca3af; text-decoration: none; transition: color 0.15s; }
+        .pd-breadcrumb-link:hover { color: #111827; }
+        .pd-breadcrumb-sep { width: 12px; height: 12px; color: #d1d5db; }
+        .pd-breadcrumb-current {
+          color: #111827;
+          font-weight: 500;
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        /* Layout */
+        .pd-product-layout {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+        @media (min-width: 768px) {
+          .pd-product-layout { grid-template-columns: 1fr 1fr; gap: 40px; }
+        }
+        @media (min-width: 1024px) {
+          .pd-product-layout { gap: 64px; }
+        }
+
+        /* Media col */
+        .pd-media-col { display: flex; flex-direction: column; gap: 12px; }
+        .pd-main-viewer {
+          aspect-ratio: 1/1;
+          border-radius: 20px;
+          overflow: hidden;
+          background: #f9fafb;
+          position: relative;
+        }
+        .pd-main-viewer-empty {
+          width: 100%; height: 100%;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .pd-viewer-placeholder-icon { width: 80px; height: 80px; color: #d1d5db; }
+        .pd-main-viewer-img { width: 100%; height: 100%; object-fit: cover; }
+        .pd-main-viewer-video { width: 100%; height: 100%; object-fit: cover; }
+        .pd-main-discount-badge {
+          position: absolute; top: 12px; left: 12px;
+          background: #ef4444; color: #fff;
+          font-size: 12px; font-weight: 800;
+          padding: 4px 10px; border-radius: 9999px;
+          box-shadow: 0 2px 8px rgba(239,68,68,0.4);
+        }
+        .pd-main-out-of-stock-overlay {
+          position: absolute; inset: 0;
+          background: rgba(0,0,0,0.5);
+          display: flex; align-items: center; justify-content: center;
+          border-radius: 20px;
+        }
+        .pd-main-out-of-stock-label {
+          background: rgba(0,0,0,0.8); color: #fff;
+          font-size: 14px; font-weight: 700;
+          padding: 6px 16px; border-radius: 9999px;
+        }
+
+        /* Thumbnails */
+        .pd-thumbnails-row {
+          display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+        }
+        .pd-thumbnail-btn {
+          position: relative;
+          width: 64px; height: 64px;
+          border-radius: 12px;
+          overflow: hidden;
+          border: 2px solid #e5e7eb;
+          flex-shrink: 0;
+          cursor: pointer;
+          transition: border-color 0.15s, box-shadow 0.15s;
+          background: none; padding: 0;
+        }
+        .pd-thumbnail-btn--active {
+          border-color: #f97316;
+          box-shadow: 0 0 0 2px rgba(249,115,22,0.25);
+        }
+        .pd-thumbnail-btn:not(.pd-thumbnail-btn--active):hover {
+          border-color: rgba(249,115,22,0.5);
+        }
+        @media (min-width: 768px) {
+          .pd-thumbnail-btn { width: 80px; height: 80px; }
+        }
+        .pd-thumbnail-img { width: 100%; height: 100%; object-fit: cover; }
+        .pd-thumbnail-video-placeholder {
+          width: 100%; height: 100%;
+          background: #f3f4f6;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .pd-thumbnail-play { width: 20px; height: 20px; color: #9ca3af; }
+        .pd-thumbnail-video-overlay {
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(0,0,0,0.3);
+        }
+        .pd-thumbnail-play-white { width: 16px; height: 16px; color: #fff; fill: #fff; }
+
+        /* Trust signals */
+        .pd-trust-signals {
+          display: none;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: 8px;
+        }
+        @media (min-width: 768px) { .pd-trust-signals { display: flex; } }
+        .pd-trust-signals-mobile {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        @media (min-width: 768px) { .pd-trust-signals-mobile { display: none; } }
+        .pd-trust-row { display: flex; align-items: center; gap: 10px; }
+        .pd-trust-icon { width: 16px; height: 16px; flex-shrink: 0; }
+        .pd-trust-icon--green { color: #22c55e; }
+        .pd-trust-icon--blue { color: #3b82f6; }
+        .pd-trust-text { font-size: 12px; color: #9ca3af; }
+
+        /* Info col */
+        .pd-info-col { display: flex; flex-direction: column; gap: 20px; }
+
+        .pd-category-pill {
+          display: inline-flex; align-items: center; gap: 4px;
+          font-size: 11px; font-weight: 700;
+          color: #f97316;
+          background: rgba(249,115,22,0.08);
+          border: 1.5px solid rgba(249,115,22,0.25);
+          padding: 3px 10px; border-radius: 9999px;
+          text-decoration: none;
+          transition: background 0.15s;
+        }
+        .pd-category-pill:hover { background: rgba(249,115,22,0.16); }
+        .pd-category-pill-icon { width: 12px; height: 12px; }
+
+        .pd-name-block {}
+        .pd-product-name {
+          font-size: clamp(20px, 3vw, 28px);
+          font-weight: 800;
+          color: #111827;
+          line-height: 1.25;
+          margin: 0 0 4px;
+        }
+        .pd-product-brand { font-size: 13px; color: #9ca3af; margin: 0; }
+        .pd-product-brand-name { font-weight: 600; color: #111827; }
+
+        .pd-price-card {
+          background: #fff;
+          border: 1.5px solid #f3f4f6;
+          border-radius: 16px;
+          padding: 16px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .pd-price-row {
+          display: flex; align-items: baseline; gap: 12px;
+          flex-wrap: wrap; margin-bottom: 8px;
+        }
+        .pd-price-main {
+          font-size: clamp(24px, 3.5vw, 32px);
+          font-weight: 800; color: #f97316;
+        }
+        .pd-price-original {
+          font-size: 16px; color: #9ca3af; text-decoration: line-through;
+        }
+        .pd-price-save-badge {
+          font-size: 12px; font-weight: 700;
+          color: #ef4444;
+          background: rgba(239,68,68,0.08);
+          padding: 2px 8px; border-radius: 9999px;
+        }
+        .pd-stock-row { display: flex; align-items: center; gap: 6px; }
+        .pd-stock-dot {
+          width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+        }
+        .pd-stock-dot--in { background: #22c55e; }
+        .pd-stock-dot--out { background: #f87171; }
+        .pd-stock-text { font-size: 12px; color: #9ca3af; }
+
+        .pd-description-block {}
+        .pd-description-heading {
+          font-size: 14px; font-weight: 700; color: #111827;
+          margin: 0 0 6px;
+        }
+        .pd-description-text {
+          font-size: 14px; color: #6b7280; line-height: 1.65; margin: 0;
+        }
+
+        .pd-actions-block { display: flex; flex-direction: column; gap: 12px; }
+        .pd-qty-row { display: flex; align-items: center; gap: 12px; }
+        .pd-qty-label { font-size: 14px; font-weight: 600; color: #111827; }
+        .pd-qty-control {
+          display: flex; align-items: center;
+          border-radius: 12px;
+          border: 1.5px solid #e5e7eb;
+          overflow: hidden;
+        }
+        .pd-qty-btn {
+          width: 36px; height: 36px;
+          display: flex; align-items: center; justify-content: center;
+          background: none; border: none; cursor: pointer;
+          color: #374151; transition: background 0.15s;
+        }
+        .pd-qty-btn:hover:not(:disabled) { background: #f9fafb; }
+        .pd-qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .pd-qty-btn-icon { width: 14px; height: 14px; }
+        .pd-qty-value {
+          width: 40px; text-align: center;
+          font-size: 14px; font-weight: 700; color: #111827;
+        }
+
+        .pd-cta-row { display: flex; gap: 8px; }
+        .pd-btn-add-cart {
+          flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+          height: 44px; border-radius: 12px;
+          background: rgba(249,115,22,0.06);
+          color: #f97316;
+          border: 1.5px solid rgba(249,115,22,0.3);
+          font-size: 14px; font-weight: 700;
+          cursor: pointer; transition: background 0.15s;
+        }
+        .pd-btn-add-cart:hover:not(:disabled) { background: rgba(249,115,22,0.12); }
+        .pd-btn-add-cart:disabled { opacity: 0.6; cursor: not-allowed; }
+        .pd-btn-order-now {
+          flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+          height: 44px; border-radius: 12px;
+          background: #f97316; color: #ffffff;
+          border: none; font-size: 14px; font-weight: 700;
+          cursor: pointer; transition: background 0.15s;
+          box-shadow: 0 4px 14px rgba(249,115,22,0.35);
+        }
+        .pd-btn-order-now:hover { background: #c2410c; }
+        .pd-cta-icon { width: 16px; height: 16px; }
+
+        .pd-seller-card {
+          background: #fff;
+          border: 1.5px solid #f3f4f6;
+          border-radius: 16px; padding: 16px;
+        }
+        .pd-seller-label {
+          font-size: 11px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.08em;
+          color: #9ca3af; margin: 0 0 12px;
+        }
+        .pd-seller-row {
+          display: flex; align-items: center; justify-content: space-between;
+        }
+        .pd-seller-info {
+          display: flex; align-items: center; gap: 12px;
+          text-decoration: none;
+        }
+        .pd-seller-avatar {
+          width: 40px; height: 40px;
+          border-radius: 50%; overflow: hidden;
+          background: rgba(249,115,22,0.1);
+          border: 1.5px solid rgba(249,115,22,0.2);
+          display: flex; align-items: center; justify-content: center;
+        }
+        .pd-seller-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+        .pd-seller-avatar-icon { width: 20px; height: 20px; color: #f97316; }
+        .pd-seller-store-name {
+          font-size: 14px; font-weight: 700; color: #111827; margin: 0 0 2px;
+          transition: color 0.15s;
+        }
+        .pd-seller-info:hover .pd-seller-store-name { color: #f97316; }
+        .pd-seller-location { font-size: 12px; color: #9ca3af; margin: 0; }
+        .pd-btn-chat {
+          display: flex; align-items: center; gap: 6px;
+          font-size: 12px; font-weight: 600; color: #374151;
+          background: #fff; border: 1.5px solid #e5e7eb;
+          padding: 6px 12px; border-radius: 10px;
+          cursor: pointer; transition: border-color 0.15s, color 0.15s;
+        }
+        .pd-btn-chat:hover { border-color: rgba(249,115,22,0.4); color: #f97316; }
+        .pd-chat-icon { width: 14px; height: 14px; }
+
+        /* Related */
+        .pd-related-section { margin-top: 48px; }
+        @media (min-width: 768px) { .pd-related-section { margin-top: 64px; } }
+        .pd-related-heading {
+          font-size: clamp(17px, 2.5vw, 20px);
+          font-weight: 800; color: #111827;
+          margin: 0 0 16px;
+        }
+        .pd-related-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        @media (min-width: 640px) { .pd-related-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 768px) { .pd-related-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 1024px) { .pd-related-grid { grid-template-columns: repeat(5, 1fr); } }
+
+        .pd-related-card {
+          border-radius: 14px;
+          border: 1.5px solid #f3f4f6;
+          background: #fff; overflow: hidden;
+          text-decoration: none;
+          display: flex; flex-direction: column;
+          transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .pd-related-card:hover {
+          box-shadow: 0 6px 20px rgba(249,115,22,0.12);
+          border-color: rgba(249,115,22,0.25);
+        }
+        .pd-related-image-wrap {
+          aspect-ratio: 1/1; background: #f9fafb;
+          position: relative; overflow: hidden;
+        }
+        .pd-related-image { width: 100%; height: 100%; object-fit: cover; }
+        .pd-related-image-fallback {
+          width: 100%; height: 100%;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .pd-related-placeholder-icon { width: 32px; height: 32px; color: #d1d5db; }
+        .pd-related-discount-badge {
+          position: absolute; top: 6px; right: 6px;
+          background: #ef4444; color: #fff;
+          font-size: 9px; font-weight: 800;
+          padding: 2px 6px; border-radius: 9999px;
+          box-shadow: 0 2px 4px rgba(239,68,68,0.3);
+        }
+        .pd-related-card-body { padding: 10px; display: flex; flex-direction: column; flex: 1; }
+        .pd-related-card-name {
+          font-size: 12px; font-weight: 600; color: #111827;
+          display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+          overflow: hidden; line-height: 1.4; flex: 1; margin: 0 0 6px;
+        }
+        .pd-related-price-row { display: flex; align-items: baseline; gap: 6px; }
+        .pd-related-price { font-size: 12px; font-weight: 800; color: #f97316; margin: 0; }
+        .pd-related-original-price {
+          font-size: 10px; color: #9ca3af; text-decoration: line-through; margin: 0;
+        }
+      `}</style>
     </div>
   );
 };
