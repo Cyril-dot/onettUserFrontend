@@ -74,7 +74,7 @@ const GLOBAL_CSS = `
   /* ── PRODUCT CARD ── */
   .pcard {
     width: 158px; flex-shrink: 0;
-    background: #F8F7F4;
+    background: #FFF8F2;
     border: 1px solid rgba(0,0,0,0.09);
     border-radius: 18px; overflow: hidden;
     display: flex; flex-direction: column;
@@ -92,7 +92,7 @@ const GLOBAL_CSS = `
   .pcard-img {
     width: 100%; aspect-ratio: 1 / 1;
     position: relative; overflow: hidden;
-    background: #EDEAE4; flex-shrink: 0;
+    background: #FFF3EA; flex-shrink: 0;
   }
   .pcard-img img {
     width: 100%; height: 100%;
@@ -113,7 +113,7 @@ const GLOBAL_CSS = `
   .pcard-wish {
     position: absolute; top: 10px; right: 10px; z-index: 2;
     width: 30px; height: 30px; border-radius: 9px;
-    background: rgba(248,247,244,0.9); border: 1px solid rgba(0,0,0,0.09);
+    background: rgba(255,248,242,0.9); border: 1px solid rgba(0,0,0,0.09);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; color: #9A9A9A; transition: all 0.15s;
     flex-shrink: 0;
@@ -193,6 +193,13 @@ const GLOBAL_CSS = `
   .pcard-cart:disabled { background: #E5E5E5; color: #A0A0A0; cursor: not-allowed; }
   @media (min-width: 480px)  { .pcard-cart { padding: 9px 13px; font-size: 11px; } }
   @media (min-width: 1024px) { .pcard-cart { padding: 10px 14px; font-size: 11.5px; } }
+
+  /* ── SECTION WRAPPER ── */
+  .section-warm {
+    background: #FFF3EA;
+    border-radius: 24px;
+    padding: 28px 0 24px;
+  }
 
   /* ── SECTION HEADER ── */
   .sec-hdr {
@@ -413,7 +420,7 @@ const GLOBAL_CSS = `
   /* ── UPCOMING CARD ── */
   .hs-card {
     width: 168px; flex-shrink: 0;
-    background: #F8F7F4; border: 1px solid rgba(0,0,0,0.09);
+    background: #FFF8F2; border: 1px solid rgba(0,0,0,0.09);
     border-radius: 18px; overflow: hidden;
     display: flex; flex-direction: column;
     text-decoration: none;
@@ -425,7 +432,7 @@ const GLOBAL_CSS = `
   @media (min-width: 480px) { .hs-card { width: 196px; } }
   @media (min-width: 768px) { .hs-card { width: 220px; } }
 
-  .hs-img { width: 100%; aspect-ratio: 1; position: relative; overflow: hidden; background: #EDEAE4; }
+  .hs-img { width: 100%; aspect-ratio: 1; position: relative; overflow: hidden; background: #FFF3EA; }
   .hs-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; display: block; }
   .hs-card:hover .hs-img img { transform: scale(1.06); }
 
@@ -472,7 +479,7 @@ const GLOBAL_CSS = `
   @media (min-width: 900px) { .ai-grid { grid-template-columns: repeat(4, 1fr); } }
 
   .ai-card {
-    background: #F8F7F4; border: 1px solid rgba(0,0,0,0.09);
+    background: #FFF8F2; border: 1px solid rgba(0,0,0,0.09);
     border-radius: 18px; padding: 18px 16px;
     cursor: pointer; transition: border-color 0.2s, transform 0.2s;
   }
@@ -486,7 +493,7 @@ const GLOBAL_CSS = `
   @media (min-width: 900px) { .trust-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; } }
 
   .trust-card {
-    background: #F8F7F4; border: 1px solid rgba(0,0,0,0.09);
+    background: #FFF8F2; border: 1px solid rgba(0,0,0,0.09);
     border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
     transition: border-color 0.2s;
   }
@@ -576,7 +583,7 @@ const GLOBAL_CSS = `
   @media (min-width: 600px) { .wp-overlay { align-items: center; } }
   .wp-sheet {
     width: 100%; max-width: 460px; border-radius: 28px 28px 0 0;
-    background: #F8F7F4; border: 1px solid rgba(0,0,0,0.08);
+    background: #FFF8F2; border: 1px solid rgba(0,0,0,0.08);
     border-bottom: none; max-height: 90dvh; overflow-y: auto;
   }
   @media (min-width: 600px) { .wp-sheet { border-radius: 28px; border-bottom: 1px solid rgba(0,0,0,0.08); } }
@@ -584,12 +591,12 @@ const GLOBAL_CSS = `
     height: 210px; position: relative; display: flex; align-items: center; justify-content: center;
     overflow: hidden;
     background: radial-gradient(ellipse at 50% 130%, var(--sc,#E6640A) 0%, transparent 65%),
-                linear-gradient(180deg, #EDEAE4, #F8F7F4);
+                linear-gradient(180deg, #FFF3EA, #FFF8F2);
     transition: background 0.4s;
   }
   .wp-orb {
     width: 100px; height: 100px; border-radius: 28px;
-    border: 1.5px solid var(--sc,#E6640A); background: rgba(248,247,244,0.85);
+    border: 1.5px solid var(--sc,#E6640A); background: rgba(255,248,242,0.85);
     display: flex; align-items: center; justify-content: center;
     position: relative; z-index: 2; backdrop-filter: blur(12px);
   }
@@ -609,7 +616,7 @@ const GLOBAL_CSS = `
   .wp-close:hover { background: rgba(0,0,0,0.1); }
   .wp-chip {
     position: absolute; top: 14px; left: 14px; z-index: 10;
-    background: rgba(248,247,244,0.9); border: 1px solid rgba(0,0,0,0.08);
+    background: rgba(255,248,242,0.9); border: 1px solid rgba(0,0,0,0.08);
     border-radius: 8px; padding: 4px 10px;
     font-family: 'Bricolage Grotesque', sans-serif;
     font-weight: 800; font-size: 13px; color: #1A1A1A; letter-spacing: -0.3px;
@@ -740,7 +747,7 @@ const GLOBAL_CSS = `
   .mobile-drawer {
     position: fixed; top: 0; right: 0; bottom: 0; z-index: 1200;
     width: min(320px, 88vw);
-    background: #F8F7F4;
+    background: #FFF8F2;
     display: flex; flex-direction: column;
     overflow-y: auto;
   }
@@ -944,8 +951,8 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
           </a>
           {hasDiscount && <div className="pcard-disc">-{product.discountPercentage}%</div>}
           {!inStock && (
-            <div style={{ position: "absolute", inset: 0, background: "rgba(248,247,244,0.75)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ background: "#F8F7F4", color: "#8A8A8A", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)" }}>Out of Stock</span>
+            <div style={{ position: "absolute", inset: 0, background: "rgba(255,248,242,0.75)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ background: "#FFF8F2", color: "#8A8A8A", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)" }}>Out of Stock</span>
             </div>
           )}
           <button className={`pcard-wish${wishlisted ? " active" : ""}`} onClick={e => { e.preventDefault(); e.stopPropagation(); setWishlisted(w => !w); }} aria-label="Add to wishlist">
@@ -1017,14 +1024,16 @@ function SectionHeader({ title, sub, accent, Icon, seeAllHref, trackId }: any) {
 
 function ProductSection({ title, sub, accent, Icon, items, loading, seeAllHref, id, onCartUpdate }: any) {
   return (
-    <div className="pg">
-      <SectionHeader title={title} sub={sub} accent={accent} Icon={Icon} seeAllHref={seeAllHref} trackId={id} />
-      <div id={id} className="scroll-track">
-        {loading
-          ? Array.from({ length: 5 }).map((_, i) => <SkeletonProductCard key={i} />)
-          : items.length === 0
-          ? <div className="empty-state"><div className="empty-state-icon">📦</div><div className="empty-state-text">Nothing here yet — check back soon!</div></div>
-          : items.map((item: any, i: number) => <ProductCard key={item.id} product={item} index={i} onCartUpdate={onCartUpdate} />)}
+    <div style={{ background: "#FFF3EA", borderRadius: 24, padding: "28px 0 24px" }}>
+      <div className="pg">
+        <SectionHeader title={title} sub={sub} accent={accent} Icon={Icon} seeAllHref={seeAllHref} trackId={id} />
+        <div id={id} className="scroll-track">
+          {loading
+            ? Array.from({ length: 5 }).map((_, i) => <SkeletonProductCard key={i} />)
+            : items.length === 0
+            ? <div className="empty-state"><div className="empty-state-icon">📦</div><div className="empty-state-text">Nothing here yet — check back soon!</div></div>
+            : items.map((item: any, i: number) => <ProductCard key={item.id} product={item} index={i} onCartUpdate={onCartUpdate} />)}
+        </div>
       </div>
     </div>
   );
@@ -1453,32 +1462,34 @@ export default function ONETTHomepage() {
         <div className="sdiv" />
 
         {/* ════ FLASH SALE ════ */}
-        <div className="pg">
-          <div className="sec-hdr">
-            <div className="sec-hdr-l">
-              <div className="sec-ico" style={{ background: "rgba(239,68,68,0.08)" }}>
-                <Ico.Flame style={{ color: "#EF4444", width: 18, height: 18 }} />
-              </div>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
-                  <span className="sec-title">Flash Sale</span>
-                  <span className="live-chip"><span className="live-dot" />LIVE</span>
+        <div style={{ background: "#FFF3EA", borderRadius: 24, padding: "28px 0 24px" }}>
+          <div className="pg">
+            <div className="sec-hdr">
+              <div className="sec-hdr-l">
+                <div className="sec-ico" style={{ background: "rgba(239,68,68,0.08)" }}>
+                  <Ico.Flame style={{ color: "#EF4444", width: 18, height: 18 }} />
                 </div>
-                <div className="sec-sub">Limited time — grab it before it's gone</div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+                    <span className="sec-title">Flash Sale</span>
+                    <span className="live-chip"><span className="live-dot" />LIVE</span>
+                  </div>
+                  <div className="sec-sub">Limited time — grab it before it's gone</div>
+                </div>
+              </div>
+              <div className="sec-hdr-r">
+                <a href="/search?discount=true" className="sec-link">See all →</a>
+                <button className="nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -280, behavior: "smooth" })}><Ico.ChevL /></button>
+                <button className="nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 280, behavior: "smooth" })}><Ico.ChevR /></button>
               </div>
             </div>
-            <div className="sec-hdr-r">
-              <a href="/search?discount=true" className="sec-link">See all →</a>
-              <button className="nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -280, behavior: "smooth" })}><Ico.ChevL /></button>
-              <button className="nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 280, behavior: "smooth" })}><Ico.ChevR /></button>
+            <div id="flash-track" className="scroll-track">
+              {loadingFlash
+                ? Array.from({ length: 5 }).map((_, i) => <SkeletonProductCard key={i} />)
+                : flashItems.length === 0
+                ? <div className="empty-state"><div className="empty-state-icon">🔥</div><div className="empty-state-text">No flash deals right now — check back soon!</div></div>
+                : flashItems.map((item, i) => <ProductCard key={item.id} product={item} index={i} onCartUpdate={refreshCartCount} />)}
             </div>
-          </div>
-          <div id="flash-track" className="scroll-track">
-            {loadingFlash
-              ? Array.from({ length: 5 }).map((_, i) => <SkeletonProductCard key={i} />)
-              : flashItems.length === 0
-              ? <div className="empty-state"><div className="empty-state-icon">🔥</div><div className="empty-state-text">No flash deals right now — check back soon!</div></div>
-              : flashItems.map((item, i) => <ProductCard key={item.id} product={item} index={i} onCartUpdate={refreshCartCount} />)}
           </div>
         </div>
 
@@ -1505,31 +1516,33 @@ export default function ONETTHomepage() {
         <div className="sdiv" />
 
         {/* ════ UPCOMING DROPS ════ */}
-        <div className="pg">
-          <div className="sec-hdr">
-            <div className="sec-hdr-l">
-              <div className="sec-ico" style={{ background: "rgba(139,92,246,0.08)" }}>
-                <Ico.Calendar style={{ color: "#8B5CF6", width: 18, height: 18 }} />
-              </div>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
-                  <span className="sec-title">Upcoming Drops</span>
-                  <span className="shimmer-chip"><Ico.Clock />Live timer</span>
+        <div style={{ background: "#FFF3EA", borderRadius: 24, padding: "28px 0 24px" }}>
+          <div className="pg">
+            <div className="sec-hdr">
+              <div className="sec-hdr-l">
+                <div className="sec-ico" style={{ background: "rgba(139,92,246,0.08)" }}>
+                  <Ico.Calendar style={{ color: "#8B5CF6", width: 18, height: 18 }} />
                 </div>
-                <div className="sec-sub">Pre-order &amp; coming soon — secure yours early</div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+                    <span className="sec-title">Upcoming Drops</span>
+                    <span className="shimmer-chip"><Ico.Clock />Live timer</span>
+                  </div>
+                  <div className="sec-sub">Pre-order &amp; coming soon — secure yours early</div>
+                </div>
+              </div>
+              <div className="sec-hdr-r">
+                <button className="nav-btn" onClick={() => document.getElementById("upcoming-track")?.scrollBy({ left: -240, behavior: "smooth" })}><Ico.ChevL /></button>
+                <button className="nav-btn" onClick={() => document.getElementById("upcoming-track")?.scrollBy({ left: 240, behavior: "smooth" })}><Ico.ChevR /></button>
               </div>
             </div>
-            <div className="sec-hdr-r">
-              <button className="nav-btn" onClick={() => document.getElementById("upcoming-track")?.scrollBy({ left: -240, behavior: "smooth" })}><Ico.ChevL /></button>
-              <button className="nav-btn" onClick={() => document.getElementById("upcoming-track")?.scrollBy({ left: 240, behavior: "smooth" })}><Ico.ChevR /></button>
+            <div id="upcoming-track" className="scroll-track">
+              {loadingUpcoming
+                ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
+                : upcomingItems.length === 0
+                ? <div className="empty-state"><div className="empty-state-icon">🚀</div><div className="empty-state-text">No upcoming drops yet</div></div>
+                : upcomingItems.map((item, i) => <UpcomingCard key={item.id} product={item} index={i} />)}
             </div>
-          </div>
-          <div id="upcoming-track" className="scroll-track">
-            {loadingUpcoming
-              ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
-              : upcomingItems.length === 0
-              ? <div className="empty-state"><div className="empty-state-icon">🚀</div><div className="empty-state-text">No upcoming drops yet</div></div>
-              : upcomingItems.map((item, i) => <UpcomingCard key={item.id} product={item} index={i} />)}
           </div>
         </div>
 
