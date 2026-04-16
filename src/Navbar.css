@@ -1,0 +1,584 @@
+/* ═══════════════════════════════════════════════════════════════
+   ONETT NAVBAR — Fully Scoped Styles  (Navbar.css)
+   All classes prefixed with  .onett-nav__*  or  .onett-nav
+   so nothing bleeds into other pages / buttons.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── BODY OFFSET: keep content below fixed bar ── */
+body { padding-top: 62px; }
+@media (min-width: 640px) { body { padding-top: 66px; } }
+
+/* ══════════════════════════════
+   1. NAV SHELL
+══════════════════════════════ */
+.onett-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  height: 62px;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid rgba(230, 100, 10, 0.10);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+@media (min-width: 640px) { .onett-nav { height: 66px; } }
+
+.onett-nav.scrolled {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 2px 20px rgba(230, 100, 10, 0.08);
+}
+
+/* ── inner row ── */
+.onett-nav__inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  height: 100%;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+@media (min-width: 640px)  { .onett-nav__inner { padding: 0 24px; } }
+@media (min-width: 1024px) { .onett-nav__inner { padding: 0 48px; } }
+
+/* ══════════════════════════════
+   2. BRAND
+══════════════════════════════ */
+.onett-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.onett-nav__brand-name {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+  color: #1A1A1A;
+  letter-spacing: -0.3px;
+  line-height: 1;
+}
+.onett-nav__brand-name em {
+  color: #E6640A;
+  font-style: normal;
+}
+
+/* ══════════════════════════════
+   3. DESKTOP SEARCH
+══════════════════════════════ */
+.onett-nav__search-form {
+  flex: 1;
+  max-width: 420px;
+  display: none;
+}
+@media (min-width: 768px) { .onett-nav__search-form { display: block; } }
+
+.onett-nav__search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFF3EA;
+  border: 1.5px solid rgba(230, 100, 10, 0.14);
+  border-radius: 11px;
+  height: 40px;
+  padding: 0 12px;
+  transition: border-color 0.15s, background 0.15s;
+  cursor: text;
+}
+.onett-nav__search-wrap:focus-within {
+  border-color: rgba(230, 100, 10, 0.55);
+  background: #ffffff;
+}
+.onett-nav__search-ico  { color: #B0A8A0; flex-shrink: 0; }
+.onett-nav__search-input {
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: #1A1A1A;
+  width: 100%;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.onett-nav__search-input::placeholder { color: #B0A8A0; }
+
+/* ══════════════════════════════
+   4. DESKTOP ACTIONS
+══════════════════════════════ */
+.onett-nav__actions {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+@media (min-width: 768px) { .onett-nav__actions { display: flex; } }
+
+/* icon button — font-size:0 kills any stray text rendering */
+.onett-nav__icon-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #FFF3EA;
+  border: 1.5px solid rgba(230, 100, 10, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6A6A6A;
+  text-decoration: none;
+  flex-shrink: 0;
+  font-size: 0;
+  line-height: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.onett-nav__icon-btn:hover {
+  background: rgba(230, 100, 10, 0.10);
+  color: #E6640A;
+  border-color: rgba(230, 100, 10, 0.30);
+}
+/* restore icon size inside */
+.onett-nav__icon-btn svg { font-size: initial; }
+
+/* notification dot */
+.onett-nav__dot {
+  position: absolute;
+  top: -4px; right: -4px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #E6640A;
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 800;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #ffffff;
+  padding: 0 3px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  pointer-events: none;
+}
+
+/* separator */
+.onett-nav__sep {
+  width: 1px;
+  height: 22px;
+  background: rgba(230, 100, 10, 0.14);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* user chip */
+.onett-nav__user-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  padding: 4px 10px 4px 4px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(230, 100, 10, 0.14);
+  background: #FFF3EA;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.onett-nav__user-btn:hover {
+  background: rgba(230, 100, 10, 0.10);
+  border-color: rgba(230, 100, 10, 0.30);
+}
+.onett-nav__user-av {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: rgba(230, 100, 10, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0;
+}
+.onett-nav__user-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1A1A1A;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* ── Auth buttons — scoped with !important to beat any global reset ── */
+.onett-nav__btn-signin {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 7px 15px !important;
+  border-radius: 9px !important;
+  border: 1.5px solid rgba(230, 100, 10, 0.22) !important;
+  background: transparent !important;
+  color: #1A1A1A !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.onett-nav__btn-signin:hover {
+  background: #FFF3EA !important;
+  border-color: rgba(230, 100, 10, 0.40) !important;
+  color: #1A1A1A !important;
+}
+
+.onett-nav__btn-register {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 7px 15px !important;
+  border-radius: 9px !important;
+  background: #E6640A !important;
+  color: #ffffff !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  border: none !important;
+  box-shadow: 0 2px 10px rgba(230, 100, 10, 0.28) !important;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+.onett-nav__btn-register:hover {
+  background: #C4520A !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+/* ══════════════════════════════
+   5. MOBILE ACTION ROW
+══════════════════════════════ */
+.onett-nav__mob {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) { .onett-nav__mob { display: none; } }
+
+.onett-nav__mob-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #FFF3EA;
+  border: 1.5px solid rgba(230, 100, 10, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5A5A5A;
+  text-decoration: none;
+  font-size: 0;
+  line-height: 0;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.onett-nav__mob-btn:hover  { background: rgba(230,100,10,0.10); color: #E6640A; }
+.onett-nav__mob-btn svg    { font-size: initial; }
+
+.onett-nav__menu-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #FFF3EA;
+  border: 1.5px solid rgba(230, 100, 10, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #5A5A5A;
+  font-size: 0;
+  line-height: 0;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.onett-nav__menu-btn:hover { background: rgba(230,100,10,0.10); color: #E6640A; }
+.onett-nav__menu-btn svg   { font-size: initial; }
+
+/* ══════════════════════════════
+   6. DRAWER OVERLAY + PANEL
+══════════════════════════════ */
+.onett-nav__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.onett-nav__drawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  z-index: 1200;
+  width: min(320px, 88vw);
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border-left: 1.5px solid rgba(230, 100, 10, 0.10);
+  box-shadow: -8px 0 48px rgba(230, 100, 10, 0.12);
+  animation: onettDrawerIn 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes onettDrawerIn {
+  from { transform: translateX(100%); opacity: 0.6; }
+  to   { transform: translateX(0);    opacity: 1;   }
+}
+
+.onett-nav__drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid rgba(230, 100, 10, 0.08);
+  flex-shrink: 0;
+}
+.onett-nav__drawer-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: #1A1A1A;
+  letter-spacing: -0.3px;
+  line-height: 1;
+}
+.onett-nav__drawer-title em { color: #E6640A; font-style: normal; }
+
+.onett-nav__drawer-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #FFF3EA;
+  border: 1.5px solid rgba(230, 100, 10, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #8A8A8A;
+  font-size: 0;
+  line-height: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.onett-nav__drawer-close:hover { background: rgba(230,100,10,0.12); color: #E6640A; }
+.onett-nav__drawer-close svg   { font-size: initial; }
+
+.onett-nav__drawer-body {
+  padding: 14px 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* drawer search */
+.onett-nav__drawer-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFF3EA;
+  border: 1.5px solid rgba(230, 100, 10, 0.14);
+  border-radius: 11px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+}
+.onett-nav__drawer-search:focus-within {
+  border-color: rgba(230, 100, 10, 0.50);
+  background: #ffffff;
+}
+.onett-nav__drawer-search-ico   { color: #B0A8A0; flex-shrink: 0; font-size: 0; }
+.onett-nav__drawer-search-ico svg { font-size: initial; }
+.onett-nav__drawer-search-input {
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #1A1A1A;
+  width: 100%;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.onett-nav__drawer-search-input::placeholder { color: #B0A8A0; }
+
+/* section label */
+.onett-nav__sec-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #C8B8A8;
+  margin: 16px 0 8px;
+  padding: 0 4px;
+}
+
+/* menu item rows */
+.onett-nav__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2A2A2A;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  text-align: left;
+  line-height: 1.3;
+  transition: background 0.15s, color 0.15s;
+}
+.onett-nav__menu-item:hover { background: rgba(230,100,10,0.07); color: #E6640A; }
+.onett-nav__menu-item > span:first-of-type { flex: 1; }
+
+/* "New" badge */
+.onett-nav__badge-new {
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.22);
+  color: #16A34A !important;
+  padding: 2px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+/* notif pill in drawer */
+.onett-nav__notif-pill {
+  min-width: 20px;
+  height: 18px;
+  border-radius: 99px;
+  background: #E6640A;
+  color: #fff !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* user card */
+.onett-nav__user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #FFF3EA;
+  border: 1.5px solid rgba(230, 100, 10, 0.15);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 4px;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.onett-nav__user-card:hover { border-color: rgba(230,100,10,0.35); background: rgba(230,100,10,0.06); }
+.onett-nav__user-card-av {
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  background: rgba(230, 100, 10, 0.10);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 0;
+}
+.onett-nav__user-card-av svg { font-size: initial; }
+.onett-nav__user-card-name {
+  font-size: 14px; font-weight: 700;
+  color: #1A1A1A;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  line-height: 1.3;
+}
+.onett-nav__user-card-sub {
+  font-size: 11.5px; color: #8A8A8A; margin-top: 1px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* drawer footer */
+.onett-nav__drawer-footer {
+  padding: 14px 16px max(20px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(230, 100, 10, 0.08);
+  flex-shrink: 0;
+}
+.onett-nav__drawer-footer-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onett-nav__logout-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  border: 1.5px solid rgba(0,0,0,0.09) !important;
+  border-radius: 11px !important;
+  padding: 12px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #6A6A6A !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  line-height: 1 !important;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.onett-nav__logout-btn:hover {
+  background: #FFF3EA !important;
+  color: #E6640A !important;
+  border-color: rgba(230,100,10,0.20) !important;
+}
+.onett-nav__logout-btn svg { font-size: initial !important; }
+
+.onett-nav__drawer-btn-signin {
+  display: block !important;
+  text-align: center !important;
+  padding: 12px !important;
+  border-radius: 99px !important;
+  border: 1px solid #ddd !important;
+  font-size: 14px !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+  color: #111 !important;
+  text-decoration: none !important;
+  background: transparent !important;
+  line-height: 1 !important;
+  transition: background 0.15s;
+}
+.onett-nav__drawer-btn-signin:hover { background: #FFF3EA !important; }
+
+.onett-nav__drawer-btn-register {
+  display: block !important;
+  text-align: center !important;
+  padding: 12px !important;
+  border-radius: 99px !important;
+  background: #E6640A !important;
+  font-size: 14px !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  text-decoration: none !important;
+  border: none !important;
+  line-height: 1 !important;
+  box-shadow: 0 3px 12px rgba(230,100,10,0.35) !important;
+  transition: background 0.15s;
+}
+.onett-nav__drawer-btn-register:hover { background: #C4520A !important; }
