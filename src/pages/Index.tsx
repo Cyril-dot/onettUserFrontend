@@ -1,1430 +1,1297 @@
+// ONETT — Redesigned Homepage
+// Production-grade · Mobile-first · Conversion-focused
+// React + Framer Motion + Tailwind-inspired inline styles
+
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence, useInView } from "framer-motion";
-import { productApi, cartApi } from "@/lib/api";
-import { sampleCategories, sampleNewArrivals } from "@/lib/sampleData";
-import HomeSkeleton from "@/components/HomeSkeleton";
-import Navbar from "@/components/Navbar";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { useTilt, useMagnetic } from "@/hooks/useMotion";
+import { motion, AnimatePresence, useInView, useScroll, useTransform } from "framer-motion";
 
-// ─── SVG Icon Components ──────────────────────────────────────────────────────
-const IconArrowRight = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12h14M12 5l7 7-7 7" />
-  </svg>
-);
-const IconSparkles = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
-    <path d="M19 15l.75 2.25L22 18l-2.25.75L19 21l-.75-2.25L16 18l2.25-.75L19 15z" />
-    <path d="M5 17l.5 1.5L7 19l-1.5.5L5 21l-.5-1.5L3 19l1.5-.5L5 17z" />
-  </svg>
-);
-const IconZap = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-  </svg>
-);
-const IconShieldCheck = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    <path d="M9 12l2 2 4-4" />
-  </svg>
-);
-const IconTruck = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="1" y="3" width="15" height="13" rx="1" />
-    <path d="M16 8h4l3 3v5h-7V8z" />
-    <circle cx="5.5" cy="18.5" r="2.5" />
-    <circle cx="18.5" cy="18.5" r="2.5" />
-  </svg>
-);
-const IconMessageSquare = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-);
-const IconCamera = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-    <circle cx="12" cy="13" r="4" />
-  </svg>
-);
-const IconBrain = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-1.04-4.83A3 3 0 0 1 4.5 9.5a3 3 0 0 1 1.5-2.6A2.5 2.5 0 0 1 9.5 2z" />
-    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 1.04-4.83A3 3 0 0 0 19.5 9.5a3 3 0 0 0-1.5-2.6A2.5 2.5 0 0 0 14.5 2z" />
-  </svg>
-);
-const IconSearch = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8" />
-    <path d="m21 21-4.35-4.35" />
-  </svg>
-);
-const IconChevronRight = ({ size = 14 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 18l6-6-6-6" />
-  </svg>
-);
-const IconChevronLeft = ({ size = 14 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 18l-6-6 6-6" />
-  </svg>
-);
-const IconClock = ({ size = 12 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 6v6l4 2" />
-  </svg>
-);
-const IconPackage = ({ size = 32 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-    <line x1="12" y1="22.08" x2="12" y2="12" />
-  </svg>
-);
-const IconCalendarClock = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5M16 2v4M8 2v4M3 10h5" />
-    <circle cx="17" cy="17" r="4" />
-    <path d="M17 15v2.2l1.4 1.4" />
-  </svg>
-);
-const IconShoppingCart = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="9" cy="21" r="1" />
-    <circle cx="20" cy="21" r="1" />
-    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-  </svg>
-);
-const IconFlame = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-  </svg>
-);
-const IconTag = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-    <line x1="7" y1="7" x2="7.01" y2="7" />
-  </svg>
-);
-const IconX = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
-const IconWhatsapp = ({ size = 15 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.508 5.836L.057 23.25a.75.75 0 00.916.943l5.638-1.479A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 01-4.962-1.355l-.356-.212-3.686.967.984-3.595-.232-.371A9.718 9.718 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
-  </svg>
-);
-const IconStar = ({ size = 12, filled = true }: { size?: number; filled?: boolean }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-);
+// ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
+const TOKEN = {
+  brand:     "#E6640A",
+  brandDark: "#C4520A",
+  brandGlow: "rgba(230,100,10,0.18)",
+  black:     "#0A0A0B",
+  surface:   "#111214",
+  surfaceEl: "#18191D",
+  border:    "rgba(255,255,255,0.07)",
+  borderMid: "rgba(255,255,255,0.12)",
+  text:      "#F4F4F5",
+  textMid:   "#A1A1AA",
+  textDim:   "#52525B",
+  red:       "#EF4444",
+  blue:      "#3B82F6",
+  green:     "#22C55E",
+  amber:     "#F59E0B",
+  purple:    "#8B5CF6",
+  radius: {
+    sm:  "10px",
+    md:  "14px",
+    lg:  "18px",
+    xl:  "24px",
+    xxl: "32px",
+  },
+  shadow: {
+    card:   "0 2px 16px rgba(0,0,0,0.45)",
+    hover:  "0 12px 40px rgba(0,0,0,0.6)",
+    brand:  "0 8px 32px rgba(230,100,10,0.35)",
+    glow:   "0 0 0 1px rgba(230,100,10,0.25)",
+  },
+};
 
-// ─── Logo Mark ────────────────────────────────────────────────────────────────
-function OnettLogoMark({ size = 36 }: { size?: number }) {
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: size * 0.25,
-      background: "linear-gradient(135deg,#E6640A,#cf5208)",
-      display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", boxShadow: "0 2px 8px rgba(230,100,10,0.35)", flexShrink: 0,
-    }}>
-      <span style={{ color: "#fff", fontFamily: "'Satoshi', sans-serif", fontWeight: 800, fontSize: size * 0.3, lineHeight: 1, letterSpacing: "-0.5px" }}>ON</span>
-      <span style={{ color: "rgba(255,255,255,0.75)", fontFamily: "'Satoshi', sans-serif", fontWeight: 700, fontSize: size * 0.22, lineHeight: 1, letterSpacing: "0.5px" }}>ETT</span>
-    </div>
-  );
-}
+// ─── INJECTED GLOBAL CSS ──────────────────────────────────────────────────────
+const GLOBAL_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap');
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface CarouselProduct {
-  id: string; name: string; brand: string; price: number;
-  primaryImageUrl?: string; categoryName?: string; stockStatus?: string;
-  availableInDays?: number | null; isDiscounted?: boolean;
-  discountPercentage?: number; discountPrice?: number;
-}
-interface ProductCardData {
-  id: string; name: string; brand?: string; price: number;
-  primaryImageUrl?: string; images?: { imageUrl: string }[];
-  isDiscounted?: boolean; discountPercentage?: number;
-  discountPrice?: number; stock?: number; categoryName?: string; category?: { name: string };
-}
-
-function dedupeById<T extends { id: string }>(arr: T[]): T[] {
-  const seen = new Set<string>();
-  return arr.filter(item => { if (seen.has(item.id)) return false; seen.add(item.id); return true; });
-}
-
-// ─── Sample fallback data ─────────────────────────────────────────────────────
-const sampleUpcoming: CarouselProduct[] = [
-  { id: "u1", name: "Sony WH-1000XM6", brand: "Sony", price: 1299, stockStatus: "PRE_ORDER", availableInDays: 5, primaryImageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80" },
-  { id: "u2", name: "Nike Air Max 2026", brand: "Nike", price: 680, stockStatus: "COMING_SOON", availableInDays: 14, primaryImageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80" },
-  { id: "u3", name: "MacBook Air M4", brand: "Apple", price: 8499, stockStatus: "PRE_ORDER", availableInDays: 3, primaryImageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80" },
-  { id: "u4", name: "Samsung Galaxy S25 Ultra", brand: "Samsung", price: 6499, stockStatus: "COMING_SOON", availableInDays: 21, primaryImageUrl: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&q=80" },
-  { id: "u5", name: "Dyson V16 Slim", brand: "Dyson", price: 2199, stockStatus: "PRE_ORDER", availableInDays: 7, primaryImageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" },
-];
-const sampleFlashSale: CarouselProduct[] = [
-  { id: "f1", name: "Samsung Galaxy S24 FE", brand: "Samsung", price: 5399, isDiscounted: true, discountPercentage: 35, discountPrice: 3499, primaryImageUrl: "https://images.unsplash.com/photo-1610945264803-c22b62d2a7b3?w=400&q=80" },
-  { id: "f2", name: "Sony WH-1000XM5", brand: "Sony", price: 1499, isDiscounted: true, discountPercentage: 40, discountPrice: 899, primaryImageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80" },
-  { id: "f3", name: "Nike Air Max 270", brand: "Nike", price: 720, isDiscounted: true, discountPercentage: 25, discountPrice: 540, primaryImageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80" },
-  { id: "f4", name: "MacBook Air M3", brand: "Apple", price: 8499, isDiscounted: true, discountPercentage: 20, discountPrice: 6799, primaryImageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80" },
-  { id: "f5", name: "Kindle Paperwhite 7", brand: "Amazon", price: 499, isDiscounted: true, discountPercentage: 30, discountPrice: 349, primaryImageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80" },
-];
-const sampleNewArrivalsCarousel: CarouselProduct[] = [
-  { id: "n1", name: "AirPods Pro 3rd Gen", brand: "Apple", price: 1799, isDiscounted: true, discountPercentage: 10, discountPrice: 1619, primaryImageUrl: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&q=80" },
-  { id: "n2", name: "Adidas Ultraboost 25", brand: "Adidas", price: 720, primaryImageUrl: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=400&q=80" },
-  { id: "n3", name: "Levi's 501 Original", brand: "Levi's", price: 380, primaryImageUrl: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80" },
-  { id: "n4", name: "Instant Pot Duo 7-in-1", brand: "Instant Pot", price: 550, primaryImageUrl: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=400&q=80" },
-  { id: "n5", name: "GoPro Hero 13 Black", brand: "GoPro", price: 1899, primaryImageUrl: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&q=80" },
-  { id: "n6", name: "PS5 Slim Digital", brand: "Sony", price: 3899, primaryImageUrl: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=400&q=80" },
-];
-
-const adBanners = [
-  { id: "a1", bg: "linear-gradient(135deg,#0f2044,#1a3a6e)", icon: "💳", title: "MTN MoMo — Pay & save 5%", sub: "Use MoMo at checkout for instant cashback on every order", cta: "Try it" },
-  { id: "a2", bg: "linear-gradient(135deg,#064e3b,#065f46)", icon: "🚚", title: "Free Delivery over GHS 200", sub: "DHL Express · Accra & Kumasi same-day available", cta: "Learn more" },
-  { id: "a3", bg: "linear-gradient(135deg,#1e1b4b,#312e81)", icon: "🔐", title: "Sell on ONETT — It's free", sub: "Reach thousands of buyers across Ghana instantly", cta: "Start selling" },
-];
-
-const aiFeatures = [
-  { icon: IconBrain, title: "Smart Picks", desc: "AI learns your taste and curates products you'll love", color: "#E6640A", bg: "rgba(230,100,10,0.1)" },
-  { icon: IconCamera, title: "Image Search", desc: "Snap a photo and find matching products instantly", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  { icon: IconMessageSquare, title: "AI Advisor", desc: "Chat for style advice, comparisons & budget tips", color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
-  { icon: IconSearch, title: "Smart Search", desc: "Natural language that understands what you mean", color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
-];
-
-const HERO_BG_DESKTOP = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=85";
-const HERO_BG_MOBILE  = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=85";
-
-function normaliseToCarousel(p: any): CarouselProduct {
-  return {
-    id: String(p.id), name: p.name ?? "", brand: p.brand ?? "",
-    price: Number(p.price),
-    primaryImageUrl: p.primaryImageUrl ?? p.images?.[0]?.imageUrl ?? undefined,
-    categoryName: p.categoryName ?? p.category?.name ?? undefined,
-    stockStatus: p.stockStatus ?? undefined,
-    availableInDays: p.availableInDays ?? null,
-    isDiscounted: p.isDiscounted ?? p.discounted ?? false,
-    discountPercentage: p.discountPercentage != null ? Number(p.discountPercentage) : undefined,
-    discountPrice: p.discountPrice != null ? Number(p.discountPrice) : undefined,
-  };
-}
-
-// ─── Countdown hook ───────────────────────────────────────────────────────────
-function useCountdown(productId: string, days: number | null | undefined) {
-  const [t, setT] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  useEffect(() => {
-    if (!days || !productId) return;
-    const key = `onett_cd_${productId}`;
-    let target: number;
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      target = Number(saved);
-      if (target < Date.now()) { target = Date.now() + days * 86_400_000; localStorage.setItem(key, String(target)); }
-    } else { target = Date.now() + days * 86_400_000; localStorage.setItem(key, String(target)); }
-    const tick = () => {
-      const d = Math.max(0, target - Date.now());
-      setT({ days: Math.floor(d / 86_400_000), hours: Math.floor((d / 3_600_000) % 24), minutes: Math.floor((d / 60_000) % 60), seconds: Math.floor((d / 1_000) % 60) });
-    };
-    tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
-  }, [days, productId]);
-  return t;
-}
-
-// ─── Product Card ─────────────────────────────────────────────────────────────
-function FlowbiteProductCard({ product }: { product: CarouselProduct | ProductCardData }) {
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const [cartLoading, setCartLoading] = useState(false);
-  const [wishlisted, setWishlisted] = useState(false);
-
-  const imageUrl = (product as CarouselProduct).primaryImageUrl
-    || ((product as ProductCardData).images?.[0]?.imageUrl)
-    || null;
-
-  const hasDiscount = product.isDiscounted && product.discountPrice;
-  const displayPrice = hasDiscount ? product.discountPrice! : product.price;
-  const inStock = ((product as ProductCardData).stock ?? 1) > 0;
-
-  const handleCart = async (e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    if (!isAuthenticated) { toast.error("Please sign in to add to cart"); return; }
-    setCartLoading(true);
-    try { await cartApi.add(product.id, 1); toast.success("Added to cart!"); }
-    catch { toast.error("Failed to add to cart"); }
-    finally { setCartLoading(false); }
-  };
-
-  return (
-    <div className="fb-product-card">
-      {/* IMAGE */}
-      <div className="fb-product-img">
-        <Link to={`/products/${product.id}`} style={{ display: "block", width: "100%", height: "100%" }}>
-          {imageUrl ? (
-            <img src={imageUrl} alt={product.name} loading="lazy" className="fb-product-img-el" />
-          ) : (
-            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#d1d5db" }}>
-              <IconPackage size={36} />
-            </div>
-          )}
-        </Link>
-        {hasDiscount && (
-          <div className="fb-disc-pill">-{product.discountPercentage}%</div>
-        )}
-        {!inStock && (
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>Out of stock</span>
-          </div>
-        )}
-        {/* Wishlist */}
-        <button
-          className={`fb-wish-btn${wishlisted ? " fb-wish-active" : ""}`}
-          title="Favourite"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWishlisted(w => !w); }}
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </button>
-      </div>
-
-      {/* BODY */}
-      <div className="fb-product-body">
-        {/* Brand */}
-        {(product as any).brand && (
-          <div className="fb-product-brand">{(product as any).brand}</div>
-        )}
-
-        {/* Name */}
-        <Link to={`/products/${product.id}`} className="fb-product-name">
-          {product.name}
-        </Link>
-
-        {/* Status badge */}
-        <div style={{ marginBottom: 8 }}>
-          {hasDiscount ? (
-            <span className="fb-badge fb-badge-red">Sale</span>
-          ) : (product as CarouselProduct).stockStatus === "PRE_ORDER" ? (
-            <span className="fb-badge fb-badge-orange">Pre-order</span>
-          ) : (product as CarouselProduct).stockStatus === "COMING_SOON" ? (
-            <span className="fb-badge fb-badge-blue">Coming Soon</span>
-          ) : (
-            <span className="fb-badge fb-badge-green">In Stock</span>
-          )}
-        </div>
-
-        {/* Price + Cart */}
-        <div className="fb-product-footer">
-          <div>
-            <div className="fb-product-price">GHS {Number(displayPrice).toLocaleString()}</div>
-            {hasDiscount && (
-              <div className="fb-product-price-old">GHS {Number(product.price).toLocaleString()}</div>
-            )}
-          </div>
-          <button
-            type="button"
-            disabled={cartLoading || !inStock}
-            onClick={handleCart}
-            className="fb-cart-btn"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-            </svg>
-            {!inStock ? "Sold out" : cartLoading ? "…" : "Add"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Scrollable Product Section ───────────────────────────────────────────────
-function FlowbiteGridSection({
-  title, subtitle, accent, icon: Icon,
-  items, seeAllLink
-}: {
-  title: string; subtitle: string; accent: string; icon: React.ElementType;
-  items: (CarouselProduct | ProductCardData)[]; seeAllLink?: string;
-}) {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const trackRef   = useRef<HTMLDivElement>(null);
-  const isInView   = useInView(sectionRef, { once: true, margin: "-80px" });
-  const scroll = (dir: number) => trackRef.current?.scrollBy({ left: dir * 280, behavior: "smooth" });
-
-  return (
-    <div ref={sectionRef}>
-      {/* Section Header */}
-      <div className="fb-sec-header">
-        <div className="fb-sec-header-left">
-          <div className="fb-sec-icon" style={{ background: `${accent}18` }}>
-            <Icon size={17} style={{ color: accent }} />
-          </div>
-          <div className="fb-sec-text">
-            <div className="fb-sec-title">{title}</div>
-            <div className="fb-sec-sub">{subtitle}</div>
-          </div>
-        </div>
-        <div className="fb-sec-header-right">
-          {seeAllLink && (
-            <Link to={seeAllLink} className="fb-sec-see-all">
-              See all →
-            </Link>
-          )}
-          <button onClick={() => scroll(-1)} className="hs-nav-btn"><IconChevronLeft size={13} /></button>
-          <button onClick={() => scroll(1)} className="hs-nav-btn"><IconChevronRight size={13} /></button>
-        </div>
-      </div>
-
-      {/* Horizontal scroll track */}
-      <div
-        ref={trackRef}
-        className="fb-prod-track"
-        style={{ marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16 }}
-      >
-        {items.map((item, i) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.4), ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
-            className="fb-prod-card-wrap"
-          >
-            <FlowbiteProductCard product={item} />
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── HScroll Card ─────────────────────────────────────────────────────────────
-function HScrollCard({ product, showTimer }: { product: CarouselProduct; showTimer?: boolean }) {
-  const navigate = useNavigate();
-  const { days, hours, minutes, seconds } = useCountdown(product.id, product.availableInDays);
-  const hasDiscount  = product.isDiscounted && product.discountPrice;
-  const isPreOrder   = product.stockStatus === "PRE_ORDER";
-  const isComingSoon = product.stockStatus === "COMING_SOON";
-  const hasStatus    = isPreOrder || isComingSoon;
-
-  const { rotateX, rotateY, tiltProps } = useTilt({
-    maxRotateX: 5, maxRotateY: 5,
-    springStiffness: 120, springDamping: 25, perspective: 1200,
-  });
-
-  return (
-    <Link to={`/products/${product.id}`} className="hs-card">
-      <motion.div
-        {...tiltProps}
-        style={{ rotateX, rotateY, transformStyle: "preserve-3d", height: "100%", display: "flex", flexDirection: "column" }}
-        transition={{ type: "spring", stiffness: 120, damping: 25 }}
-      >
-        <div className="hs-img">
-          {product.primaryImageUrl
-            ? <img src={product.primaryImageUrl} alt={product.name} className="hs-img-el" loading="lazy" />
-            : <div className="hs-img-ph"><IconPackage size={32} /></div>}
-          {hasDiscount && !showTimer && (
-            <div className="hs-disc-badge">-{product.discountPercentage}%</div>
-          )}
-          {showTimer && hasStatus && (
-            <div className={`hs-timer-wrap${isPreOrder ? " tb-orange" : " tb-blue"}`}>
-              <div className="hs-timer-inner">
-                <div className="hs-timer-unit">
-                  <span className="hs-timer-num">{String(days).padStart(2, "0")}</span>
-                  <span className="hs-timer-lbl">d</span>
-                </div>
-                <span className="hs-timer-sep">:</span>
-                <div className="hs-timer-unit">
-                  <span className="hs-timer-num">{String(hours).padStart(2, "0")}</span>
-                  <span className="hs-timer-lbl">h</span>
-                </div>
-                <span className="hs-timer-sep">:</span>
-                <div className="hs-timer-unit">
-                  <span className="hs-timer-num">{String(minutes).padStart(2, "0")}</span>
-                  <span className="hs-timer-lbl">m</span>
-                </div>
-                <span className="hs-timer-sep">:</span>
-                <div className="hs-timer-unit">
-                  <span className="hs-timer-num">{String(seconds).padStart(2, "0")}</span>
-                  <span className="hs-timer-lbl">s</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="hs-body">
-          {hasStatus && (
-            <div className={`hs-status${isPreOrder ? " st-orange" : " st-blue"}`}>
-              <IconCalendarClock size={9} />
-              {isPreOrder ? "Pre-order" : "Coming Soon"}
-            </div>
-          )}
-          <div className="hs-brand">{product.brand}</div>
-          <div className="hs-name">{product.name}</div>
-          <div className="hs-price-row">
-            {hasDiscount ? (
-              <>
-                <span className="hs-price">GHS {product.discountPrice?.toLocaleString()}</span>
-                <span className="hs-price-old">GHS {product.price?.toLocaleString()}</span>
-              </>
-            ) : (
-              <span className="hs-price-plain">GHS {product.price?.toLocaleString()}</span>
-            )}
-          </div>
-          <div className="p-actions">
-            <button
-              onClick={e => { e.preventDefault(); e.stopPropagation(); navigate(`/products/${product.id}`); }}
-              className="p-btn-order w-full"
-            >
-              <IconShoppingCart size={11} />Add to cart
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    </Link>
-  );
-}
-
-// ─── HScroll Section ──────────────────────────────────────────────────────────
-function HScrollSection({ title, subtitle, accent, icon: Icon, items, showTimer, badge }: {
-  title: string; subtitle: string; accent: string; icon: React.ElementType;
-  items: CarouselProduct[]; showTimer?: boolean; badge?: React.ReactNode;
-}) {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const trackRef   = useRef<HTMLDivElement>(null);
-  const isInView   = useInView(sectionRef, { once: true, margin: "-80px" });
-  const scroll = (dir: number) => trackRef.current?.scrollBy({ left: dir * 260, behavior: "smooth" });
-
-  return (
-    <div className="hs-section-inner" ref={sectionRef}>
-      <div className="hs-header">
-        <div className="hs-header-left">
-          <motion.div
-            className="hs-icon"
-            style={{ background: `${accent}18` }}
-            initial={{ scale: 0, rotate: -10 }}
-            animate={isInView ? { scale: 1, rotate: 0 } : {}}
-            transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-          >
-            <Icon size={16} style={{ color: accent }} />
-          </motion.div>
-          <div style={{ minWidth: 0 }}>
-            <motion.div
-              style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
-              initial={{ opacity: 0, x: -10 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.4, delay: 0.05 }}
-            >
-              <span className="hs-title">{title}</span>
-              {badge}
-            </motion.div>
-            <motion.div
-              className="hs-sub"
-              initial={{ opacity: 0, x: -10 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.4, delay: 0.1 }}
-            >
-              {subtitle}
-            </motion.div>
-          </div>
-        </div>
-        <div className="hs-nav-btns">
-          <button className="hs-nav-btn" onClick={() => scroll(-1)}><IconChevronLeft size={14} /></button>
-          <button className="hs-nav-btn" onClick={() => scroll(1)}><IconChevronRight size={14} /></button>
-        </div>
-      </div>
-      <div ref={trackRef} className="hs-track">
-        {items.map((item, i) => {
-          const fromTop = i % 2 === 0;
-          return (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: fromTop ? -50 : 50, scale: 0.88, rotate: fromTop ? -3 : 3 }}
-              animate={isInView ? { opacity: 1, y: 0, scale: 1, rotate: 0 } : {}}
-              transition={{ duration: 0.55, delay: Math.min(i * 0.07, 0.5), ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ y: -6, scale: 1.03, transition: { type: "spring", stiffness: 400, damping: 20 } }}
-            >
-              <HScrollCard product={item} showTimer={showTimer} />
-            </motion.div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Ad Banner ────────────────────────────────────────────────────────────────
-function AdBanner({ ad }: { ad: typeof adBanners[0] }) {
-  return (
-    <div className="ad-banner" style={{ background: ad.bg }}>
-      <span className="ad-label">Ad</span>
-      <div className="ad-icon">{ad.icon}</div>
-      <div className="ad-body">
-        <div className="ad-title">{ad.title}</div>
-        <div className="ad-sub">{ad.sub}</div>
-      </div>
-      <button className="ad-cta">{ad.cta}</button>
-    </div>
-  );
-}
-
-// ─── Welcome Popup ────────────────────────────────────────────────────────────
-const WELCOME_KEY = "onett_welcome_v6";
-
-function WelcomePopup() {
-  const [visible, setVisible] = useState(false);
-  const [step, setStep]       = useState(0);
-
-  useEffect(() => {
-    if (!sessionStorage.getItem(WELCOME_KEY)) {
-      const t = setTimeout(() => setVisible(true), 900);
-      return () => clearTimeout(t);
-    }
-  }, []);
-
-  const close = useCallback(() => {
-    setVisible(false);
-    sessionStorage.setItem(WELCOME_KEY, "1");
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = visible ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [visible]);
-
-  if (!visible) return null;
-
-  const slides = [
-    {
-      emoji: "✨",
-      title: "Welcome to ONETT",
-      sub: "Ghana's smartest marketplace",
-      body: "Shop 10,000+ products with AI-powered recommendations tailored to your style and budget.",
-      color: "#E6640A",
-    },
-    {
-      emoji: "🤖",
-      title: "Meet Your AI Shopper",
-      sub: "Shop by chatting",
-      body: "Describe what you need in plain language — our AI finds the perfect match in seconds.",
-      color: "#8b5cf6",
-    },
-    {
-      emoji: "🚀",
-      title: "Ready to explore?",
-      sub: "Deals waiting for you",
-      body: "Exclusive flash sales, pre-orders, and new arrivals drop every day. Don't miss out.",
-      color: "#22c55e",
-    },
-  ];
-
-  const current = slides[step];
-  const isLast  = step === slides.length - 1;
-
-  return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          key="popup-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          onClick={close}
-          style={{
-            position: "fixed", inset: 0, zIndex: 9999,
-            background: "rgba(0,0,0,0.75)",
-            backdropFilter: "blur(12px) saturate(0.5)",
-            display: "flex", alignItems: "flex-end",
-            justifyContent: "center",
-          }}
-        >
-          <motion.div
-            key="popup-card"
-            initial={{ opacity: 0, y: 80 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 60 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            onClick={e => e.stopPropagation()}
-            className="wp-sheet"
-          >
-            {/* Close */}
-            <button onClick={close} className="wp-close">
-              <IconX size={14} />
-            </button>
-
-            {/* Top visual */}
-            <div className="wp-visual" style={{ "--slide-color": current.color } as any}>
-              <motion.div
-                key={step}
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.7, opacity: 0 }}
-                transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
-                className="wp-emoji-wrap"
-              >
-                <div className="wp-orb" style={{ background: `${current.color}22`, borderColor: `${current.color}44` }}>
-                  <div className="wp-orb-glow" style={{ background: current.color }} />
-                  <span className="wp-emoji">{current.emoji}</span>
-                </div>
-              </motion.div>
-              <div className="wp-logo-chip">
-                <span className="wp-logo-on">ON</span><span className="wp-logo-ett">ETT</span>
-              </div>
-            </div>
-
-            {/* Body */}
-            <div className="wp-body">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={step}
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -14 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <div className="wp-sub-label" style={{ color: current.color }}>{current.sub}</div>
-                  <h2 className="wp-title">{current.title}</h2>
-                  <p className="wp-desc">{current.body}</p>
-                </motion.div>
-              </AnimatePresence>
-
-              {/* Dots */}
-              <div className="wp-dots">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    className={`wp-dot${i === step ? " active" : ""}`}
-                    style={i === step ? { background: current.color, width: 24 } : {}}
-                    onClick={() => setStep(i)}
-                  />
-                ))}
-              </div>
-
-              {/* CTA */}
-              {isLast ? (
-                <Link to="/search?keyword=" onClick={close} className="wp-cta" style={{ background: current.color }}>
-                  Start Shopping <IconArrowRight size={16} />
-                </Link>
-              ) : (
-                <button className="wp-cta" style={{ background: current.color }} onClick={() => setStep(s => s + 1)}>
-                  Next <IconArrowRight size={16} />
-                </button>
-              )}
-              <button onClick={close} className="wp-skip">Skip intro</button>
-            </div>
-            <div className="wp-safe" />
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-// ─── Injected CSS ─────────────────────────────────────────────────────────────
-const MOBILE_STYLES = `
-  * { box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body { background: #0A0A0B; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
   button, a { -webkit-tap-highlight-color: transparent; }
+  img { display: block; }
+  ::-webkit-scrollbar { width: 6px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
 
-  /* ── PAGE BACKGROUND ── */
-  .onett-page { background: #f5f5f0; }
-  @media (prefers-color-scheme: dark) { .onett-page { background: #0f1117; } }
+  /* ── SCROLL TRACKS ── */
+  .scroll-track {
+    display: flex; gap: 12px; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    padding-bottom: 8px; align-items: stretch;
+    margin-left: -16px; padding-left: 16px;
+    margin-right: -16px; padding-right: 16px;
+  }
+  .scroll-track::-webkit-scrollbar { display: none; }
+  @media (min-width: 640px) {
+    .scroll-track { margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; gap: 14px; }
+  }
 
-  /* ── DIVIDERS ── */
-  .sdiv { height: 28px; }
-  @media (min-width: 640px) { .sdiv { height: 36px; } }
-
-  /* ── PAGE GUTTERS ── */
+  /* ── PAGE CONTAINER ── */
   .pg {
     padding-left: max(16px, env(safe-area-inset-left));
     padding-right: max(16px, env(safe-area-inset-right));
-    max-width: 1280px; margin: 0 auto; width: 100%;
+    max-width: 1320px; margin: 0 auto; width: 100%;
   }
   @media (min-width: 640px)  { .pg { padding-left: 24px; padding-right: 24px; } }
-  @media (min-width: 1024px) { .pg { padding-left: 40px; padding-right: 40px; } }
+  @media (min-width: 1024px) { .pg { padding-left: 48px; padding-right: 48px; } }
 
-  /* ── SECTION WRAPPER ── */
-  .section-wrap { padding: 0; }
+  /* ── SECTION DIVIDER ── */
+  .sdiv { height: 40px; }
+  @media (min-width: 768px) { .sdiv { height: 56px; } }
 
-  /* ── SECTION HEADER ── */
-  .fb-sec-header {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  @media (min-width: 480px) {
-    .fb-sec-header {
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-  }
-  .fb-sec-header-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
-  }
-  .fb-sec-icon {
-    width: 38px; height: 38px; border-radius: 11px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .fb-sec-text { min-width: 0; flex: 1; }
-  .fb-sec-title {
-    font-family: 'Satoshi', sans-serif;
-    font-size: 16px; font-weight: 800;
-    color: #111827; letter-spacing: -0.3px; line-height: 1.2;
-  }
-  @media (prefers-color-scheme: dark) { .fb-sec-title { color: #f9fafb; } }
-  .fb-sec-sub { font-size: 12px; color: #9ca3af; margin-top: 2px; line-height: 1.4; }
-  .fb-sec-header-right {
-    display: flex; align-items: center; gap: 8px;
-    flex-shrink: 0;
-    align-self: flex-start;
-    padding-left: 48px;
-  }
-  @media (min-width: 480px) {
-    .fb-sec-header-right { align-self: center; padding-left: 0; }
-  }
-  .fb-sec-see-all {
-    font-size: 12.5px; font-weight: 700; color: #E6640A;
-    text-decoration: none; white-space: nowrap;
-  }
-
-  /* ── CATEGORIES ── */
-  .cats-scroll {
-    display: flex; gap: 12px;
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; padding-bottom: 4px;
-    margin-left: -16px; padding-left: 16px;
-    margin-right: -16px; padding-right: 16px;
-  }
-  @media (min-width: 640px) {
-    .cats-scroll { margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; flex-wrap: wrap; overflow-x: visible; }
-  }
-  .cats-scroll::-webkit-scrollbar { display: none; }
-  .cat-item { display: flex; flex-direction: column; align-items: center; gap: 7px; flex-shrink: 0; min-width: 68px; text-decoration: none; }
-  .cat-icon-box {
-    width: 62px; height: 62px; border-radius: 17px;
-    background: #fff;
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.09);
-  }
-  @media (prefers-color-scheme: dark) { .cat-icon-box { background: #1e2130; } }
-  .cat-item:active .cat-icon-box { transform: scale(0.92); }
-  .cat-icon-img { width: 100%; height: 100%; object-fit: cover; }
-  .cat-lbl {
-    font-size: 11px; font-weight: 600; text-align: center;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    max-width: 70px; color: #374151;
-  }
-  @media (prefers-color-scheme: dark) { .cat-lbl { color: #d1d5db; } }
-
-  /* ── HSCROLL SECTION ── */
-  .hs-section-inner { width: 100%; }
-  .hs-header {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    padding: 0 0 14px; gap: 8px;
-  }
-  .hs-header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-  .hs-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .hs-title { font-family: 'Satoshi', sans-serif; font-size: 16px; font-weight: 800; color: #111; letter-spacing: -0.3px; }
-  @media (prefers-color-scheme: dark) { .hs-title { color: #f9fafb; } }
-  .hs-sub { font-size: 12px; color: #9ca3af; margin-top: 2px; }
-  .hs-nav-btns { display: flex; gap: 6px; flex-shrink: 0; margin-top: 4px; }
-  .hs-nav-btn {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: rgba(0,0,0,0.06); border: none;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: #374151; transition: background 0.15s;
-  }
-  @media (prefers-color-scheme: dark) { .hs-nav-btn { background: rgba(255,255,255,0.08); color: #d1d5db; } }
-  .hs-nav-btn:hover { background: rgba(0,0,0,0.1); }
-
-  .hs-track {
-    display: flex; gap: 10px; align-items: stretch;
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; padding-bottom: 6px;
-    margin-left: -16px; padding-left: 16px;
-    margin-right: -16px; padding-right: 16px;
-  }
-  @media (min-width: 640px) { .hs-track { margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; gap: 12px; } }
-  .hs-track::-webkit-scrollbar { display: none; }
-  #flash-track::-webkit-scrollbar { display: none; }
-  .fb-prod-track::-webkit-scrollbar { display: none; }
-
-  /* ══════════════════════════════════════════
-     PRODUCT CARD — equal height fix
-  ══════════════════════════════════════════ */
-
-  /* The motion wrapper must stretch to full track height */
-  .fb-prod-card-wrap {
-    display: flex;
-    flex-direction: column;
-    align-self: stretch;
-    flex-shrink: 0;
-  }
-
-  .fb-product-card {
-    width: 155px;
-    /* Fill the height of .fb-prod-card-wrap so all cards are equal height */
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 1px 8px rgba(0,0,0,0.08);
-    overflow: hidden;
-    transition: box-shadow 0.2s, transform 0.2s;
+  /* ── PRODUCT CARD ── */
+  .pcard {
+    width: 158px; flex-shrink: 0;
+    background: #18191D;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px; overflow: hidden;
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
     position: relative;
   }
-  @media (prefers-color-scheme: dark) { .fb-product-card { background: #1a1d27; box-shadow: 0 1px 8px rgba(0,0,0,0.3); } }
-  @media (min-width: 480px)  { .fb-product-card { width: 188px; } }
-  @media (min-width: 768px)  { .fb-product-card { width: 220px; } }
-  @media (min-width: 1024px) { .fb-product-card { width: 248px; } }
-  .fb-product-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.13); transform: translateY(-3px); }
-
-  .fb-product-img {
-    width: 100%; height: 130px; flex-shrink: 0;
-    position: relative; overflow: hidden; background: #f3f4f6;
+  .pcard:hover {
+    border-color: rgba(230,100,10,0.3);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(230,100,10,0.15);
   }
-  @media (min-width: 480px)  { .fb-product-img { height: 150px; } }
-  @media (min-width: 768px)  { .fb-product-img { height: 170px; } }
-  @media (min-width: 1024px) { .fb-product-img { height: 188px; } }
-  .fb-product-img-el {
+  @media (min-width: 480px)  { .pcard { width: 190px; } }
+  @media (min-width: 768px)  { .pcard { width: 218px; } }
+  @media (min-width: 1024px) { .pcard { width: 248px; } }
+
+  /* Image container */
+  .pcard-img {
+    width: 100%; aspect-ratio: 1 / 1;
+    position: relative; overflow: hidden;
+    background: #1E1F25; flex-shrink: 0;
+  }
+  .pcard-img img {
     width: 100%; height: 100%;
     object-fit: cover; object-position: center;
-    display: block; transition: transform 0.35s;
+    transition: transform 0.45s cubic-bezier(0.22,1,0.36,1);
+    display: block;
   }
-  .fb-product-card:hover .fb-product-img-el { transform: scale(1.06); }
+  .pcard:hover .pcard-img img { transform: scale(1.07); }
 
-  .fb-disc-pill {
-    position: absolute; top: 8px; left: 8px;
-    background: #ef4444; color: #fff;
-    font-size: 9px; font-weight: 800;
-    padding: 3px 7px; border-radius: 20px; z-index: 1;
+  /* Discount pill */
+  .pcard-disc {
+    position: absolute; top: 10px; left: 10px; z-index: 2;
+    background: #EF4444; color: #fff;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.3px;
+    padding: 3px 8px; border-radius: 99px;
+    backdrop-filter: blur(4px);
   }
 
-  /* Wishlist button */
-  .fb-wish-btn {
-    position: absolute; top: 8px; right: 8px; z-index: 2;
-    width: 28px; height: 28px; border-radius: 8px;
-    background: rgba(255,255,255,0.9);
-    border: none; cursor: pointer;
+  /* Wishlist */
+  .pcard-wish {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    width: 30px; height: 30px; border-radius: 9px;
+    background: rgba(10,10,11,0.7); border: 1px solid rgba(255,255,255,0.1);
     display: flex; align-items: center; justify-content: center;
-    color: #9ca3af; transition: all 0.15s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    cursor: pointer; color: #71717A; transition: all 0.15s;
+    backdrop-filter: blur(8px); flex-shrink: 0;
   }
-  .fb-wish-btn:hover { background: #fff; color: #ef4444; }
-  .fb-wish-active { background: #fee2e2 !important; color: #ef4444 !important; }
+  .pcard-wish:hover { color: #EF4444; border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.1); }
+  .pcard-wish.active { color: #EF4444; background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.35); }
 
-  /* Body grows to fill remaining card height */
-  .fb-product-body {
-    padding: 10px 11px 12px;
-    display: flex;
-    flex-direction: column;
-    flex: 1; /* ← key: pushes footer to bottom */
+  /* Body */
+  .pcard-body {
+    padding: 12px 13px 14px;
+    display: flex; flex-direction: column; flex: 1;
+    gap: 0;
   }
-  @media (min-width: 480px)  { .fb-product-body { padding: 11px 13px 13px; } }
-  @media (min-width: 1024px) { .fb-product-body { padding: 13px 15px 15px; } }
+  @media (min-width: 480px)  { .pcard-body { padding: 13px 15px 15px; } }
+  @media (min-width: 1024px) { .pcard-body { padding: 14px 16px 16px; } }
 
-  .fb-badge { font-size: 9.5px; font-weight: 700; padding: 2px 8px; border-radius: 5px; white-space: nowrap; display: inline-block; }
-  .fb-badge-red    { background: #fee2e2; color: #b91c1c; }
-  .fb-badge-blue   { background: #dbeafe; color: #1e40af; }
-  .fb-badge-orange { background: #ffedd5; color: #9a3412; }
-  .fb-badge-green  { background: #dcfce7; color: #166534; }
-
-  .fb-product-brand {
-    font-size: 9px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.7px; color: #9ca3af; margin-bottom: 4px;
+  .pcard-brand {
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: #52525B; margin-bottom: 5px;
   }
 
-  /* Name grows to fill space — pushes badge + footer down */
-  .fb-product-name {
-    font-size: 12px; font-weight: 600; color: #111827;
-    line-height: 1.4; text-decoration: none;
-    display: -webkit-box; -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical; overflow: hidden;
-    margin-bottom: 7px;
-    flex: 1; /* ← pushes footer to bottom */
+  .pcard-name {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: #E4E4E7;
+    line-height: 1.4; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; margin-bottom: 8px; flex: 1;
+    text-decoration: none;
+    transition: color 0.15s;
   }
-  @media (min-width: 480px)  { .fb-product-name { font-size: 13px; } }
-  @media (min-width: 1024px) { .fb-product-name { font-size: 13.5px; } }
-  .fb-product-name:hover { text-decoration: underline; }
-  @media (prefers-color-scheme: dark) { .fb-product-name { color: #f3f4f6; } }
+  .pcard-name:hover { color: #fff; }
+  @media (min-width: 480px)  { .pcard-name { font-size: 13px; } }
+  @media (min-width: 1024px) { .pcard-name { font-size: 13.5px; } }
 
-  /* Footer always pinned to bottom */
-  .fb-product-footer {
-    margin-top: auto;
-    padding-top: 8px;
-    display: flex; align-items: center;
-    justify-content: space-between; gap: 6px;
-    border-top: 1px solid #f3f4f6;
-  }
-  @media (prefers-color-scheme: dark) { .fb-product-footer { border-top-color: rgba(255,255,255,0.06); } }
-  .fb-product-price {
-    font-size: 13.5px; font-weight: 800;
-    color: #111827; letter-spacing: -0.3px; line-height: 1;
-  }
-  @media (min-width: 480px)  { .fb-product-price { font-size: 15px; } }
-  @media (min-width: 1024px) { .fb-product-price { font-size: 16px; } }
-  @media (prefers-color-scheme: dark) { .fb-product-price { color: #f9fafb; } }
-  .fb-product-price-old { font-size: 9.5px; color: #d1d5db; text-decoration: line-through; margin-top: 2px; }
-
-  .fb-cart-btn {
+  /* Status badges */
+  .pcard-badge {
     display: inline-flex; align-items: center; gap: 4px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.3px;
+    padding: 3px 9px; border-radius: 6px; margin-bottom: 10px;
+    width: fit-content;
+  }
+  .badge-sale   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.2);  color: #F87171; }
+  .badge-new    { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.2);  color: #4ADE80; }
+  .badge-pre    { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); color: #FBB344; }
+  .badge-soon   { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: #60A5FA; }
+  .badge-stock  { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.2);  color: #4ADE80; }
+
+  /* Footer: price + cart */
+  .pcard-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 6px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: auto;
+  }
+
+  .pcard-price {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 15px; font-weight: 800; color: #F4F4F5;
+    letter-spacing: -0.4px; line-height: 1;
+  }
+  @media (min-width: 480px)  { .pcard-price { font-size: 16px; } }
+  @media (min-width: 1024px) { .pcard-price { font-size: 17px; } }
+
+  .pcard-price-old {
+    font-size: 10px; color: #3F3F46;
+    text-decoration: line-through; margin-top: 2px; line-height: 1;
+  }
+
+  .pcard-cart {
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
     background: #E6640A; color: #fff; border: none;
-    border-radius: 9px; padding: 7px 9px;
-    font-size: 10px; font-weight: 700;
-    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    border-radius: 10px; padding: 8px 11px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 10px; font-weight: 800; cursor: pointer;
+    white-space: nowrap; flex-shrink: 0;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(230,100,10,0.3);
+  }
+  .pcard-cart:hover { background: #C4520A; box-shadow: 0 4px 16px rgba(230,100,10,0.4); transform: translateY(-1px); }
+  .pcard-cart:active { transform: translateY(0); }
+  .pcard-cart:disabled { background: #27272A; color: #52525B; box-shadow: none; cursor: not-allowed; }
+  @media (min-width: 480px)  { .pcard-cart { padding: 9px 13px; font-size: 11px; } }
+  @media (min-width: 1024px) { .pcard-cart { padding: 10px 14px; font-size: 11.5px; } }
+
+  /* ── SECTION HEADER ── */
+  .sec-hdr {
+    display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;
+  }
+  @media (min-width: 500px) {
+    .sec-hdr { flex-direction: row; align-items: center; justify-content: space-between; }
+  }
+  .sec-hdr-l { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+  .sec-hdr-r { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding-left: 50px; }
+  @media (min-width: 500px) { .sec-hdr-r { padding-left: 0; } }
+
+  .sec-ico {
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sec-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 18px; font-weight: 800; color: #F4F4F5; letter-spacing: -0.4px; line-height: 1.2;
+  }
+  @media (min-width: 768px) { .sec-title { font-size: 20px; } }
+  .sec-sub { font-size: 12.5px; color: #52525B; margin-top: 3px; line-height: 1.4; }
+
+  .sec-link {
+    font-size: 12px; font-weight: 700; color: #E6640A;
+    text-decoration: none; white-space: nowrap;
+    padding: 6px 12px; border-radius: 8px;
+    background: rgba(230,100,10,0.08);
+    border: 1px solid rgba(230,100,10,0.15);
     transition: background 0.15s;
   }
-  @media (min-width: 480px)  { .fb-cart-btn { padding: 7px 11px; font-size: 11px; } }
-  @media (min-width: 1024px) { .fb-cart-btn { padding: 9px 13px; font-size: 12px; } }
-  .fb-cart-btn:hover { background: #d45a09; }
-  .fb-cart-btn:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+  .sec-link:hover { background: rgba(230,100,10,0.15); }
 
-  /* ── PRODUCT SCROLL TRACK ── */
-  .fb-prod-track {
-    display: flex; gap: 10px;
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 6px;
-    /* stretch children to same height */
-    align-items: stretch;
-  }
-  @media (min-width: 640px)  { .fb-prod-track { gap: 12px; } }
-  @media (min-width: 1024px) { .fb-prod-track { gap: 14px; } }
-
-  /* ── HSCROLL CARD ── */
-  .hs-card {
-    width: 162px; flex-shrink: 0;
-    background: #fff;
-    border-radius: 16px; overflow: hidden;
-    text-decoration: none;
-    display: flex; flex-direction: column;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    transition: box-shadow 0.2s;
-  }
-  @media (prefers-color-scheme: dark) { .hs-card { background: #1a1d27; } }
-  .hs-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.13); }
-  @media (max-width: 374px) { .hs-card { width: 148px; } }
-  @media (min-width: 640px) { .hs-card { width: 198px; } }
-
-  .hs-img { width: 100%; height: 152px; position: relative; overflow: hidden; background: #f5f4f2; flex-shrink: 0; }
-  .hs-img-el { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: transform 0.35s ease; }
-  .hs-card:hover .hs-img-el { transform: scale(1.05); }
-  .hs-img-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #c8c5c0; }
-  .hs-disc-badge { position: absolute; top: 8px; left: 8px; background: #ef4444; color: #fff; font-size: 9.5px; font-weight: 800; padding: 3px 7px; border-radius: 20px; }
-
-  .hs-timer-wrap {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 6px 8px 7px;
+  .nav-btn {
+    width: 33px; height: 33px; border-radius: 50%;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
     display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #A1A1AA;
+    transition: all 0.15s;
   }
-  .tb-orange { background: linear-gradient(to top, rgba(180,70,5,0.95), rgba(230,100,10,0.85)); }
-  .tb-blue   { background: linear-gradient(to top, rgba(29,78,216,0.95), rgba(59,130,246,0.85)); }
-  .hs-timer-inner { display: flex; align-items: center; justify-content: center; gap: 3px; }
-  .hs-timer-unit { display: flex; flex-direction: column; align-items: center; min-width: 28px; }
-  .hs-timer-num { font-size: 14px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -0.5px; }
-  @media (max-width: 374px) { .hs-timer-num { font-size: 12px; } }
-  .hs-timer-lbl { font-size: 8px; font-weight: 600; color: rgba(255,255,255,0.65); text-transform: uppercase; line-height: 1; margin-top: 1px; }
-  .hs-timer-sep { font-size: 13px; font-weight: 900; color: rgba(255,255,255,0.6); margin-bottom: 8px; line-height: 1; }
-
-  .hs-body { padding: 11px 11px 12px; display: flex; flex-direction: column; gap: 0; flex: 1; }
-  .hs-status { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.3px; width: fit-content; margin-bottom: 6px; }
-  .st-orange { background: rgba(230,100,10,0.1); color: #E6640A; }
-  .st-blue   { background: rgba(59,130,246,0.1); color: #3b82f6; }
-  .hs-brand { font-size: 9.5px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
-  .hs-name { font-size: 12px; font-weight: 600; color: #111; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 32px; margin-bottom: 8px; }
-  @media (prefers-color-scheme: dark) { .hs-name { color: #f9fafb; } }
-  .hs-price-row { display: flex; align-items: baseline; gap: 5px; margin-bottom: 8px; }
-  .hs-price       { font-size: 13px; font-weight: 800; color: #E6640A; letter-spacing: -0.3px; }
-  .hs-price-old   { font-size: 10px; color: #c0b8b0; text-decoration: line-through; }
-  .hs-price-plain { font-size: 13px; font-weight: 800; color: #111; letter-spacing: -0.3px; }
-  @media (prefers-color-scheme: dark) { .hs-price-plain { color: #f9fafb; } }
-
-  .p-actions { display: flex; gap: 5px; margin-top: auto; }
-  .p-btn-order { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; background: #E6640A; border: none; color: #fff; font-size: 10.5px; font-weight: 700; padding: 8px; border-radius: 9px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
-  .p-btn-order:hover { background: #d45a09; }
-
-  /* ── AD BANNER ── */
-  .ad-banner { border-radius: 18px; padding: 16px; display: flex; align-items: center; gap: 12px; position: relative; overflow: hidden; }
-  @media (min-width: 640px) { .ad-banner { padding: 20px 24px; border-radius: 22px; gap: 16px; } }
-  .ad-icon { font-size: 26px; flex-shrink: 0; }
-  .ad-body { flex: 1; min-width: 0; }
-  .ad-title { font-family: 'Satoshi', sans-serif; font-size: clamp(13px,3.5vw,15px); font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ad-sub { font-size: clamp(11px,2.8vw,13px); color: rgba(255,255,255,0.6); margin-top: 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .ad-label { position: absolute; top: 8px; right: 8px; font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.08); border-radius: 4px; padding: 2px 5px; letter-spacing: 0.5px; }
-  .ad-cta { flex-shrink: 0; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.22); color: #fff; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
-  .ad-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
-  .ad-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(0,0,0,0.15); cursor: pointer; transition: background 0.2s, transform 0.2s; }
-  .ad-dot.active { background: #E6640A; transform: scale(1.3); }
-
-  /* ── LIVE / SHIMMER BADGES ── */
-  .live-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.22); color: #ef4444; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.5px; }
-  .live-dot { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; animation: live-pulse 1.2s ease-in-out infinite; }
-  @keyframes live-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
-  .shimmer-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.22); color: #8b5cf6; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.3px; }
-
-  /* ── AI FEATURES ── */
-  .ai-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
-  @media (min-width: 900px) { .ai-grid { grid-template-columns: repeat(4,1fr); } }
-  .ai-card { background: rgba(0,0,0,0.03); border-radius: 16px; padding: 15px 13px; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(0,0,0,0.04); }
-  @media (prefers-color-scheme: dark) { .ai-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.06); } }
-  .ai-card-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
-  .ai-card-title { font-family: 'Satoshi', sans-serif; font-size: 13.5px; font-weight: 700; color: #111; margin-bottom: 4px; }
-  @media (prefers-color-scheme: dark) { .ai-card-title { color: #f9fafb; } }
-  .ai-card-desc { font-size: 11.5px; color: #666; line-height: 1.55; }
-
-  /* ── TRUST GRID ── */
-  .trust-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
-  @media (min-width: 900px) { .trust-grid { grid-template-columns: repeat(4,1fr); } }
-  .trust-card {
-    background: #fff; border-radius: 15px; padding: 14px;
-    display: flex; flex-direction: column; gap: 8px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
-  }
-  @media (prefers-color-scheme: dark) { .trust-card { background: #1a1d27; } }
-  @media (min-width: 640px) { .trust-card { padding: 18px 16px; flex-direction: row; align-items: flex-start; gap: 12px; } }
-  .trust-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(230,100,10,0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .trust-title { font-size: 13px; font-weight: 700; color: #111; }
-  @media (prefers-color-scheme: dark) { .trust-title { color: #f9fafb; } }
-  .trust-desc { font-size: 11.5px; color: #666; margin-top: 2px; line-height: 1.5; }
-
-  /* ── CTA BANNER ── */
-  .cta-banner { position: relative; overflow: hidden; border-radius: 22px; background: linear-gradient(135deg,#0d0d0d 0%,#1a0800 60%,#2d1000 100%); padding: 28px 20px; display: flex; flex-direction: column; gap: 0; }
-  @media (min-width: 640px) { .cta-banner { padding: 40px 36px; flex-direction: row; align-items: center; justify-content: space-between; } }
-  .cta-content { position: relative; z-index: 1; }
-  .cta-h2 { font-family: 'Satoshi', sans-serif; font-size: clamp(22px,6vw,32px); font-weight: 800; color: #fff; line-height: 1.2; letter-spacing: -0.5px; margin: 0 0 10px; }
-  .cta-p { font-size: clamp(13px,3.5vw,14.5px); color: rgba(255,255,255,0.5); line-height: 1.65; margin: 0 0 20px; max-width: 380px; }
-  .cta-btns { display: flex; gap: 10px; flex-wrap: wrap; }
-  .cta-btn-w, .cta-btn-g { display: inline-flex; align-items: center; gap: 7px; padding: 13px 22px; border-radius: 12px; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 14px; text-decoration: none; cursor: pointer; }
-  .cta-btn-w { background: #E6640A; color: #fff; border: none; }
-  .cta-btn-g { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: #fff; }
-  .cta-logo { display: none; }
-  @media (min-width: 640px) { .cta-logo { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; position: relative; z-index: 1; } }
-  .cta-logo-box { width: 64px; height: 64px; border-radius: 18px; background: linear-gradient(135deg,#E6640A,#cf5208); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 8px 28px rgba(230,100,10,0.4); }
-  .cta-logo-on  { font-family: 'Satoshi', sans-serif; font-weight: 900; font-size: 22px; color: #fff; line-height: 1; letter-spacing: -1px; }
-  .cta-logo-ett { font-family: 'Satoshi', sans-serif; font-weight: 700; font-size: 11px; color: rgba(255,255,255,0.55); line-height: 1; letter-spacing: 2px; }
-  .cta-logo-name { font-family: 'Satoshi', sans-serif; font-weight: 800; font-size: 16px; color: rgba(255,255,255,0.7); letter-spacing: -0.5px; }
-  .cta-glow { position: absolute; top: -60px; right: -60px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle,rgba(230,100,10,0.18) 0%,transparent 70%); pointer-events: none; }
+  .nav-btn:hover { background: rgba(255,255,255,0.1); color: #F4F4F5; border-color: rgba(255,255,255,0.15); }
 
   /* ── HERO ── */
-  @media (max-width: 639px) {
-    .hero { min-height: 85dvh !important; }
-    .hero-inner { padding-top: 80px !important; padding-bottom: 48px !important; }
-    .hero-h1 { font-size: clamp(32px,9vw,48px) !important; }
-    .hero-p { font-size: 14px !important; max-width: 90% !important; }
-    .hero-btns { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
-    .h-btn-primary, .h-btn-ghost { width: 100% !important; justify-content: center !important; padding: 15px 20px !important; font-size: 15px !important; }
-  }
-
-  /* ══════════════════════════════════════════
-     WELCOME POPUP
-  ══════════════════════════════════════════ */
-  .wp-sheet {
-    position: relative;
-    width: 100%; max-width: 440px;
-    border-radius: 28px 28px 0 0;
+  .hero-section {
+    position: relative; min-height: 100dvh;
+    display: flex; flex-direction: column; justify-content: flex-end;
     overflow: hidden;
-    background: #0c0c0e;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-bottom: none;
-    box-shadow: 0 -32px 80px rgba(0,0,0,0.6);
-    max-height: 90dvh;
-    overflow-y: auto;
   }
-  @media (min-width: 600px) {
-    .wp-sheet { border-radius: 28px; border-bottom: 1px solid rgba(255,255,255,0.1); max-height: 88vh; }
+  .hero-bg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
   }
-
-  .wp-visual {
-    position: relative;
-    height: 200px;
-    background: radial-gradient(ellipse at 50% 130%, var(--slide-color, #E6640A) 0%, transparent 65%),
-                linear-gradient(180deg, #14141a 0%, #0c0c0e 100%);
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden;
-    transition: background 0.4s;
-  }
-  @media (min-width: 400px) { .wp-visual { height: 220px; } }
-
-  .wp-visual::after {
-    content: "";
+  .hero-overlay {
     position: absolute; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none; opacity: 0.5;
+    background: linear-gradient(
+      to top,
+      rgba(10,10,11,0.97) 0%,
+      rgba(10,10,11,0.65) 45%,
+      rgba(10,10,11,0.2) 100%
+    );
+  }
+  .hero-content {
+    position: relative; z-index: 2;
+    padding: 0 16px 56px; max-width: 1320px; margin: 0 auto; width: 100%;
+  }
+  @media (min-width: 640px)  { .hero-content { padding: 0 24px 72px; } }
+  @media (min-width: 1024px) { .hero-content { padding: 0 48px 88px; } }
+
+  .hero-kicker {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(230,100,10,0.12); border: 1px solid rgba(230,100,10,0.25);
+    color: #FBA35A; font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 6px 14px; border-radius: 99px; margin-bottom: 20px;
+    backdrop-filter: blur(8px);
+  }
+  .hero-h1 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(38px, 8vw, 78px);
+    font-weight: 800; color: #fff; line-height: 1.05;
+    letter-spacing: -2px; margin-bottom: 18px; max-width: 720px;
+  }
+  .hero-h1 em { color: #E6640A; font-style: normal; }
+  .hero-p {
+    font-size: clamp(14px, 2.5vw, 17px); color: rgba(255,255,255,0.5);
+    line-height: 1.7; max-width: 460px; margin-bottom: 32px;
+  }
+  .hero-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  @media (max-width: 480px) {
+    .hero-btns { flex-direction: column; }
+    .hero-btns a, .hero-btns button { width: 100%; justify-content: center; }
   }
 
-  .wp-close {
-    position: absolute; top: 14px; right: 14px; z-index: 20;
-    width: 34px; height: 34px; border-radius: 50%;
-    background: rgba(255,255,255,0.08);
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #E6640A; color: #fff; border: none;
+    border-radius: 13px; padding: 15px 26px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+    box-shadow: 0 4px 20px rgba(230,100,10,0.4);
+  }
+  .btn-primary:hover { background: #C4520A; box-shadow: 0 8px 32px rgba(230,100,10,0.5); transform: translateY(-1px); }
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.06); color: #F4F4F5;
     border: 1px solid rgba(255,255,255,0.12);
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    color: rgba(255,255,255,0.55); transition: background 0.15s;
+    border-radius: 13px; padding: 15px 26px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
   }
-  .wp-close:hover { background: rgba(255,255,255,0.14); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
 
-  .wp-logo-chip {
-    position: absolute; top: 14px; left: 14px; z-index: 10;
-    display: inline-flex; align-items: center;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px; padding: 4px 9px; gap: 1px;
+  /* ── HERO STATS ── */
+  .hero-stats {
+    display: flex; gap: 24px; margin-top: 40px; flex-wrap: wrap;
   }
-  .wp-logo-on  { font-family: 'Satoshi', sans-serif; font-weight: 900; font-size: 13px; color: #fff; line-height: 1; letter-spacing: -0.5px; }
-  .wp-logo-ett { font-family: 'Satoshi', sans-serif; font-weight: 600; font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1; }
+  .hero-stat { display: flex; flex-direction: column; gap: 2px; }
+  .hero-stat-num {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.5px;
+  }
+  .hero-stat-lbl { font-size: 11px; color: rgba(255,255,255,0.35); font-weight: 600; letter-spacing: 0.3px; }
+  .hero-stat-div { width: 1px; background: rgba(255,255,255,0.08); align-self: stretch; }
 
-  .wp-emoji-wrap { position: relative; z-index: 5; }
-  .wp-orb {
-    width: 96px; height: 96px; border-radius: 28px;
-    border: 1.5px solid;
+  /* ── CATEGORY PILLS ── */
+  .cat-grid {
+    display: flex; gap: 10px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    padding-bottom: 4px;
+    margin-left: -16px; padding-left: 16px;
+    margin-right: -16px; padding-right: 16px;
+  }
+  .cat-grid::-webkit-scrollbar { display: none; }
+  @media (min-width: 640px) {
+    .cat-grid { flex-wrap: wrap; overflow-x: visible;
+      margin-left: 0; padding-left: 0; margin-right: 0; padding-right: 0; }
+  }
+  .cat-pill {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    flex-shrink: 0; text-decoration: none;
+  }
+  .cat-pill-ico {
+    width: 64px; height: 64px; border-radius: 18px;
+    background: #18191D; border: 1px solid rgba(255,255,255,0.06);
     display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .cat-pill:hover .cat-pill-ico {
+    border-color: rgba(230,100,10,0.35);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    transform: translateY(-3px);
+  }
+  .cat-pill-ico img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-pill-lbl {
+    font-size: 11px; font-weight: 600; color: #71717A;
+    text-align: center; white-space: nowrap;
+    max-width: 70px; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.15s;
+  }
+  .cat-pill:hover .cat-pill-lbl { color: #E6640A; }
+  @media (min-width: 640px) { .cat-pill-ico { width: 72px; height: 72px; border-radius: 20px; } }
+
+  /* ── AD STRIP ── */
+  .ad-strip {
+    border-radius: 20px; padding: 18px 20px;
+    display: flex; align-items: center; gap: 14px;
+    overflow: hidden; position: relative;
+  }
+  @media (min-width: 640px) { .ad-strip { padding: 22px 28px; border-radius: 24px; gap: 18px; } }
+  .ad-strip-icon { font-size: 28px; flex-shrink: 0; }
+  .ad-strip-body { flex: 1; min-width: 0; }
+  .ad-strip-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(13px, 3.5vw, 15px); font-weight: 700; color: #fff;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ad-strip-sub {
+    font-size: clamp(11px, 2.5vw, 12.5px); color: rgba(255,255,255,0.45);
+    margin-top: 2px; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .ad-strip-cta {
+    flex-shrink: 0; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18);
+    color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 11px;
+    cursor: pointer; white-space: nowrap; font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background 0.15s;
+  }
+  .ad-strip-cta:hover { background: rgba(255,255,255,0.2); }
+  .ad-strip-label {
+    position: absolute; top: 8px; right: 8px;
+    font-size: 8px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+    color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.06);
+    border-radius: 4px; padding: 2px 5px;
+  }
+  .ad-dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+  .ad-dot {
+    width: 6px; height: 6px; border-radius: 99px;
+    background: rgba(255,255,255,0.1); cursor: pointer; border: none; padding: 0;
+    transition: background 0.2s, width 0.2s;
+  }
+  .ad-dot.on { width: 20px; background: #E6640A; }
+
+  /* ── FLASH SALE HEADER LIVE ── */
+  .live-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+    color: #F87171; font-size: 9px; font-weight: 800; letter-spacing: 0.5px;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 6px;
+  }
+  .live-dot { width: 5px; height: 5px; border-radius: 50%; background: #EF4444; animation: livePulse 1.2s ease-in-out infinite; }
+  @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.75)} }
+
+  /* ── SHIMMER CHIP ── */
+  .shimmer-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2);
+    color: #A78BFA; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 6px;
+  }
+
+  /* ── HScroll CARD (UPCOMING) ── */
+  .hs-card {
+    width: 168px; flex-shrink: 0;
+    background: #18191D; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px; overflow: hidden;
+    display: flex; flex-direction: column;
+    text-decoration: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .hs-card:hover {
+    border-color: rgba(139,92,246,0.3);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+  }
+  @media (min-width: 480px) { .hs-card { width: 196px; } }
+  @media (min-width: 768px) { .hs-card { width: 220px; } }
+
+  .hs-img { width: 100%; aspect-ratio: 1; position: relative; overflow: hidden; background: #1E1F25; }
+  .hs-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; display: block; }
+  .hs-card:hover .hs-img img { transform: scale(1.06); }
+
+  .hs-timer {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(10,10,11,0.95), rgba(10,10,11,0.6));
+    padding: 8px; display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .hs-timer-unit { display: flex; flex-direction: column; align-items: center; min-width: 28px; }
+  .hs-timer-num {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 15px; font-weight: 800; color: #fff; line-height: 1; font-variant-numeric: tabular-nums;
+  }
+  .hs-timer-lbl { font-size: 7.5px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+  .hs-timer-sep { font-size: 13px; font-weight: 900; color: rgba(255,255,255,0.3); margin-bottom: 8px; }
+  .timer-purple { border-top: 1px solid rgba(139,92,246,0.2); }
+  .timer-amber  { border-top: 1px solid rgba(245,158,11,0.2); }
+
+  .hs-body { padding: 12px 13px 14px; display: flex; flex-direction: column; flex: 1; }
+  .hs-status {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 6px;
+    margin-bottom: 8px; width: fit-content;
+  }
+  .hs-brand { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #3F3F46; margin-bottom: 5px; }
+  .hs-name {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: #D4D4D8; line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; min-height: 35px; margin-bottom: 10px; flex: 1;
+  }
+  .hs-price-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }
+  .hs-price { font-family: 'Bricolage Grotesque', sans-serif; font-size: 14px; font-weight: 800; color: #F4F4F5; letter-spacing: -0.3px; }
+  .hs-price-old { font-size: 10px; color: #3F3F46; text-decoration: line-through; }
+  .hs-btn {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.2);
+    color: #A78BFA; border-radius: 10px; padding: 9px;
+    font-size: 11px; font-weight: 700; cursor: pointer;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background 0.15s;
+  }
+  .hs-btn:hover { background: rgba(139,92,246,0.2); }
+
+  /* ── AI FEATURES GRID ── */
+  .ai-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (min-width: 900px) { .ai-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .ai-card {
+    background: #18191D; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px; padding: 18px 16px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .ai-card:hover { border-color: rgba(255,255,255,0.12); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+  .ai-card-ico { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .ai-card-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; font-weight: 700; color: #E4E4E7; margin-bottom: 5px; }
+  .ai-card-desc { font-size: 11.5px; color: #52525B; line-height: 1.6; }
+
+  /* ── TRUST CARDS ── */
+  .trust-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (min-width: 900px) { .trust-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; } }
+
+  .trust-card {
+    background: #18191D; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    transition: border-color 0.2s;
+  }
+  .trust-card:hover { border-color: rgba(230,100,10,0.2); }
+  @media (min-width: 640px) { .trust-card { flex-direction: row; align-items: flex-start; padding: 20px 18px; gap: 14px; } }
+  .trust-ico { width: 38px; height: 38px; border-radius: 11px; background: rgba(230,100,10,0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .trust-title { font-size: 13px; font-weight: 700; color: #E4E4E7; margin-bottom: 3px; }
+  .trust-desc { font-size: 11.5px; color: #52525B; line-height: 1.55; }
+
+  /* ── CTA DARK BANNER ── */
+  .cta-block {
     position: relative; overflow: hidden;
-    backdrop-filter: blur(12px);
+    border-radius: 24px;
+    background: linear-gradient(135deg, #111214 0%, #1A0D05 50%, #201005 100%);
+    border: 1px solid rgba(230,100,10,0.15);
+    padding: 32px 20px;
+    display: flex; flex-direction: column; gap: 0;
   }
-  @media (min-width: 400px) { .wp-orb { width: 108px; height: 108px; border-radius: 32px; } }
-  .wp-orb-glow {
-    position: absolute; inset: -20%; border-radius: 50%;
-    opacity: 0.25; filter: blur(24px); pointer-events: none;
+  @media (min-width: 640px) { .cta-block { padding: 48px 44px; flex-direction: row; align-items: center; justify-content: space-between; gap: 32px; } }
+  .cta-glow { position: absolute; top: -80px; right: -80px; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(230,100,10,0.15) 0%, transparent 70%); pointer-events: none; }
+  .cta-glow2 { position: absolute; bottom: -60px; left: -40px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%); pointer-events: none; }
+  .cta-h2 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(24px, 5vw, 36px); font-weight: 800; color: #fff;
+    line-height: 1.15; letter-spacing: -0.7px; margin-bottom: 12px;
   }
-  .wp-emoji { font-size: 44px; position: relative; z-index: 2; line-height: 1; }
-  @media (min-width: 400px) { .wp-emoji { font-size: 52px; } }
-
-  .wp-body { padding: 22px 22px 20px; }
-  @media (min-width: 400px) { .wp-body { padding: 24px 26px 22px; } }
-  .wp-sub-label {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
-    text-transform: uppercase; margin-bottom: 6px;
+  .cta-p { font-size: clamp(13px, 3vw, 14.5px); color: rgba(255,255,255,0.38); line-height: 1.7; margin-bottom: 24px; max-width: 420px; }
+  .cta-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .cta-logo-wrap { display: none; }
+  @media (min-width: 640px) {
+    .cta-logo-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      position: relative; z-index: 1; flex-shrink: 0;
+    }
   }
-  .wp-title {
-    font-family: 'Satoshi', sans-serif;
-    font-size: clamp(22px, 6vw, 27px);
-    font-weight: 800; color: #fff;
-    line-height: 1.15; letter-spacing: -0.5px;
-    margin: 0 0 10px;
+  .cta-logo-box {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: linear-gradient(135deg, #E6640A, #C4520A);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(230,100,10,0.4);
   }
-  .wp-desc {
-    font-size: 14px; color: rgba(255,255,255,0.42);
-    line-height: 1.7; margin: 0 0 24px;
-  }
-
-  .wp-dots { display: flex; align-items: center; gap: 7px; margin-bottom: 20px; }
-  .wp-dot {
-    height: 6px; width: 6px; border-radius: 99px;
-    background: rgba(255,255,255,0.18);
-    border: none; cursor: pointer; padding: 0;
-    transition: background 0.25s, width 0.25s;
-  }
-  .wp-dot.active { width: 24px; }
-
-  .wp-cta {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; border: none;
-    border-radius: 15px; padding: 16px 0;
-    font-family: 'Manrope', sans-serif;
-    font-weight: 800; font-size: 15px;
-    color: #fff; text-decoration: none; cursor: pointer;
-    margin-bottom: 10px;
-    transition: opacity 0.15s, transform 0.15s;
-  }
-  .wp-cta:hover { opacity: 0.9; transform: scale(0.99); }
-
-  .wp-skip {
-    display: block; width: 100%; text-align: center;
-    font-size: 12.5px; color: rgba(255,255,255,0.2);
-    background: transparent; border: none; cursor: pointer; padding: 6px 0;
-  }
-  .wp-skip:hover { color: rgba(255,255,255,0.35); }
-  .wp-safe { height: env(safe-area-inset-bottom, 0px); }
-
-  /* ── SECTION HEADERS ── */
-  .sec-hdr-row {
-    display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;
-  }
-  @media (min-width: 480px) {
-    .sec-hdr-row { flex-direction: row; align-items: center; justify-content: space-between; }
-  }
-  .sec-hdr-left { display: flex; align-items: center; gap: 10px; }
-  .sec-hdr-right { display: flex; align-items: center; gap: 8px; padding-left: 48px; }
-  @media (min-width: 480px) { .sec-hdr-right { padding-left: 0; } }
-  .sec-hdr-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .sec-hdr-title { font-family: 'Satoshi', sans-serif; font-size: 16px; font-weight: 800; color: #111827; letter-spacing: -0.3px; line-height: 1.2; }
-  @media (prefers-color-scheme: dark) { .sec-hdr-title { color: #f9fafb; } }
-  .sec-hdr-sub { font-size: 12px; color: #9ca3af; margin-top: 2px; }
-  .sec-hdr-link { font-size: 12.5px; font-weight: 700; color: #E6640A; text-decoration: none; white-space: nowrap; }
+  .cta-logo-name { font-family: 'Bricolage Grotesque', sans-serif; font-size: 17px; font-weight: 800; color: rgba(255,255,255,0.6); letter-spacing: -0.5px; }
 
   /* ── FOOTER ── */
-  .footer { background: #fff; border-top: 1px solid rgba(0,0,0,0.06); margin-top: 4px; }
-  @media (prefers-color-scheme: dark) { .footer { background: #1a1d27; border-top-color: rgba(255,255,255,0.06); } }
-  .footer-inner { max-width: 1280px; margin: 0 auto; padding: 36px 16px 24px; }
-  @media (min-width: 640px)  { .footer-inner { padding: 48px 24px 28px; } }
-  @media (min-width: 1024px) { .footer-inner { padding: 56px 40px 32px; } }
-  .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 20px; }
-  @media (min-width: 640px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; } }
-  .footer-brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .footer-brand-name { font-family: 'Satoshi', sans-serif; font-weight: 800; font-size: 20px; color: #111; letter-spacing: -0.5px; }
-  @media (prefers-color-scheme: dark) { .footer-brand-name { color: #f9fafb; } }
-  .footer-brand-name em { color: #E6640A; font-style: normal; }
-  .footer-tagline { font-size: 13px; color: #666; line-height: 1.6; margin: 0 0 12px; }
-  .footer-wa { display: inline-flex; align-items: center; gap: 7px; background: #25D366; color: #fff; font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 10px; text-decoration: none; }
-  .footer-col { grid-column: span 1; }
-  .footer-col:first-child { grid-column: 1 / -1; }
-  @media (min-width: 640px) { .footer-col:first-child { grid-column: span 1; } }
-  .footer-col-title { font-family: 'Satoshi', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; color: #666; margin-bottom: 12px; }
-  .footer-links { display: flex; flex-direction: column; gap: 8px; }
-  .footer-link { font-size: 13.5px; color: #111; text-decoration: none; opacity: 0.75; transition: opacity 0.15s; }
-  @media (prefers-color-scheme: dark) { .footer-link { color: #e5e7eb; } }
-  .footer-link:hover { opacity: 1; }
-  .footer-bottom { border-top: 1px solid rgba(0,0,0,0.06); margin-top: 28px; padding-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .footer {
+    background: #0D0D0F; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 4px;
+  }
+  .footer-inner { max-width: 1320px; margin: 0 auto; padding: 48px 16px 28px; }
+  @media (min-width: 640px)  { .footer-inner { padding: 56px 24px 32px; } }
+  @media (min-width: 1024px) { .footer-inner { padding: 64px 48px 36px; } }
+  .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px 20px; }
+  @media (min-width: 640px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; } }
+  .footer-brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .footer-logo-box {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, #E6640A, #C4520A);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 2px 10px rgba(230,100,10,0.3);
+  }
+  .footer-logo-on  { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 900; font-size: 11px; color: #fff; line-height: 1; letter-spacing: -0.5px; }
+  .footer-logo-ett { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 8px; color: rgba(255,255,255,0.6); line-height: 1; letter-spacing: 0.5px; }
+  .footer-name { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 20px; color: #F4F4F5; letter-spacing: -0.5px; }
+  .footer-name em { color: #E6640A; font-style: normal; }
+  .footer-tag { font-size: 13px; color: #3F3F46; line-height: 1.65; margin: 0 0 14px; max-width: 240px; }
+  .footer-wa {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(37,211,102,0.1); border: 1px solid rgba(37,211,102,0.2);
+    color: #4ADE80; font-size: 12.5px; font-weight: 700;
+    padding: 9px 16px; border-radius: 11px; text-decoration: none;
+    transition: background 0.15s;
+  }
+  .footer-wa:hover { background: rgba(37,211,102,0.18); }
+  .footer-col-first { grid-column: 1 / -1; }
+  @media (min-width: 640px) { .footer-col-first { grid-column: span 1; } }
+  .footer-col-title { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #3F3F46; margin-bottom: 14px; }
+  .footer-links { display: flex; flex-direction: column; gap: 9px; }
+  .footer-link { font-size: 13.5px; color: #71717A; text-decoration: none; transition: color 0.15s; }
+  .footer-link:hover { color: #F4F4F5; }
+  .footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.04); margin-top: 36px; padding-top: 22px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
   @media (min-width: 640px) { .footer-bottom { flex-direction: row; justify-content: space-between; } }
-  .footer-copy { font-size: 12px; color: #888; margin: 0; }
+  .footer-copy { font-size: 12px; color: #3F3F46; }
+
+  /* ── WELCOME POPUP ── */
+  .wp-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(16px) saturate(0.4);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  @media (min-width: 600px) { .wp-overlay { align-items: center; } }
+  .wp-sheet {
+    width: 100%; max-width: 460px; border-radius: 28px 28px 0 0;
+    background: #111214; border: 1px solid rgba(255,255,255,0.08);
+    border-bottom: none; max-height: 90dvh; overflow-y: auto;
+    box-shadow: 0 -40px 80px rgba(0,0,0,0.7);
+  }
+  @media (min-width: 600px) { .wp-sheet { border-radius: 28px; border-bottom: 1px solid rgba(255,255,255,0.08); } }
+  .wp-visual {
+    height: 210px; position: relative; display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 130%, var(--sc,#E6640A) 0%, transparent 65%),
+                linear-gradient(180deg, #16161A, #111214);
+    transition: background 0.4s;
+  }
+  .wp-orb {
+    width: 100px; height: 100px; border-radius: 28px;
+    border: 1.5px solid var(--sc,#E6640A); background: rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 2; backdrop-filter: blur(12px);
+  }
+  .wp-orb::before {
+    content: ""; position: absolute; inset: -20%; border-radius: 50%;
+    background: var(--sc,#E6640A); opacity: 0.2; filter: blur(24px);
+  }
+  .wp-emoji { font-size: 48px; position: relative; z-index: 2; line-height: 1; }
+  .wp-close {
+    position: absolute; top: 14px; right: 14px; z-index: 10;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.4); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .wp-close:hover { background: rgba(255,255,255,0.12); }
+  .wp-chip {
+    position: absolute; top: 14px; left: 14px; z-index: 10;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 4px 10px;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 13px; color: #fff; letter-spacing: -0.3px;
+  }
+  .wp-chip em { color: #E6640A; font-style: normal; }
+  .wp-body { padding: 24px 24px 20px; }
+  .wp-kicker { font-size: 10px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 7px; }
+  .wp-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: clamp(22px,6vw,27px); font-weight: 800; color: #fff; line-height: 1.15; letter-spacing: -0.5px; margin: 0 0 10px; }
+  .wp-desc { font-size: 13.5px; color: rgba(255,255,255,0.35); line-height: 1.7; margin: 0 0 22px; }
+  .wp-dots { display: flex; gap: 7px; margin-bottom: 18px; }
+  .wp-dot { height: 5px; border-radius: 99px; background: rgba(255,255,255,0.12); border: none; cursor: pointer; padding: 0; transition: width 0.25s, background 0.25s; width: 16px; }
+  .wp-dot.on { width: 28px; }
+  .wp-cta {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; border: none; border-radius: 15px; padding: 16px;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 15px;
+    color: #fff; cursor: pointer; margin-bottom: 10px; text-decoration: none;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .wp-cta:hover { opacity: 0.9; transform: scale(0.99); }
+  .wp-skip { display: block; width: 100%; text-align: center; font-size: 12px; color: rgba(255,255,255,0.15); background: transparent; border: none; cursor: pointer; padding: 6px 0; }
+  .wp-skip:hover { color: rgba(255,255,255,0.3); }
+  .wp-safe { height: env(safe-area-inset-bottom, 0); }
+
+  /* ── NAVBAR ── */
+  .navbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    padding: 0 16px; height: 62px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: rgba(10,10,11,0.8); border-bottom: 1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px) saturate(1.5);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  @media (min-width: 640px) { .navbar { padding: 0 24px; height: 66px; } }
+  @media (min-width: 1024px) { .navbar { padding: 0 48px; } }
+  .navbar.scrolled { background: rgba(10,10,11,0.95); box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+  .nav-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; flex-shrink: 0; }
+  .nav-logo-box {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: linear-gradient(135deg, #E6640A, #C4520A);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .nav-logo-on  { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 900; font-size: 10px; color: #fff; line-height: 1; }
+  .nav-logo-ett { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 7px; color: rgba(255,255,255,0.55); line-height: 1; }
+  .nav-name { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 17px; color: #F4F4F5; letter-spacing: -0.3px; }
+  .nav-name em { color: #E6640A; font-style: normal; }
+  .nav-search {
+    flex: 1; max-width: 400px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 11px; height: 40px;
+    display: flex; align-items: center; gap: 8px; padding: 0 12px;
+    cursor: text; transition: border-color 0.15s, background 0.15s;
+    display: none;
+  }
+  @media (min-width: 768px) { .nav-search { display: flex; } }
+  .nav-search:hover { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.07); }
+  .nav-search input {
+    background: none; border: none; outline: none;
+    font-size: 13px; color: #F4F4F5; width: 100%;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .nav-search input::placeholder { color: #3F3F46; }
+  .nav-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .nav-icon-btn {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #71717A; transition: all 0.15s; position: relative;
+    text-decoration: none;
+  }
+  .nav-icon-btn:hover { background: rgba(255,255,255,0.09); color: #F4F4F5; border-color: rgba(255,255,255,0.12); }
+  .nav-cart-badge {
+    position: absolute; top: -4px; right: -4px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #E6640A; color: #fff;
+    font-size: 8.5px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid #0A0A0B;
+  }
+  .nav-sign-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #E6640A; color: #fff; border: none;
+    border-radius: 10px; padding: 8px 16px;
+    font-size: 12.5px; font-weight: 700; cursor: pointer;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    white-space: nowrap;
+    transition: background 0.15s; text-decoration: none;
+  }
+  .nav-sign-btn:hover { background: #C4520A; }
 `;
 
-function InjectStyles() {
+function InjectCSS() {
   useEffect(() => {
-    const id = "onett-mobile-styles";
+    const id = "onett-v2-styles";
     if (!document.getElementById(id)) {
       const el = document.createElement("style");
-      el.id = id;
-      el.textContent = MOBILE_STYLES;
+      el.id = id; el.textContent = GLOBAL_CSS;
       document.head.appendChild(el);
     }
   }, []);
   return null;
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-const Index = () => {
-  const [categories,           setCategories]           = useState<any[]>([]);
-  const [newArrivals,          setNewArrivals]          = useState<ProductCardData[]>([]);
-  const [newArrivalsCarousel,  setNewArrivalsCarousel]  = useState<CarouselProduct[]>([]);
-  const [upcomingCarousel,     setUpcomingCarousel]     = useState<CarouselProduct[]>([]);
-  const [flashSale,            setFlashSale]            = useState<CarouselProduct[]>([]);
-  const [adIdx,                setAdIdx]                = useState(0);
-  const [loading,              setLoading]              = useState(true);
+// ─── SVG ICONS ────────────────────────────────────────────────────────────────
+const Ico = {
+  Arrow:     (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 12h14M12 5l7 7-7 7"/></svg>,
+  Sparkles:  (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M19 15l.75 2.25L22 18l-2.25.75L19 21l-.75-2.25L16 18l2.25-.75L19 15z"/></svg>,
+  Flame:     (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
+  Zap:       (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  Tag:       (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
+  Cart:      (p={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
+  Heart:     (p={}) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  Shield:    (p={}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>,
+  Truck:     (p={}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
+  Chat:      (p={}) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  Brain:     (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-1.04-4.83A3 3 0 0 1 4.5 9.5a3 3 0 0 1 1.5-2.6A2.5 2.5 0 0 1 9.5 2z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 1.04-4.83A3 3 0 0 0 19.5 9.5a3 3 0 0 0-1.5-2.6A2.5 2.5 0 0 0 14.5 2z"/></svg>,
+  Camera:    (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>,
+  Search:    (p={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
+  Clock:     (p={}) => <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>,
+  Calendar:  (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5M16 2v4M8 2v4M3 10h5"/><circle cx="17" cy="17" r="4"/><path d="M17 15v2.2l1.4 1.4"/></svg>,
+  ChevR:     (p={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 18l6-6-6-6"/></svg>,
+  ChevL:     (p={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 18l-6-6 6-6"/></svg>,
+  X:         (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  Wa:        (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.508 5.836L.057 23.25a.75.75 0 00.916.943l5.638-1.479A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 01-4.962-1.355l-.356-.212-3.686.967.984-3.595-.232-.371A9.718 9.718 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>,
+  Pkg:       (p={}) => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
+};
 
-  const magnet1 = useMagnetic({ strength: 0.3 });
-  const magnet2 = useMagnetic({ strength: 0.3 });
-
+// ─── COUNTDOWN HOOK ───────────────────────────────────────────────────────────
+function useCountdown(id, days) {
+  const [t, setT] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   useEffect(() => {
-    const fetchAll = async () => {
-      const [homeResult, upcomingResult] = await Promise.allSettled([
-        productApi.getHome(),
-        productApi.getUpcoming(),
-      ]);
-
-      if (homeResult.status === "fulfilled" && homeResult.value) {
-        const home = homeResult.value;
-        const rawArrivals = Array.isArray(home.newArrivals) ? home.newArrivals : [];
-        const arrivals: ProductCardData[] = rawArrivals.map((p: any) => ({
-          ...p, id: String(p.id),
-          isDiscounted: p.isDiscounted ?? p.discounted ?? false,
-          discountPrice: p.discountPrice != null ? Number(p.discountPrice) : undefined,
-          discountPercentage: p.discountPercentage != null ? Number(p.discountPercentage) : undefined,
-        }));
-        const dedupedArrivals = dedupeById(arrivals);
-        setCategories(Array.isArray(home.categories) ? home.categories : []);
-        setNewArrivals(dedupedArrivals);
-        const carouselArrivals = dedupeById(dedupedArrivals.map(normaliseToCarousel));
-        setNewArrivalsCarousel(carouselArrivals.length > 0 ? carouselArrivals : sampleNewArrivalsCarousel);
-        const discounted = dedupeById(
-          dedupedArrivals.filter(p => p.isDiscounted && p.discountPrice).map(normaliseToCarousel)
-        );
-        setFlashSale(discounted.length > 0 ? discounted : sampleFlashSale);
-      } else {
-        setCategories(sampleCategories);
-        setNewArrivals(sampleNewArrivals.map((p: any) => ({ ...p, id: String(p.id) })));
-        setNewArrivalsCarousel(sampleNewArrivalsCarousel);
-        setFlashSale(sampleFlashSale);
-      }
-
-      if (upcomingResult.status === "fulfilled" && upcomingResult.value) {
-        const upcoming = upcomingResult.value;
-        const pre  = Array.isArray(upcoming.preOrder)   ? upcoming.preOrder.map(normaliseToCarousel)   : [];
-        const soon = Array.isArray(upcoming.comingSoon) ? upcoming.comingSoon.map(normaliseToCarousel) : [];
-        const merged = dedupeById([...pre, ...soon]);
-        setUpcomingCarousel(merged.length > 0 ? merged : sampleUpcoming);
-      } else {
-        setUpcomingCarousel(sampleUpcoming);
-      }
-
-      setLoading(false);
+    if (!days || !id) return;
+    const key = `onett_v2_cd_${id}`;
+    let target;
+    try {
+      const s = localStorage.getItem(key);
+      target = s ? Number(s) : Date.now() + days * 86_400_000;
+      if (target < Date.now()) target = Date.now() + days * 86_400_000;
+      localStorage.setItem(key, String(target));
+    } catch { target = Date.now() + days * 86_400_000; }
+    const tick = () => {
+      const d = Math.max(0, target - Date.now());
+      setT({ days: Math.floor(d/86_400_000), hours: Math.floor((d/3_600_000)%24), minutes: Math.floor((d/60_000)%60), seconds: Math.floor((d/1_000)%60) });
     };
-    fetchAll();
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [days, id]);
+  return t;
+}
+
+// ─── PRODUCT CARD ─────────────────────────────────────────────────────────────
+function ProductCard({ product, index = 0 }) {
+  const [wishlisted, setWishlisted] = useState(false);
+  const [addingCart, setAddingCart] = useState(false);
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  const img = product.primaryImageUrl || product.images?.[0]?.imageUrl || null;
+  const hasDiscount = product.isDiscounted && product.discountPrice;
+  const displayPrice = hasDiscount ? product.discountPrice : product.price;
+  const inStock = product.stock == null || product.stock > 0;
+  const isNew = !product.isDiscounted && !product.stockStatus;
+
+  const handleCart = async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    setAddingCart(true);
+    await new Promise(r => setTimeout(r, 700));
+    setAddingCart(false);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      className="fb-prod-card-wrap"
+      style={{ display: "flex", flexDirection: "column", alignSelf: "stretch", flexShrink: 0 }}
+      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
+      transition={{ duration: 0.45, delay: Math.min(index * 0.05, 0.35), ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -5, transition: { type: "spring", stiffness: 360, damping: 22 } }}
+    >
+      <div className="pcard" style={{ flex: 1 }}>
+        {/* IMAGE */}
+        <div className="pcard-img">
+          <a href={`/products/${product.id}`} style={{ display: "block", width: "100%", height: "100%" }}>
+            {img
+              ? <img src={img} alt={product.name} loading="lazy" />
+              : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#3F3F46" }}><Ico.Pkg /></div>
+            }
+          </a>
+
+          {/* Discount pill */}
+          {hasDiscount && (
+            <div className="pcard-disc">-{product.discountPercentage}%</div>
+          )}
+
+          {/* Out of stock overlay */}
+          {!inStock && (
+            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ background: "rgba(0,0,0,0.75)", color: "#71717A", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)" }}>Out of Stock</span>
+            </div>
+          )}
+
+          {/* Wishlist */}
+          <button
+            className={`pcard-wish${wishlisted ? " active" : ""}`}
+            onClick={e => { e.preventDefault(); e.stopPropagation(); setWishlisted(w => !w); }}
+            aria-label="Add to wishlist"
+          >
+            <Ico.Heart style={{ fill: wishlisted ? "currentColor" : "none" }} />
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div className="pcard-body">
+          {product.brand && <div className="pcard-brand">{product.brand}</div>}
+
+          <a href={`/products/${product.id}`} className="pcard-name">{product.name}</a>
+
+          {/* Status badge */}
+          <div style={{ marginBottom: 8 }}>
+            {hasDiscount
+              ? <span className="pcard-badge badge-sale">Sale</span>
+              : product.stockStatus === "PRE_ORDER"
+              ? <span className="pcard-badge badge-pre">Pre-order</span>
+              : product.stockStatus === "COMING_SOON"
+              ? <span className="pcard-badge badge-soon">Coming Soon</span>
+              : isNew
+              ? <span className="pcard-badge badge-new">New</span>
+              : <span className="pcard-badge badge-stock">In Stock</span>
+            }
+          </div>
+
+          {/* Price + Cart */}
+          <div className="pcard-footer">
+            <div>
+              <div className="pcard-price">GHS {Number(displayPrice).toLocaleString()}</div>
+              {hasDiscount && (
+                <div className="pcard-price-old">GHS {Number(product.price).toLocaleString()}</div>
+              )}
+            </div>
+            <button
+              className="pcard-cart"
+              onClick={handleCart}
+              disabled={addingCart || !inStock}
+              aria-label="Add to cart"
+            >
+              <Ico.Cart />
+              {!inStock ? "Sold out" : addingCart ? "…" : "Add"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── SECTION HEADER ───────────────────────────────────────────────────────────
+function SectionHeader({ title, sub, accent, Icon, seeAllHref, trackId }) {
+  const scroll = (dir) => {
+    const el = trackId ? document.getElementById(trackId) : null;
+    el?.scrollBy({ left: dir * 280, behavior: "smooth" });
+  };
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  return (
+    <div className="sec-hdr" ref={ref}>
+      <div className="sec-hdr-l">
+        <motion.div
+          className="sec-ico"
+          style={{ background: `${accent}14` }}
+          initial={{ scale: 0, rotate: -10 }}
+          animate={inView ? { scale: 1, rotate: 0 } : {}}
+          transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+        >
+          <Icon style={{ color: accent, width: 18, height: 18 }} />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: -12 }}
+          animate={inView ? { opacity: 1, x: 0 } : {}}
+          transition={{ duration: 0.38, delay: 0.06 }}
+        >
+          <div className="sec-title">{title}</div>
+          <div className="sec-sub">{sub}</div>
+        </motion.div>
+      </div>
+      <div className="sec-hdr-r">
+        {seeAllHref && <a href={seeAllHref} className="sec-link">See all →</a>}
+        {trackId && <>
+          <button className="nav-btn" onClick={() => scroll(-1)} aria-label="Scroll left"><Ico.ChevL /></button>
+          <button className="nav-btn" onClick={() => scroll(1)} aria-label="Scroll right"><Ico.ChevR /></button>
+        </>}
+      </div>
+    </div>
+  );
+}
+
+// ─── SCROLLABLE PRODUCT SECTION ───────────────────────────────────────────────
+function ProductSection({ title, sub, accent, Icon, items, seeAllHref, id }) {
+  return (
+    <div className="pg">
+      <SectionHeader title={title} sub={sub} accent={accent} Icon={Icon} seeAllHref={seeAllHref} trackId={id} />
+      <div id={id} className="scroll-track">
+        {items.map((item, i) => (
+          <ProductCard key={item.id} product={item} index={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── UPCOMING CARD ────────────────────────────────────────────────────────────
+function UpcomingCard({ product, index = 0 }) {
+  const { days, hours, minutes, seconds } = useCountdown(product.id, product.availableInDays || 7);
+  const isPre = product.stockStatus === "PRE_ORDER";
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  return (
+    <motion.a
+      ref={ref}
+      href={`/products/${product.id}`}
+      className="hs-card"
+      initial={{ opacity: 0, y: index % 2 === 0 ? -28 : 28, scale: 0.9 }}
+      animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
+      transition={{ duration: 0.5, delay: Math.min(index * 0.06, 0.4), ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -5, transition: { type: "spring", stiffness: 360, damping: 22 } }}
+    >
+      <div className="hs-img">
+        {product.primaryImageUrl
+          ? <img src={product.primaryImageUrl} alt={product.name} loading="lazy" />
+          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#3F3F46" }}><Ico.Pkg /></div>
+        }
+        <div className={`hs-timer ${isPre ? "timer-amber" : "timer-purple"}`}>
+          {[
+            { v: days, l: "d" }, null,
+            { v: hours, l: "h" }, null,
+            { v: minutes, l: "m" }, null,
+            { v: seconds, l: "s" }
+          ].map((u, i) => u === null
+            ? <span key={i} className="hs-timer-sep">:</span>
+            : <div key={i} className="hs-timer-unit">
+                <span className="hs-timer-num">{String(u.v).padStart(2,"0")}</span>
+                <span className="hs-timer-lbl">{u.l}</span>
+              </div>
+          )}
+        </div>
+      </div>
+      <div className="hs-body">
+        <div className={`hs-status ${isPre ? "badge-pre" : "badge-soon"}`} style={{ marginBottom: 7 }}>
+          <Ico.Calendar />{isPre ? "Pre-order" : "Coming Soon"}
+        </div>
+        <div className="hs-brand">{product.brand}</div>
+        <div className="hs-name">{product.name}</div>
+        <div className="hs-price-row">
+          <span className="hs-price">GHS {product.price?.toLocaleString()}</span>
+        </div>
+        <button className="hs-btn">
+          <Ico.Cart />{isPre ? "Pre-order Now" : "Notify Me"}
+        </button>
+      </div>
+    </motion.a>
+  );
+}
+
+// ─── AD STRIP ────────────────────────────────────────────────────────────────
+const ADS = [
+  { id: "a1", bg: "linear-gradient(135deg,#0e1f3e,#1a3877)", icon: "💳", title: "MTN MoMo — Pay & save 5%", sub: "Use MoMo at checkout for instant cashback on every order", cta: "Try it" },
+  { id: "a2", bg: "linear-gradient(135deg,#052e1e,#064c30)", icon: "🚚", title: "Free Delivery over GHS 200", sub: "DHL Express — Accra & Kumasi same-day delivery available", cta: "Learn more" },
+  { id: "a3", bg: "linear-gradient(135deg,#1c1040,#2d1f60)", icon: "🔐", title: "Sell on ONETT — It's free", sub: "Reach thousands of buyers across Ghana instantly today", cta: "Start selling" },
+];
+
+function AdStrip({ adIdx, setAdIdx }) {
+  return (
+    <>
+      <div className="pg">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={ADS[adIdx].id}
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -12 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="ad-strip" style={{ background: ADS[adIdx].bg }}>
+              <span className="ad-strip-label">Sponsored</span>
+              <div className="ad-strip-icon">{ADS[adIdx].icon}</div>
+              <div className="ad-strip-body">
+                <div className="ad-strip-title">{ADS[adIdx].title}</div>
+                <div className="ad-strip-sub">{ADS[adIdx].sub}</div>
+              </div>
+              <button className="ad-strip-cta">{ADS[adIdx].cta}</button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+        <div className="ad-dots">
+          {ADS.map((_, i) => (
+            <button key={i} className={`ad-dot${i === adIdx ? " on" : ""}`} onClick={() => setAdIdx(i)} aria-label={`Ad ${i+1}`} />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── SAMPLE DATA ──────────────────────────────────────────────────────────────
+const SAMPLE_CATEGORIES = [
+  { id: "c1", name: "Electronics",  slug: "electronics",  icon: { imageUrl: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=120&q=70" } },
+  { id: "c2", name: "Fashion",      slug: "fashion",      icon: { imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=120&q=70" } },
+  { id: "c3", name: "Shoes",        slug: "shoes",        icon: { imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&q=70" } },
+  { id: "c4", name: "Home",         slug: "home",         icon: { imageUrl: "https://images.unsplash.com/photo-1585412727339-54e4bae3bbf9?w=120&q=70" } },
+  { id: "c5", name: "Sports",       slug: "sports",       icon: { imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=120&q=70" } },
+  { id: "c6", name: "Gaming",       slug: "gaming",       icon: { imageUrl: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=120&q=70" } },
+  { id: "c7", name: "Beauty",       slug: "beauty",       icon: { imageUrl: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=120&q=70" } },
+  { id: "c8", name: "Books",        slug: "books",        icon: { imageUrl: "https://images.unsplash.com/photo-1535905557558-afc4877a26fc?w=120&q=70" } },
+  { id: "c9", name: "Kitchen",      slug: "kitchen",      icon: { imageUrl: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=120&q=70" } },
+  { id: "c10", name: "Watches",     slug: "watches",      icon: { imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=120&q=70" } },
+];
+
+const SAMPLE_FLASH = [
+  { id: "f1", name: "Samsung Galaxy S24 FE", brand: "Samsung", price: 5399, isDiscounted: true, discountPercentage: 35, discountPrice: 3499, primaryImageUrl: "https://images.unsplash.com/photo-1610945264803-c22b62d2a7b3?w=400&q=80" },
+  { id: "f2", name: "Sony WH-1000XM5 Headphones", brand: "Sony", price: 1499, isDiscounted: true, discountPercentage: 40, discountPrice: 899, primaryImageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80" },
+  { id: "f3", name: "Nike Air Max 270", brand: "Nike", price: 720, isDiscounted: true, discountPercentage: 25, discountPrice: 540, primaryImageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80" },
+  { id: "f4", name: "MacBook Air M3 13\"", brand: "Apple", price: 8499, isDiscounted: true, discountPercentage: 20, discountPrice: 6799, primaryImageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80" },
+  { id: "f5", name: "Kindle Paperwhite 7th Gen", brand: "Amazon", price: 499, isDiscounted: true, discountPercentage: 30, discountPrice: 349, primaryImageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80" },
+  { id: "f6", name: "Apple Watch Series 9", brand: "Apple", price: 2399, isDiscounted: true, discountPercentage: 18, discountPrice: 1969, primaryImageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80" },
+];
+
+const SAMPLE_NEW = [
+  { id: "n1", name: "AirPods Pro 3rd Gen", brand: "Apple", price: 1799, primaryImageUrl: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&q=80" },
+  { id: "n2", name: "Adidas Ultraboost 25", brand: "Adidas", price: 720, primaryImageUrl: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=400&q=80" },
+  { id: "n3", name: "Levi's 501 Original Fit", brand: "Levi's", price: 380, primaryImageUrl: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80" },
+  { id: "n4", name: "Instant Pot Duo 7-in-1", brand: "Instant Pot", price: 550, primaryImageUrl: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=400&q=80" },
+  { id: "n5", name: "GoPro Hero 13 Black", brand: "GoPro", price: 1899, primaryImageUrl: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&q=80" },
+  { id: "n6", name: "PlayStation 5 Slim Digital", brand: "Sony", price: 3899, primaryImageUrl: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=400&q=80" },
+  { id: "n7", name: "Dyson V15 Detect Absolute", brand: "Dyson", price: 3299, primaryImageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" },
+];
+
+const SAMPLE_UPCOMING = [
+  { id: "u1", name: "Sony WH-1000XM6", brand: "Sony", price: 1299, stockStatus: "PRE_ORDER", availableInDays: 5, primaryImageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80" },
+  { id: "u2", name: "Nike Air Max 2026", brand: "Nike", price: 680, stockStatus: "COMING_SOON", availableInDays: 14, primaryImageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80" },
+  { id: "u3", name: "MacBook Air M4", brand: "Apple", price: 8499, stockStatus: "PRE_ORDER", availableInDays: 3, primaryImageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80" },
+  { id: "u4", name: "Samsung Galaxy S25 Ultra", brand: "Samsung", price: 6499, stockStatus: "COMING_SOON", availableInDays: 21, primaryImageUrl: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&q=80" },
+  { id: "u5", name: "Dyson V16 Slim", brand: "Dyson", price: 2199, stockStatus: "PRE_ORDER", availableInDays: 7, primaryImageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" },
+];
+
+const AI_FEATURES = [
+  { icon: Ico.Brain,   title: "Smart Picks",    desc: "AI learns your taste and curates products you'll love",       color: "#E6640A", bg: "rgba(230,100,10,0.1)" },
+  { icon: Ico.Camera,  title: "Image Search",   desc: "Snap a photo and find matching products instantly",           color: "#F59E0B", bg: "rgba(245,158,11,0.1)" },
+  { icon: Ico.Chat,    title: "AI Advisor",     desc: "Chat for style advice, comparisons & budget tips",            color: "#3B82F6", bg: "rgba(59,130,246,0.1)" },
+  { icon: Ico.Search,  title: "Smart Search",   desc: "Natural language that understands exactly what you mean",     color: "#22C55E", bg: "rgba(34,197,94,0.1)" },
+];
+
+const TRUST = [
+  { Icon: Ico.Shield,  title: "Secure Payments",  desc: "Every transaction is encrypted and fully protected end-to-end" },
+  { Icon: Ico.Truck,   title: "Fast Delivery",    desc: "Real-time tracking from purchase to your doorstep" },
+  { Icon: Ico.Sparkles,title: "AI-Powered",       desc: "Smart recommendations tailored specifically for you" },
+  { Icon: Ico.Chat,    title: "24/7 Support",     desc: "Connect with sellers and get instant help any time" },
+];
+
+// ─── NAVBAR ───────────────────────────────────────────────────────────────────
+function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const h = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", h, { passive: true });
+    return () => window.removeEventListener("scroll", h);
   }, []);
+
+  return (
+    <nav className={`navbar${scrolled ? " scrolled" : ""}`}>
+      <a href="/" className="nav-logo">
+        <div className="nav-logo-box">
+          <div className="nav-logo-on">ON</div>
+          <div className="nav-logo-ett">ETT</div>
+        </div>
+        <span className="nav-name">ONETT<em>.</em></span>
+      </a>
+
+      <div className="nav-search">
+        <Ico.Search style={{ color: "#3F3F46", width: 14, height: 14, flexShrink: 0 }} />
+        <input type="text" placeholder="Search 10,000+ products…" />
+      </div>
+
+      <div className="nav-right">
+        <a href="/ai-assistant" className="nav-icon-btn" title="AI Assistant">
+          <Ico.Sparkles style={{ width: 15, height: 15 }} />
+        </a>
+        <a href="/cart" className="nav-icon-btn" title="Cart">
+          <Ico.Cart style={{ width: 15, height: 15 }} />
+          <span className="nav-cart-badge">3</span>
+        </a>
+        <a href="/login" className="nav-sign-btn">Sign in</a>
+      </div>
+    </nav>
+  );
+}
+
+// ─── WELCOME POPUP ────────────────────────────────────────────────────────────
+const WELCOME_KEY = "onett_v2_wp";
+const WP_SLIDES = [
+  { emoji: "✨", kicker: "Welcome to ONETT", title: "Ghana's Smartest Marketplace", desc: "Shop 10,000+ products with AI-powered recommendations tailored to your style and budget.", color: "#E6640A" },
+  { emoji: "🤖", kicker: "Meet Your AI Shopper", title: "Shop by Simply Chatting", desc: "Describe what you need in plain language — our AI finds the perfect match in seconds.", color: "#8B5CF6" },
+  { emoji: "🚀", kicker: "Deals Waiting for You", title: "Ready to Explore?", desc: "Exclusive flash sales, pre-orders, and new arrivals drop every day. Don't miss out.", color: "#22C55E" },
+];
+
+function WelcomePopup() {
+  const [visible, setVisible] = useState(false);
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setAdIdx(i => (i + 1) % adBanners.length), 5000);
-    return () => clearInterval(id);
+    try { if (!sessionStorage.getItem(WELCOME_KEY)) setTimeout(() => setVisible(true), 900); }
+    catch {}
   }, []);
 
-  if (loading) return <HomeSkeleton />;
+  const close = useCallback(() => {
+    setVisible(false);
+    try { sessionStorage.setItem(WELCOME_KEY, "1"); } catch {}
+  }, []);
+
+  useEffect(() => { document.body.style.overflow = visible ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [visible]);
+
+  if (!visible) return null;
+  const s = WP_SLIDES[step];
+  const isLast = step === WP_SLIDES.length - 1;
+
+  return (
+    <AnimatePresence>
+      <motion.div className="wp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close}>
+        <motion.div
+          className="wp-sheet"
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 60, opacity: 0 }}
+          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="wp-visual" style={{ "--sc": s.color }}>
+            <motion.div
+              className="wp-orb"
+              key={step}
+              initial={{ scale: 0.65, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.65, opacity: 0 }}
+              transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+            >
+              <span className="wp-emoji">{s.emoji}</span>
+            </motion.div>
+            <button className="wp-close" onClick={close}><Ico.X /></button>
+            <div className="wp-chip">ON<em>ETT.</em></div>
+          </div>
+          <div className="wp-body">
+            <AnimatePresence mode="wait">
+              <motion.div key={step} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.28 }}>
+                <div className="wp-kicker" style={{ color: s.color }}>{s.kicker}</div>
+                <h2 className="wp-title">{s.title}</h2>
+                <p className="wp-desc">{s.desc}</p>
+              </motion.div>
+            </AnimatePresence>
+            <div className="wp-dots">
+              {WP_SLIDES.map((_, i) => (
+                <button key={i} className={`wp-dot${i === step ? " on" : ""}`} style={i === step ? { background: s.color } : {}} onClick={() => setStep(i)} />
+              ))}
+            </div>
+            {isLast
+              ? <a href="/search?keyword=" onClick={close} className="wp-cta" style={{ background: s.color }}>Start Shopping <Ico.Arrow /></a>
+              : <button className="wp-cta" style={{ background: s.color }} onClick={() => setStep(p => p + 1)}>Next <Ico.Arrow /></button>
+            }
+            <button onClick={close} className="wp-skip">Skip intro</button>
+          </div>
+          <div className="wp-safe" />
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
+export default function ONETTHomepage() {
+  const [adIdx, setAdIdx] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setAdIdx(i => (i + 1) % ADS.length), 5000);
+    return () => clearInterval(iv);
+  }, []);
 
   return (
     <>
-      <InjectStyles />
-      <div className="onett-page">
+      <InjectCSS />
+      <div style={{ background: "#0A0A0B", minHeight: "100vh" }}>
         <WelcomePopup />
         <Navbar />
 
-        {/* ── HERO ── */}
-        <section
-          className="hero relative overflow-hidden"
-          style={{ minHeight: "92dvh", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}
-        >
-          <img src={HERO_BG_DESKTOP} alt="Shopping" className="absolute inset-0 h-full w-full object-cover object-center hidden sm:block" loading="eager" />
-          <img src={HERO_BG_MOBILE} alt="Shopping" className="absolute inset-0 h-full w-full object-cover object-center block sm:hidden" loading="eager" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          <div className="relative z-10 pg hero-inner" style={{ paddingTop: 96, paddingBottom: 64 }}>
+        {/* ════════════════════════════════ HERO ════════════════════════════════ */}
+        <section className="hero-section">
+          <img
+            className="hero-bg"
+            src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=85"
+            alt="Hero"
+            loading="eager"
+          />
+          <div className="hero-overlay" />
+
+          <div className="hero-content pg">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 36 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="hero-badge inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm mb-5">
-                <IconSparkles size={13} />
+              <div className="hero-kicker">
+                <Ico.Sparkles style={{ width: 12, height: 12 }} />
                 AI-Powered · Ghana's Smartest Shop
               </div>
-              <h1
-                className="hero-h1 font-extrabold text-white mb-4"
-                style={{ fontFamily: "'Satoshi', sans-serif", fontSize: "clamp(40px,8vw,72px)", lineHeight: 1.08, letterSpacing: "-1.5px", maxWidth: 700 }}
-              >
-                Shop Smarter<br />with <em style={{ color: "#E6640A", fontStyle: "normal" }}>ONETT.</em>
+
+              <h1 className="hero-h1">
+                Shop Smarter<br />with <em>ONETT.</em>
               </h1>
-              <p
-                className="hero-p text-white/70 mb-8"
-                style={{ fontSize: "clamp(15px,2.5vw,18px)", lineHeight: 1.65, maxWidth: 480 }}
-              >
+
+              <p className="hero-p">
                 Personalized picks, snap-to-search, budget advice, and unbeatable deals — all in one place.
               </p>
-              <div className="hero-btns flex gap-3" style={{ flexWrap: "wrap" }}>
-                <motion.div style={{ x: magnet1.x, y: magnet1.y }}>
-                  <Link to="/search?keyword=" className="h-btn-primary inline-flex items-center gap-2 rounded-xl bg-[#E6640A] px-6 py-3.5 text-base font-bold text-white transition-all hover:bg-[#d45a09]" {...magnet1.magneticProps}>
-                    Start Shopping <IconArrowRight size={16} />
-                  </Link>
-                </motion.div>
-                <motion.div style={{ x: magnet2.x, y: magnet2.y }}>
-                  <Link to="/ai-assistant" className="h-btn-ghost inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-6 py-3.5 text-base font-bold text-white backdrop-blur-sm transition-all hover:bg-white/20" {...magnet2.magneticProps}>
-                    <IconSparkles size={14} />Try AI Assistant
-                  </Link>
-                </motion.div>
+
+              <div className="hero-btns">
+                <a href="/search?keyword=" className="btn-primary">
+                  Start Shopping <Ico.Arrow />
+                </a>
+                <a href="/ai-assistant" className="btn-ghost">
+                  <Ico.Sparkles />Try AI Assistant
+                </a>
+              </div>
+
+              <div className="hero-stats">
+                <div className="hero-stat">
+                  <div className="hero-stat-num">10K+</div>
+                  <div className="hero-stat-lbl">Products</div>
+                </div>
+                <div className="hero-stat-div" />
+                <div className="hero-stat">
+                  <div className="hero-stat-num">50K+</div>
+                  <div className="hero-stat-lbl">Happy Buyers</div>
+                </div>
+                <div className="hero-stat-div" />
+                <div className="hero-stat">
+                  <div className="hero-stat-num">4.8★</div>
+                  <div className="hero-stat-lbl">Avg Rating</div>
+                </div>
+                <div className="hero-stat-div" />
+                <div className="hero-stat">
+                  <div className="hero-stat-num">2-Day</div>
+                  <div className="hero-stat-lbl">Delivery</div>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -1432,263 +1299,223 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── CATEGORIES ── */}
+        {/* ════════════════════════════ CATEGORIES ══════════════════════════════ */}
         <div className="pg">
-          <div className="sec-hdr-row">
-            <div className="sec-hdr-left">
-              <div className="sec-hdr-icon" style={{ background: "rgba(230,100,10,0.08)" }}>
-                <IconTag size={18} style={{ color: "#E6640A" }} />
-              </div>
-              <div>
-                <div className="sec-hdr-title">Browse Categories</div>
-                <div className="sec-hdr-sub">Find exactly what you're looking for</div>
-              </div>
-            </div>
-            <div className="sec-hdr-right">
-              <Link to="/categories" className="sec-hdr-link">See all →</Link>
-            </div>
-          </div>
-          <div className="cats-scroll">
-            {(categories.length > 0 ? categories : sampleCategories).slice(0, 12).map((cat: any) => (
-              <Link key={cat.id} to={`/categories/${cat.slug}`} className="cat-item">
-                <div className="cat-icon-box">
+          <SectionHeader
+            title="Browse Categories"
+            sub="Find exactly what you're looking for"
+            accent="#E6640A"
+            Icon={Ico.Tag}
+            seeAllHref="/categories"
+          />
+          <div className="cat-grid">
+            {SAMPLE_CATEGORIES.map((cat, i) => (
+              <motion.a
+                key={cat.id}
+                href={`/categories/${cat.slug}`}
+                className="cat-pill"
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.38, delay: i * 0.04 }}
+              >
+                <div className="cat-pill-ico">
                   {cat.icon?.imageUrl
-                    ? <img src={cat.icon.imageUrl} alt={cat.name} className="cat-icon-img" loading="lazy" />
-                    : <IconPackage size={22} />}
+                    ? <img src={cat.icon.imageUrl} alt={cat.name} loading="lazy" />
+                    : <Ico.Pkg style={{ width: 22, height: 22, color: "#3F3F46" }} />
+                  }
                 </div>
-                <span className="cat-lbl">{cat.name}</span>
-              </Link>
+                <span className="cat-pill-lbl">{cat.name}</span>
+              </motion.a>
             ))}
           </div>
         </div>
 
         <div className="sdiv" />
 
-        {/* ── FLASH SALE ── */}
-        {flashSale.length > 0 && (
-          <div className="pg">
-            <div className="sec-hdr-row">
-              <div className="sec-hdr-left">
-                <div className="sec-hdr-icon" style={{ background: "rgba(239,68,68,0.08)" }}>
-                  <IconFlame size={17} style={{ color: "#ef4444" }} />
-                </div>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span className="sec-hdr-title">Flash Sale</span>
-                    <div className="live-badge"><div className="live-dot" />LIVE</div>
-                  </div>
-                  <div className="sec-hdr-sub">Limited time — grab it before it's gone</div>
-                </div>
-              </div>
-              <div className="sec-hdr-right">
-                <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -220, behavior: "smooth" })}>
-                  <IconChevronLeft size={13} />
-                </button>
-                <button className="hs-nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 220, behavior: "smooth" })}>
-                  <IconChevronRight size={13} />
-                </button>
-              </div>
-            </div>
-            <div id="flash-track" className="fb-prod-track" style={{ marginLeft: -16, paddingLeft: 16, marginRight: -16, paddingRight: 16 }}>
-              {flashSale.map(item => (
-                <motion.div
-                  key={item.id}
-                  className="fb-prod-card-wrap"
-                  whileHover={{ y: -4, transition: { type: "spring", stiffness: 380, damping: 22 } }}
-                >
-                  <FlowbiteProductCard product={item} />
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="sdiv" />
-
-        {/* ── AD BANNER ── */}
+        {/* ═══════════════════════════ FLASH SALE ═══════════════════════════════ */}
         <div className="pg">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={adBanners[adIdx].id}
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.28 }}
-            >
-              <AdBanner ad={adBanners[adIdx]} />
-            </motion.div>
-          </AnimatePresence>
-          <div className="ad-dots">
-            {adBanners.map((_, i) => (
-              <div key={i} className={`ad-dot${i === adIdx ? " active" : ""}`} onClick={() => setAdIdx(i)} />
-            ))}
-          </div>
-        </div>
-
-        <div className="sdiv" />
-
-        {/* ── NEW ARRIVALS ── */}
-        {newArrivalsCarousel.length > 0 && (
-          <div className="pg">
-            <FlowbiteGridSection
-              title="New Arrivals"
-              subtitle="Fresh products added this week"
-              accent="#f59e0b"
-              icon={IconZap}
-              items={newArrivalsCarousel}
-              seeAllLink="/search?keyword=new"
-            />
-          </div>
-        )}
-
-        <div className="sdiv" />
-
-        {/* ── UPCOMING DROPS ── */}
-        {upcomingCarousel.length > 0 && (
-          <div className="pg">
-            <HScrollSection
-              title="Upcoming Drops"
-              subtitle="Pre-order & coming soon"
-              accent="#8b5cf6"
-              icon={IconCalendarClock}
-              items={upcomingCarousel}
-              showTimer
-              badge={
-                <span className="shimmer-badge">
-                  <IconClock size={9} />Live timer
-                </span>
-              }
-            />
-          </div>
-        )}
-
-        <div className="sdiv" />
-
-        {/* ── JUST DROPPED ── */}
-        {newArrivals.length > 0 && (
-          <div className="pg">
-            <FlowbiteGridSection
-              title="Just Dropped"
-              subtitle="Browse all the latest products"
-              accent="#E6640A"
-              icon={IconFlame}
-              items={dedupeById(newArrivals.map(p => ({
-                ...normaliseToCarousel(p),
-                stock: (p as ProductCardData).stock,
-              })))}
-              seeAllLink="/search?keyword="
-            />
-          </div>
-        )}
-
-        <div className="sdiv" />
-
-        {/* ── AI FEATURES ── */}
-        <div className="pg">
-          <div className="sec-hdr-row" style={{ marginBottom: 16 }}>
-            <div className="sec-hdr-left">
-              <div className="sec-hdr-icon" style={{ background: "rgba(230,100,10,0.08)" }}>
-                <IconSparkles size={18} style={{ color: "#E6640A" }} />
+          <div className="sec-hdr">
+            <div className="sec-hdr-l">
+              <div className="sec-ico" style={{ background: "rgba(239,68,68,0.1)" }}>
+                <Ico.Flame style={{ color: "#EF4444", width: 18, height: 18 }} />
               </div>
               <div>
-                <div className="sec-hdr-title">Shopping, Reimagined</div>
-                <div className="sec-hdr-sub">Powered by AI</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+                  <span className="sec-title">Flash Sale</span>
+                  <span className="live-chip"><span className="live-dot" />LIVE</span>
+                </div>
+                <div className="sec-sub">Limited time — grab it before it's gone</div>
               </div>
             </div>
+            <div className="sec-hdr-r">
+              <a href="/search?discount=true" className="sec-link">See all →</a>
+              <button className="nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: -280, behavior: "smooth" })}><Ico.ChevL /></button>
+              <button className="nav-btn" onClick={() => document.getElementById("flash-track")?.scrollBy({ left: 280, behavior: "smooth" })}><Ico.ChevR /></button>
+            </div>
           </div>
+          <div id="flash-track" className="scroll-track">
+            {SAMPLE_FLASH.map((item, i) => (
+              <ProductCard key={item.id} product={item} index={i} />
+            ))}
+          </div>
+        </div>
+
+        <div className="sdiv" />
+
+        {/* ════════════════════════════ AD STRIP ════════════════════════════════ */}
+        <AdStrip adIdx={adIdx} setAdIdx={setAdIdx} />
+
+        <div className="sdiv" />
+
+        {/* ══════════════════════════ NEW ARRIVALS ══════════════════════════════ */}
+        <ProductSection
+          id="new-track"
+          title="New Arrivals"
+          sub="Fresh products added this week"
+          accent="#F59E0B"
+          Icon={Ico.Zap}
+          items={SAMPLE_NEW}
+          seeAllHref="/search?keyword=new"
+        />
+
+        <div className="sdiv" />
+
+        {/* ═══════════════════════════ UPCOMING DROPS ═══════════════════════════ */}
+        <div className="pg">
+          <div className="sec-hdr">
+            <div className="sec-hdr-l">
+              <div className="sec-ico" style={{ background: "rgba(139,92,246,0.1)" }}>
+                <Ico.Calendar style={{ color: "#8B5CF6", width: 18, height: 18 }} />
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+                  <span className="sec-title">Upcoming Drops</span>
+                  <span className="shimmer-chip"><Ico.Clock />Live timer</span>
+                </div>
+                <div className="sec-sub">Pre-order &amp; coming soon — secure yours early</div>
+              </div>
+            </div>
+            <div className="sec-hdr-r">
+              <button className="nav-btn" onClick={() => document.getElementById("upcoming-track")?.scrollBy({ left: -240, behavior: "smooth" })}><Ico.ChevL /></button>
+              <button className="nav-btn" onClick={() => document.getElementById("upcoming-track")?.scrollBy({ left: 240, behavior: "smooth" })}><Ico.ChevR /></button>
+            </div>
+          </div>
+          <div id="upcoming-track" className="scroll-track">
+            {SAMPLE_UPCOMING.map((item, i) => (
+              <UpcomingCard key={item.id} product={item} index={i} />
+            ))}
+          </div>
+        </div>
+
+        <div className="sdiv" />
+
+        {/* ═══════════════════════════ AI FEATURES ══════════════════════════════ */}
+        <div className="pg">
+          <SectionHeader
+            title="Shopping, Reimagined"
+            sub="Powered by AI · Built for you"
+            accent="#E6640A"
+            Icon={Ico.Sparkles}
+          />
           <div className="ai-grid">
-            {aiFeatures.map((f, i) => (
+            {AI_FEATURES.map((f, i) => (
               <motion.div
                 key={f.title}
                 className="ai-card"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -5, scale: 1.03, transition: { type: "spring", stiffness: 400, damping: 18 } }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.45, delay: i * 0.09, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.42, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="ai-card-icon" style={{ background: f.bg }}>
-                  <f.icon size={17} style={{ color: f.color }} />
+                <div className="ai-card-ico" style={{ background: f.bg }}>
+                  <f.icon style={{ color: f.color, width: 18, height: 18 }} />
                 </div>
                 <div className="ai-card-title">{f.title}</div>
                 <div className="ai-card-desc">{f.desc}</div>
               </motion.div>
             ))}
           </div>
-          <div style={{ textAlign: "center", paddingTop: 16 }}>
-            <Link to="/ai-assistant" style={{
-              display: "inline-flex", alignItems: "center", gap: 7,
-              background: "rgba(230,100,10,0.08)", border: "1px solid rgba(230,100,10,0.18)",
-              color: "#E6640A", fontFamily: "'Manrope',sans-serif",
-              fontSize: 13, fontWeight: 700,
-              padding: "11px 22px", borderRadius: 11, textDecoration: "none",
+          <div style={{ textAlign: "center", paddingTop: 20 }}>
+            <a href="/ai-assistant" style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: "rgba(230,100,10,0.1)", border: "1px solid rgba(230,100,10,0.2)",
+              color: "#E6640A", fontSize: 13, fontWeight: 700, fontFamily: "'Plus Jakarta Sans',sans-serif",
+              padding: "11px 24px", borderRadius: 12, textDecoration: "none",
+              transition: "background 0.15s",
             }}>
-              <IconSparkles size={13} />Try AI Assistant Now
-            </Link>
+              <Ico.Sparkles />Try AI Assistant Now
+            </a>
           </div>
         </div>
 
         <div className="sdiv" />
 
-        {/* ── AD BANNER 2 ── */}
-        <div className="pg">
-          <AdBanner ad={adBanners[(adIdx + 1) % adBanners.length]} />
-        </div>
+        {/* ════════════════════════════ AD STRIP 2 ══════════════════════════════ */}
+        <AdStrip adIdx={(adIdx + 1) % ADS.length} setAdIdx={setAdIdx} />
 
         <div className="sdiv" />
 
-        {/* ── CTA BANNER ── */}
+        {/* ═══════════════════════════ JUST DROPPED ═════════════════════════════ */}
+        <ProductSection
+          id="dropped-track"
+          title="Just Dropped"
+          sub="Browse all the latest products"
+          accent="#E6640A"
+          Icon={Ico.Flame}
+          items={[...SAMPLE_FLASH.slice(0,3), ...SAMPLE_NEW.slice(0,4)]}
+          seeAllHref="/search?keyword="
+        />
+
+        <div className="sdiv" />
+
+        {/* ═══════════════════════════ CTA BANNER ═══════════════════════════════ */}
         <div className="pg">
           <motion.div
-            className="cta-banner"
-            initial={{ opacity: 0, y: 22 }}
+            className="cta-block"
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
             <div className="cta-glow" />
-            <div className="cta-content">
-              <h2 className="cta-h2">Not sure what to buy?<br />Let AI decide.</h2>
+            <div className="cta-glow2" />
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <h2 className="cta-h2">Not sure what<br />to buy? Let AI<br />decide.</h2>
               <p className="cta-p">Describe what you need, set your budget, and our AI will curate the perfect selection just for you.</p>
               <div className="cta-btns">
-                <Link to="/ai-assistant" className="cta-btn-w"><IconSparkles size={14} />Chat with AI</Link>
-                <Link to="/register" className="cta-btn-g">Create Free Account</Link>
+                <a href="/ai-assistant" className="btn-primary"><Ico.Sparkles />Chat with AI</a>
+                <a href="/register" className="btn-ghost">Create Free Account</a>
               </div>
             </div>
-            <div className="cta-logo">
+            <div className="cta-logo-wrap">
               <div className="cta-logo-box">
-                <div className="cta-logo-on">ON</div>
-                <div className="cta-logo-ett">ETT</div>
+                <div style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontWeight: 900, fontSize: 24, color: "#fff", lineHeight: 1, letterSpacing: -1 }}>ON</div>
+                <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, fontSize: 11, color: "rgba(255,255,255,0.55)", lineHeight: 1, letterSpacing: 2 }}>ETT</div>
               </div>
-              <span className="cta-logo-name">ONETT<span style={{ opacity: 0.55 }}>.</span></span>
+              <span className="cta-logo-name">ONETT<span style={{ opacity: 0.45 }}>.</span></span>
             </div>
           </motion.div>
         </div>
 
         <div className="sdiv" />
 
-        {/* ── TRUST GRID ── */}
+        {/* ═══════════════════════════ TRUST GRID ═══════════════════════════════ */}
         <div className="pg">
           <div className="trust-grid">
-            {[
-              { icon: IconShieldCheck,   title: "Secure Payments",  desc: "Every transaction is encrypted and protected" },
-              { icon: IconTruck,         title: "Fast Delivery",    desc: "Real-time tracking from purchase to doorstep" },
-              { icon: IconSparkles,      title: "AI-Powered",       desc: "Smart recommendations tailored just for you" },
-              { icon: IconMessageSquare, title: "24/7 Support",     desc: "Connect with sellers and get instant help" },
-            ].map((f, i) => (
+            {TRUST.map((t, i) => (
               <motion.div
-                key={f.title}
+                key={t.title}
                 className="trust-card"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -5, scale: 1.03, transition: { type: "spring", stiffness: 400, damping: 20 } }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.45, delay: i * 0.09, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.42, delay: i * 0.08 }}
               >
-                <div className="trust-icon"><f.icon size={20} style={{ color: "#E6640A" }} /></div>
+                <div className="trust-ico"><t.Icon style={{ color: "#E6640A" }} /></div>
                 <div>
-                  <div className="trust-title">{f.title}</div>
-                  <div className="trust-desc">{f.desc}</div>
+                  <div className="trust-title">{t.title}</div>
+                  <div className="trust-desc">{t.desc}</div>
                 </div>
               </motion.div>
             ))}
@@ -1697,69 +1524,53 @@ const Index = () => {
 
         <div className="sdiv" />
 
-        {/* ── FOOTER ── */}
+        {/* ══════════════════════════════ FOOTER ════════════════════════════════ */}
         <motion.footer
           className="footer"
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.55 }}
         >
           <div className="footer-inner">
-            <motion.div
-              className="footer-grid"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
-            >
-              <motion.div className="footer-col" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.4 }}>
+            <div className="footer-grid">
+              <div className="footer-col-first">
                 <div className="footer-brand-row">
-                  <OnettLogoMark size={34} />
-                  <span className="footer-brand-name">ONETT<em>.</em></span>
+                  <div className="footer-logo-box">
+                    <div className="footer-logo-on">ON</div>
+                    <div className="footer-logo-ett">ETT</div>
+                  </div>
+                  <span className="footer-name">ONETT<em>.</em></span>
                 </div>
-                <p className="footer-tagline">Ghana's AI-powered marketplace. Shop smarter, not harder.</p>
-                <a href="https://wa.me/233257765011?text=Hi%2C%20I%20found%20you%20on%20ONETT" target="_blank" rel="noopener noreferrer" className="footer-wa">
-                  <IconWhatsapp size={15} /> Chat with a Seller
+                <p className="footer-tag">Ghana's AI-powered marketplace. Shop smarter, not harder.</p>
+                <a href="https://wa.me/233257765011" target="_blank" rel="noopener noreferrer" className="footer-wa">
+                  <Ico.Wa />Chat with a Seller
                 </a>
-              </motion.div>
+              </div>
 
               {[
-                { title: "Shop", links: [
-                  { label: "Categories",   to: "/categories" },
-                  { label: "All Products", to: "/search?keyword=" },
-                  { label: "Flash Sales",  to: "/search?discount=true" },
-                ]},
-                { title: "Account", links: [
-                  { label: "Sign In",        to: "/login" },
-                  { label: "Create Account", to: "/register" },
-                  { label: "My Orders",      to: "/orders" },
-                ]},
-                { title: "Features", links: [
-                  { label: "AI Assistant", to: "/ai-assistant" },
-                  { label: "Messages",     to: "/messages" },
-                ]},
+                { title: "Shop",    links: [{ l: "Categories", h: "/categories" }, { l: "All Products", h: "/search?keyword=" }, { l: "Flash Sales", h: "/search?discount=true" }] },
+                { title: "Account", links: [{ l: "Sign In", h: "/login" }, { l: "Create Account", h: "/register" }, { l: "My Orders", h: "/orders" }] },
+                { title: "Features",links: [{ l: "AI Assistant", h: "/ai-assistant" }, { l: "Messages", h: "/messages" }, { l: "Sell on ONETT", h: "/sell" }] },
               ].map(col => (
-                <motion.div key={col.title} className="footer-col" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.4 }}>
+                <div key={col.title}>
                   <div className="footer-col-title">{col.title}</div>
                   <div className="footer-links">
                     {col.links.map(link => (
-                      <Link key={link.label} to={link.to} className="footer-link">{link.label}</Link>
+                      <a key={link.l} href={link.h} className="footer-link">{link.l}</a>
                     ))}
                   </div>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
 
-            <motion.div className="footer-bottom" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.3 }}>
+            <div className="footer-bottom">
               <p className="footer-copy">© 2026 ONETT. All rights reserved.</p>
               <p className="footer-copy">Smart Buying · Affordable Access</p>
-            </motion.div>
+            </div>
           </div>
         </motion.footer>
       </div>
     </>
   );
-};
-
-export default Index;
+}
