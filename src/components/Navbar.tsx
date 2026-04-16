@@ -6,7 +6,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useCallback } from "react";
 import { notificationApi } from "@/lib/api";
-import "./Navbar.css";
+import "../Navbar.css";
 
 function OnettLogo({ size = 32 }: { size?: number }) {
   return (
