@@ -21,14 +21,23 @@ function normaliseCart(data: any) {
     cartTotal:       Number(data.cartTotal       ?? 0),
     discountedTotal: Number(data.discountedTotal ?? 0),
     items: Array.isArray(data.items)
-      ? data.items.map((item: any) => ({
-          ...item,
-          isDiscounted:  item.isDiscounted ?? item.discounted ?? false,
-          unitPrice:     Number(item.unitPrice     ?? 0),
-          originalPrice: item.originalPrice != null ? Number(item.originalPrice) : undefined,
-          subTotal:      Number(item.subTotal      ?? 0),
-          stockStatus:   item.stockStatus ?? "IN_STOCK",
-        }))
+      ? data.items.map((item: any) => {
+          // ✅ FIX: ensure quantity is always a valid positive integer (default 1)
+          const rawQty = Number(item.quantity);
+          const quantity = Number.isFinite(rawQty) && rawQty >= 1
+            ? Math.floor(rawQty)
+            : 1;
+
+          return {
+            ...item,
+            quantity,
+            isDiscounted:  item.isDiscounted ?? item.discounted ?? false,
+            unitPrice:     Number(item.unitPrice     ?? 0),
+            originalPrice: item.originalPrice != null ? Number(item.originalPrice) : undefined,
+            subTotal:      Number(item.subTotal      ?? 0),
+            stockStatus:   item.stockStatus ?? "IN_STOCK",
+          };
+        })
       : [],
   };
 }
@@ -60,12 +69,16 @@ const Cart = () => {
   const [initiating, setInitiating]     = useState(false);
 
   // payment step
-  const [senderName, setSenderName]           = useState("");
-  const [senderPhone, setSenderPhone]         = useState("");
-  const [screenshot, setScreenshot]           = useState<File | null>(null);
+  const [senderName, setSenderName]               = useState("");
+  const [senderPhone, setSenderPhone]             = useState("");
+  const [screenshot, setScreenshot]               = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
-  const [submitting, setSubmitting]           = useState(false);
+  const [submitting, setSubmitting]               = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ✅ FIX: refs that block duplicate in-flight requests
+  const initiatingRef = useRef(false);
+  const submittingRef = useRef(false);
 
   // ── fetch cart ──────────────────────────────────────────────────────────────
   const fetchCart = async () => {
@@ -106,7 +119,12 @@ const Cart = () => {
       toast.error("Please enter a delivery address");
       return;
     }
+
+    // ✅ FIX: block if already in-flight (ref check beats state race condition)
+    if (initiatingRef.current) return;
+    initiatingRef.current = true;
     setInitiating(true);
+
     try {
       const order = await orderApi.initiate({
         deliveryAddress: deliveryAddress.trim(),
@@ -122,6 +140,7 @@ const Cart = () => {
       toast.error(err?.message ?? "Failed to create order.");
     } finally {
       setInitiating(false);
+      initiatingRef.current = false;
     }
   };
 
@@ -154,7 +173,11 @@ const Cart = () => {
     if (!screenshot)         { toast.error("Upload your payment screenshot"); return; }
     if (!currentOrder?.orderId) { toast.error("No order found. Please restart checkout."); return; }
 
+    // ✅ FIX: block if already in-flight
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
+
     try {
       await paymentApi.submitOrderPayment(
         currentOrder.orderId,
@@ -167,6 +190,7 @@ const Cart = () => {
       toast.error(err?.message ?? "Payment submission failed. Please try again.");
     } finally {
       setSubmitting(false);
+      submittingRef.current = false;
     }
   };
 
@@ -497,7 +521,6 @@ const Cart = () => {
                 <li>Take a screenshot of the transfer confirmation</li>
                 <li>Fill in your sender details below and upload the screenshot</li>
               </ol>
-              {/* Replace with your actual MoMo number */}
               <div className="rounded-lg bg-muted px-4 py-3 text-sm font-mono font-semibold text-center tracking-widest">
                 MoMo: 055 XXX XXXX
               </div>
