@@ -456,7 +456,6 @@ const GLOBAL_CSS = `
   .ont-hs-price { font-family: 'Bricolage Grotesque', sans-serif; font-size: 14px; font-weight: 800; color: #1A1A1A; letter-spacing: -0.3px; }
   .ont-hs-price-old { font-size: 10px; color: #B0B0B0; text-decoration: line-through; }
 
-  /* ── Upcoming card CTA button — orange to match site brand ── */
   .ont-hs-btn {
     display: flex; align-items: center; justify-content: center; gap: 5px;
     background: #E6640A; color: #fff; border: none;
@@ -1164,15 +1163,15 @@ function MobileDrawer({ open, onClose, isAuthenticated, user, onLogout }: any) {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
+  // Only pages that exist
   const navLinks = [
     { icon: Ico.Home,     label: "Home",         href: "/" },
     { icon: Ico.Tag,      label: "Categories",   href: "/categories" },
     { icon: Ico.Flame,    label: "Flash Sales",  href: "/search?discount=true" },
     { icon: Ico.Zap,      label: "New Arrivals", href: "/search?keyword=new" },
-    { icon: Ico.Calendar, label: "Upcoming",     href: "/upcoming" },
-    { icon: Ico.Sparkles, label: "AI Assistant", href: "/ai-assistant" },
     { icon: Ico.Package,  label: "My Orders",    href: "/orders" },
     { icon: Ico.Wishlist, label: "Wishlist",     href: "/wishlist" },
+    { icon: Ico.Cart,     label: "Cart",         href: "/cart" },
   ];
 
   const displayName = user?.fullName || user?.storeName || "Account";
@@ -1265,17 +1264,20 @@ function Navbar({ cartCount, onCartUpdate }: { cartCount: number; onCartUpdate: 
         </div>
 
         <div className="ont-nav-right">
+          {/* Only show notifications if authenticated */}
           {isAuthenticated && (
             <a href="/notifications" className="ont-nav-icon-btn" title="Notifications" style={{ display: "flex" }}>
               <Ico.Notif style={{ width: 15, height: 15 }} />
             </a>
           )}
 
+          {/* Cart — always visible */}
           <a href="/cart" className="ont-nav-icon-btn" title="Cart">
             <Ico.Cart style={{ width: 15, height: 15 }} />
             {cartCount > 0 && <span className="ont-nav-cart-badge">{cartCount > 99 ? "99+" : cartCount}</span>}
           </a>
 
+          {/* Auth state */}
           {isAuthenticated ? (
             <button className="ont-nav-avatar" title={`Signed in as ${displayName}`} onClick={() => window.location.href = "/profile"}>
               {initial}
@@ -1285,6 +1287,7 @@ function Navbar({ cartCount, onCartUpdate }: { cartCount: number; onCartUpdate: 
             <a href="/login" className="ont-nav-sign-btn">Sign in</a>
           )}
 
+          {/* Mobile menu toggle */}
           <button className="ont-nav-menu-btn" onClick={() => setDrawerOpen(true)} aria-label="Open menu">
             <Ico.Menu />
           </button>
@@ -1678,7 +1681,7 @@ export default function ONETTHomepage() {
               {[
                 { title: "Shop",     links: [{ l: "Categories", h: "/categories" }, { l: "All Products", h: "/search?keyword=" }, { l: "Flash Sales", h: "/search?discount=true" }] },
                 { title: "Account",  links: [{ l: "Sign In", h: "/login" }, { l: "Create Account", h: "/register" }, { l: "My Orders", h: "/orders" }] },
-                { title: "Features", links: [{ l: "AI Assistant", h: "/ai-assistant" }, { l: "Messages", h: "/messages" }, { l: "Sell on ONETT", h: "/sell" }] },
+                { title: "Features", links: [{ l: "AI Assistant", h: "/ai-assistant" }, { l: "Sell on ONETT", h: "/sell" }] },
               ].map(col => (
                 <div key={col.title}>
                   <div className="ont-footer-col-title">{col.title}</div>
