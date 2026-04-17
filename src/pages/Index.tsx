@@ -29,8 +29,6 @@ const TOKEN = {
 };
 
 // ─── INJECTED GLOBAL CSS ──────────────────────────────────────────────────────
-// ALL class names prefixed with "ont-" to avoid any conflicts
-// UNIFIED BG: #F0EBE3 for page, all sections, categories — one tone throughout
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap');
 
@@ -86,9 +84,7 @@ const GLOBAL_CSS = `
     transition: border-color 0.2s;
     position: relative;
   }
-  .ont-pcard:hover {
-    border-color: rgba(230,100,10,0.35);
-  }
+  .ont-pcard:hover { border-color: rgba(230,100,10,0.35); }
   @media (min-width: 480px)  { .ont-pcard { width: 190px; } }
   @media (min-width: 768px)  { .ont-pcard { width: 218px; } }
   @media (min-width: 1024px) { .ont-pcard { width: 248px; } }
@@ -197,13 +193,6 @@ const GLOBAL_CSS = `
   .ont-pcard-cart:disabled { background: #E5E5E5; color: #A0A0A0; cursor: not-allowed; }
   @media (min-width: 480px)  { .ont-pcard-cart { padding: 9px 13px; font-size: 11px; } }
   @media (min-width: 1024px) { .ont-pcard-cart { padding: 10px 14px; font-size: 11.5px; } }
-
-  /* ── SECTION WRAPPER — unified bg, no contrast vs page ── */
-  .ont-section-warm {
-    background: #F0EBE3;
-    border-radius: 24px;
-    padding: 28px 0 24px;
-  }
 
   /* ── SECTION HEADER ── */
   .ont-sec-hdr {
@@ -430,9 +419,7 @@ const GLOBAL_CSS = `
     text-decoration: none;
     transition: border-color 0.2s;
   }
-  .ont-hs-card:hover {
-    border-color: rgba(139,92,246,0.35);
-  }
+  .ont-hs-card:hover { border-color: rgba(139,92,246,0.35); }
   @media (min-width: 480px) { .ont-hs-card { width: 196px; } }
   @media (min-width: 768px) { .ont-hs-card { width: 220px; } }
 
@@ -468,15 +455,19 @@ const GLOBAL_CSS = `
   .ont-hs-price-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }
   .ont-hs-price { font-family: 'Bricolage Grotesque', sans-serif; font-size: 14px; font-weight: 800; color: #1A1A1A; letter-spacing: -0.3px; }
   .ont-hs-price-old { font-size: 10px; color: #B0B0B0; text-decoration: line-through; }
+
+  /* ── Upcoming card CTA button — orange to match site brand ── */
   .ont-hs-btn {
     display: flex; align-items: center; justify-content: center; gap: 5px;
-    background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2);
-    color: #7C3AED; border-radius: 10px; padding: 9px;
+    background: #E6640A; color: #fff; border: none;
+    border-radius: 10px; padding: 9px;
     font-size: 11px; font-weight: 700; cursor: pointer;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    transition: background 0.15s;
+    transition: background 0.15s, transform 0.1s;
   }
-  .ont-hs-btn:hover { background: rgba(139,92,246,0.14); }
+  .ont-hs-btn:hover { background: #C4520A; transform: translateY(-1px); }
+  .ont-hs-btn:active { transform: translateY(0); }
+  .ont-hs-btn:disabled { background: #E5E5E5; color: #A0A0A0; cursor: not-allowed; transform: none; }
 
   /* ── AI FEATURES GRID ── */
   .ont-ai-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -1044,38 +1035,74 @@ function ProductSection({ title, sub, accent, Icon, items, loading, seeAllHref, 
 }
 
 // ─── UPCOMING CARD ────────────────────────────────────────────────────────────
-function UpcomingCard({ product, index = 0 }: { product: any; index?: number }) {
+function UpcomingCard({ product, index = 0, onCartUpdate }: { product: any; index?: number; onCartUpdate?: () => void }) {
   const { days, hours, minutes, seconds } = useCountdown(product.id, product.availableInDays || 7);
   const isPre = product.stockStatus === "PRE_ORDER";
+  const [addingCart, setAddingCart] = useState(false);
+  const [cartAdded, setCartAdded] = useState(false);
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  const handleCart = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (addingCart) return;
+    setAddingCart(true);
+    try {
+      await cartApi.add(product.id, 1);
+      setCartAdded(true);
+      onCartUpdate?.();
+      setTimeout(() => setCartAdded(false), 2000);
+    } catch (err) {
+      console.error("[Cart] upcoming add failed:", err);
+    } finally {
+      setAddingCart(false);
+    }
+  };
+
   return (
-    <motion.a ref={ref} href={`/products/${product.id}`} className="ont-hs-card"
+    <motion.div
+      ref={ref}
+      style={{ flexShrink: 0 }}
       initial={{ opacity: 0, y: index % 2 === 0 ? -28 : 28, scale: 0.9 }}
       animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
       transition={{ duration: 0.5, delay: Math.min(index * 0.06, 0.4), ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -5, transition: { type: "spring", stiffness: 360, damping: 22 } }}
     >
-      <div className="ont-hs-img">
-        {product.primaryImageUrl
-          ? <img src={product.primaryImageUrl} alt={product.name} loading="lazy" />
-          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#C0C0C0" }}><Ico.Pkg /></div>}
-        <div className={`ont-hs-timer ${isPre ? "ont-timer-amber" : "ont-timer-purple"}`}>
-          {[{ v: days, l: "d" }, null, { v: hours, l: "h" }, null, { v: minutes, l: "m" }, null, { v: seconds, l: "s" }].map((u: any, i) =>
-            u === null
-              ? <span key={i} className="ont-hs-timer-sep">:</span>
-              : <div key={i} className="ont-hs-timer-unit"><span className="ont-hs-timer-num">{String(u.v).padStart(2, "0")}</span><span className="ont-hs-timer-lbl">{u.l}</span></div>
-          )}
+      <a href={`/products/${product.id}`} className="ont-hs-card">
+        <div className="ont-hs-img">
+          {product.primaryImageUrl
+            ? <img src={product.primaryImageUrl} alt={product.name} loading="lazy" />
+            : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#C0C0C0" }}><Ico.Pkg /></div>}
+          <div className={`ont-hs-timer ${isPre ? "ont-timer-amber" : "ont-timer-purple"}`}>
+            {[{ v: days, l: "d" }, null, { v: hours, l: "h" }, null, { v: minutes, l: "m" }, null, { v: seconds, l: "s" }].map((u: any, i) =>
+              u === null
+                ? <span key={i} className="ont-hs-timer-sep">:</span>
+                : <div key={i} className="ont-hs-timer-unit"><span className="ont-hs-timer-num">{String(u.v).padStart(2, "0")}</span><span className="ont-hs-timer-lbl">{u.l}</span></div>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="ont-hs-body">
-        <div className={`ont-hs-status ${isPre ? "ont-badge-pre" : "ont-badge-soon"}`} style={{ marginBottom: 7 }}><Ico.Calendar />{isPre ? "Pre-order" : "Coming Soon"}</div>
-        {product.brand && <div className="ont-hs-brand">{product.brand}</div>}
-        <div className="ont-hs-name">{product.name}</div>
-        <div className="ont-hs-price-row"><span className="ont-hs-price">GHS {product.price?.toLocaleString()}</span></div>
-        <button className="ont-hs-btn"><Ico.Cart />{isPre ? "Pre-order Now" : "Notify Me"}</button>
-      </div>
-    </motion.a>
+        <div className="ont-hs-body">
+          <div className={`ont-hs-status ${isPre ? "ont-badge-pre" : "ont-badge-soon"}`} style={{ marginBottom: 7 }}>
+            <Ico.Calendar />{isPre ? "Pre-order" : "Coming Soon"}
+          </div>
+          {product.brand && <div className="ont-hs-brand">{product.brand}</div>}
+          <div className="ont-hs-name">{product.name}</div>
+          <div className="ont-hs-price-row">
+            <span className="ont-hs-price">GHS {product.price?.toLocaleString()}</span>
+          </div>
+          <button
+            className="ont-hs-btn"
+            onClick={handleCart}
+            disabled={addingCart}
+            aria-label="Add to cart"
+            style={cartAdded ? { background: "#22C55E" } : {}}
+          >
+            <Ico.Cart />
+            {addingCart ? "…" : cartAdded ? "Added!" : isPre ? "Pre-order Now" : "Add to Cart"}
+          </button>
+        </div>
+      </a>
+    </motion.div>
   );
 }
 
@@ -1545,7 +1572,7 @@ export default function ONETTHomepage() {
                 ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
                 : upcomingItems.length === 0
                 ? <div className="ont-empty-state"><div className="ont-empty-state-icon">🚀</div><div className="ont-empty-state-text">No upcoming drops yet</div></div>
-                : upcomingItems.map((item, i) => <UpcomingCard key={item.id} product={item} index={i} />)}
+                : upcomingItems.map((item, i) => <UpcomingCard key={item.id} product={item} index={i} onCartUpdate={refreshCartCount} />)}
             </div>
           </div>
         </div>
