@@ -1,11 +1,10 @@
 // ONETT — Homepage (Live API Integration · Real Auth · No Demo Data)
-// CLASS NAMES: all prefixed with "ont-" to avoid CSS conflicts
-// BACKGROUND: unified #F0EBE3 across page, all sections, category area
+// Uses external Navbar component from @/components/Navbar
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext";
 import { productApi, cartApi } from "@/lib/api";
+import Navbar from "@/components/Navbar";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const TOKEN = {
@@ -635,175 +634,6 @@ const GLOBAL_CSS = `
   .ont-wp-skip:hover { color: rgba(0,0,0,0.4); }
   .ont-wp-safe { height: env(safe-area-inset-bottom, 0); }
 
-  /* ── NAVBAR ── */
-  .ont-navbar {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-    padding: 0 16px; height: 62px;
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    background: rgba(240,235,227,0.9); border-bottom: 1px solid rgba(0,0,0,0.08);
-    backdrop-filter: blur(20px) saturate(1.5);
-    transition: background 0.3s;
-  }
-  @media (min-width: 640px) { .ont-navbar { padding: 0 24px; height: 66px; } }
-  @media (min-width: 1024px) { .ont-navbar { padding: 0 48px; } }
-  .ont-navbar.scrolled { background: rgba(240,235,227,0.97); }
-  .ont-nav-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; flex-shrink: 0; }
-  .ont-nav-logo-box {
-    width: 32px; height: 32px; border-radius: 9px;
-    background: linear-gradient(135deg, #E6640A, #C4520A);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-  }
-  .ont-nav-logo-on  { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 900; font-size: 10px; color: #fff; line-height: 1; }
-  .ont-nav-logo-ett { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 7px; color: rgba(255,255,255,0.65); line-height: 1; }
-  .ont-nav-name { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 17px; color: #1A1A1A; letter-spacing: -0.3px; }
-  .ont-nav-name em { color: #E6640A; font-style: normal; }
-
-  .ont-nav-search {
-    flex: 1; max-width: 400px;
-    background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.09);
-    border-radius: 11px; height: 40px;
-    align-items: center; gap: 8px; padding: 0 12px;
-    cursor: text; transition: border-color 0.15s, background 0.15s;
-    display: none;
-  }
-  @media (min-width: 768px) { .ont-nav-search { display: flex; } }
-  .ont-nav-search:hover { border-color: rgba(0,0,0,0.14); background: rgba(0,0,0,0.06); }
-  .ont-nav-search input {
-    background: none; border: none; outline: none;
-    font-size: 13px; color: #1A1A1A; width: 100%;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-  }
-  .ont-nav-search input::placeholder { color: #A0A0A0; }
-
-  .ont-nav-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-
-  .ont-nav-icon-btn {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: #6A6A6A; transition: all 0.15s; position: relative;
-    text-decoration: none;
-  }
-  .ont-nav-icon-btn:hover { background: rgba(0,0,0,0.08); color: #1A1A1A; border-color: rgba(0,0,0,0.14); }
-
-  .ont-nav-cart-badge {
-    position: absolute; top: -4px; right: -4px;
-    min-width: 16px; height: 16px; border-radius: 50%;
-    background: #E6640A; color: #fff;
-    font-size: 8.5px; font-weight: 800;
-    display: flex; align-items: center; justify-content: center;
-    border: 1.5px solid #F0EBE3;
-    padding: 0 3px;
-  }
-
-  .ont-nav-sign-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: #E6640A; color: #fff; border: none;
-    border-radius: 10px; padding: 8px 16px;
-    font-size: 12.5px; font-weight: 700; cursor: pointer;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    white-space: nowrap;
-    transition: background 0.15s; text-decoration: none;
-  }
-  .ont-nav-sign-btn:hover { background: #C4520A; }
-
-  .ont-nav-avatar {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: linear-gradient(135deg, #E6640A, #C4520A);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: #fff; font-weight: 800; font-size: 14px;
-    font-family: 'Bricolage Grotesque', sans-serif;
-    border: none; position: relative;
-    transition: opacity 0.15s;
-    flex-shrink: 0;
-  }
-  .ont-nav-avatar:hover { opacity: 0.88; }
-  .ont-nav-avatar-online {
-    position: absolute; bottom: -2px; right: -2px;
-    width: 10px; height: 10px; border-radius: 50%;
-    background: #22C55E; border: 2px solid #F0EBE3;
-  }
-
-  .ont-nav-menu-btn {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: #3A3A3A; transition: all 0.15s;
-    flex-shrink: 0;
-  }
-  .ont-nav-menu-btn:hover { background: rgba(0,0,0,0.08); }
-  @media (min-width: 768px) { .ont-nav-menu-btn { display: none; } }
-
-  .ont-mobile-drawer-overlay {
-    position: fixed; inset: 0; z-index: 1100;
-    background: rgba(0,0,0,0.35); backdrop-filter: blur(6px);
-  }
-  .ont-mobile-drawer {
-    position: fixed; top: 0; right: 0; bottom: 0; z-index: 1200;
-    width: min(320px, 88vw);
-    background: #F0EBE3;
-    display: flex; flex-direction: column;
-    overflow-y: auto;
-  }
-  .ont-md-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 20px 20px 16px;
-    border-bottom: 1px solid rgba(0,0,0,0.07);
-  }
-  .ont-md-close {
-    width: 34px; height: 34px; border-radius: 9px;
-    background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: #5A5A5A; transition: background 0.15s;
-  }
-  .ont-md-close:hover { background: rgba(0,0,0,0.1); }
-  .ont-md-body { padding: 16px 20px; flex: 1; }
-  .ont-md-user {
-    display: flex; align-items: center; gap: 12px;
-    background: rgba(230,100,10,0.06); border: 1px solid rgba(230,100,10,0.15);
-    border-radius: 14px; padding: 14px 16px; margin-bottom: 20px;
-  }
-  .ont-md-user-avatar {
-    width: 44px; height: 44px; border-radius: 12px;
-    background: linear-gradient(135deg, #E6640A, #C4520A);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 800; font-size: 16px;
-    font-family: 'Bricolage Grotesque', sans-serif;
-    flex-shrink: 0;
-  }
-  .ont-md-user-name { font-weight: 700; font-size: 14px; color: #1A1A1A; }
-  .ont-md-user-email { font-size: 12px; color: #8A8A8A; margin-top: 1px; }
-  .ont-md-search {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.09);
-    border-radius: 11px; padding: 10px 14px; margin-bottom: 20px;
-  }
-  .ont-md-search input {
-    background: none; border: none; outline: none;
-    font-size: 14px; color: #1A1A1A; width: 100%;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-  }
-  .ont-md-search input::placeholder { color: #A0A0A0; }
-  .ont-md-nav-label { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #B0B0B0; margin-bottom: 8px; margin-top: 16px; }
-  .ont-md-nav-links { display: flex; flex-direction: column; gap: 2px; }
-  .ont-md-nav-link {
-    display: flex; align-items: center; gap: 12px;
-    padding: 11px 14px; border-radius: 11px;
-    font-size: 14px; font-weight: 600; color: #2A2A2A;
-    text-decoration: none; transition: background 0.15s, color 0.15s;
-  }
-  .ont-md-nav-link:hover { background: rgba(230,100,10,0.07); color: #E6640A; }
-  .ont-md-nav-link svg { flex-shrink: 0; }
-  .ont-md-footer { padding: 16px 20px 32px; border-top: 1px solid rgba(0,0,0,0.07); }
-  .ont-md-signout {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; border: 1px solid rgba(0,0,0,0.1); border-radius: 11px;
-    padding: 12px; font-size: 13px; font-weight: 700; color: #5A5A5A;
-    background: transparent; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
-    transition: background 0.15s;
-  }
-  .ont-md-signout:hover { background: rgba(0,0,0,0.04); }
-
   /* ── EMPTY STATE ── */
   .ont-empty-state {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -845,15 +675,8 @@ const Ico = {
   ChevR:    (p: any={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 18l6-6-6-6"/></svg>,
   ChevL:    (p: any={}) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 18l-6-6 6-6"/></svg>,
   X:        (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-  Menu:     (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
-  Home:     (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  Package:  (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>,
-  User:     (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-  LogOut:   (p: any={}) => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
   Wa:       (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.508 5.836L.057 23.25a.75.75 0 00.916.943l5.638-1.479A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 01-4.962-1.355l-.356-.212-3.686.967.984-3.595-.232-.371A9.718 9.718 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>,
   Pkg:      (p: any={}) => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
-  Wishlist: (p: any={}) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
-  Notif:    (p: any={}) => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
 };
 
 // ─── COUNTDOWN HOOK ───────────────────────────────────────────────────────────
@@ -1156,155 +979,6 @@ const WP_SLIDES = [
   { emoji: "🚀", kicker: "Deals Waiting for You", title: "Ready to Explore?", desc: "Exclusive flash sales, pre-orders, and new arrivals drop every day. Don't miss out.", color: "#22C55E" },
 ];
 
-// ─── MOBILE DRAWER ────────────────────────────────────────────────────────────
-function MobileDrawer({ open, onClose, isAuthenticated, user, onLogout }: any) {
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [open]);
-
-  // Only pages that exist
-  const navLinks = [
-    { icon: Ico.Home,     label: "Home",         href: "/" },
-    { icon: Ico.Tag,      label: "Categories",   href: "/categories" },
-    { icon: Ico.Flame,    label: "Flash Sales",  href: "/search?discount=true" },
-    { icon: Ico.Zap,      label: "New Arrivals", href: "/search?keyword=new" },
-    { icon: Ico.Package,  label: "My Orders",    href: "/orders" },
-    { icon: Ico.Wishlist, label: "Wishlist",     href: "/wishlist" },
-    { icon: Ico.Cart,     label: "Cart",         href: "/cart" },
-  ];
-
-  const displayName = user?.fullName || user?.storeName || "Account";
-  const displayEmail = user?.email || "";
-  const initial = displayName.charAt(0).toUpperCase();
-
-  return (
-    <AnimatePresence>
-      {open && <>
-        <motion.div className="ont-mobile-drawer-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
-        <motion.div className="ont-mobile-drawer" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", stiffness: 340, damping: 32 }}>
-          <div className="ont-md-header">
-            <a href="/" className="ont-nav-logo" onClick={onClose}>
-              <div className="ont-nav-logo-box"><div className="ont-nav-logo-on">ON</div><div className="ont-nav-logo-ett">ETT</div></div>
-              <span className="ont-nav-name">ONETT<em>.</em></span>
-            </a>
-            <button className="ont-md-close" onClick={onClose}><Ico.X /></button>
-          </div>
-          <div className="ont-md-body">
-            <div className="ont-md-search">
-              <Ico.Search style={{ color: "#A0A0A0", width: 14, height: 14, flexShrink: 0 }} />
-              <input type="text" placeholder="Search 10,000+ products…" />
-            </div>
-            {isAuthenticated ? (
-              <div className="ont-md-user">
-                <div className="ont-md-user-avatar">{initial}</div>
-                <div>
-                  <div className="ont-md-user-name">{displayName}</div>
-                  <div className="ont-md-user-email">{displayEmail}</div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-                <a href="/login" onClick={onClose} className="ont-btn-primary" style={{ flex: 1, justifyContent: "center", padding: "11px 16px", fontSize: 13, borderRadius: 11 }}>Sign In</a>
-                <a href="/register" onClick={onClose} className="ont-btn-ghost" style={{ flex: 1, justifyContent: "center", padding: "11px 16px", fontSize: 13, borderRadius: 11 }}>Register</a>
-              </div>
-            )}
-            <div className="ont-md-nav-label">Navigation</div>
-            <div className="ont-md-nav-links">
-              {navLinks.map(link => (
-                <a key={link.label} href={link.href} className="ont-md-nav-link" onClick={onClose}>
-                  <link.icon style={{ color: "#E6640A" }} />{link.label}
-                </a>
-              ))}
-            </div>
-          </div>
-          {isAuthenticated && (
-            <div className="ont-md-footer">
-              <button className="ont-md-signout" onClick={() => { onLogout(); onClose(); }}>
-                <Ico.LogOut />Sign Out
-              </button>
-            </div>
-          )}
-          <div style={{ height: "env(safe-area-inset-bottom, 0px)" }} />
-        </motion.div>
-      </>}
-    </AnimatePresence>
-  );
-}
-
-// ─── NAVBAR ───────────────────────────────────────────────────────────────────
-function Navbar({ cartCount, onCartUpdate }: { cartCount: number; onCartUpdate: () => void }) {
-  const { isAuthenticated, user, logout } = useAuth();
-  const [scrolled, setScrolled] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  useEffect(() => {
-    const h = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", h, { passive: true });
-    return () => window.removeEventListener("scroll", h);
-  }, []);
-
-  const displayName = user?.fullName || user?.storeName || "";
-  const initial = displayName ? displayName.charAt(0).toUpperCase() : "?";
-
-  return (
-    <>
-      <nav className={`ont-navbar${scrolled ? " scrolled" : ""}`}>
-        <a href="/" className="ont-nav-logo">
-          <div className="ont-nav-logo-box">
-            <div className="ont-nav-logo-on">ON</div>
-            <div className="ont-nav-logo-ett">ETT</div>
-          </div>
-          <span className="ont-nav-name">ONETT<em>.</em></span>
-        </a>
-
-        <div className="ont-nav-search">
-          <Ico.Search style={{ color: "#A0A0A0", width: 14, height: 14, flexShrink: 0 }} />
-          <input type="text" placeholder="Search 10,000+ products…" />
-        </div>
-
-        <div className="ont-nav-right">
-          {/* Only show notifications if authenticated */}
-          {isAuthenticated && (
-            <a href="/notifications" className="ont-nav-icon-btn" title="Notifications" style={{ display: "flex" }}>
-              <Ico.Notif style={{ width: 15, height: 15 }} />
-            </a>
-          )}
-
-          {/* Cart — always visible */}
-          <a href="/cart" className="ont-nav-icon-btn" title="Cart">
-            <Ico.Cart style={{ width: 15, height: 15 }} />
-            {cartCount > 0 && <span className="ont-nav-cart-badge">{cartCount > 99 ? "99+" : cartCount}</span>}
-          </a>
-
-          {/* Auth state */}
-          {isAuthenticated ? (
-            <button className="ont-nav-avatar" title={`Signed in as ${displayName}`} onClick={() => window.location.href = "/profile"}>
-              {initial}
-              <span className="ont-nav-avatar-online" />
-            </button>
-          ) : (
-            <a href="/login" className="ont-nav-sign-btn">Sign in</a>
-          )}
-
-          {/* Mobile menu toggle */}
-          <button className="ont-nav-menu-btn" onClick={() => setDrawerOpen(true)} aria-label="Open menu">
-            <Ico.Menu />
-          </button>
-        </div>
-      </nav>
-
-      <MobileDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        isAuthenticated={isAuthenticated}
-        user={user}
-        onLogout={logout}
-      />
-    </>
-  );
-}
-
 // ─── WELCOME POPUP ────────────────────────────────────────────────────────────
 function WelcomePopup() {
   const [visible, setVisible] = useState(false);
@@ -1376,7 +1050,6 @@ export default function ONETTHomepage() {
   const [newArrivals,   setNewArrivals]   = useState<any[]>([]);
   const [homeItems,     setHomeItems]     = useState<any[]>([]);
   const [upcomingItems, setUpcomingItems] = useState<any[]>([]);
-  const [cartCount,     setCartCount]     = useState(0);
 
   const [loadingCats,     setLoadingCats]     = useState(true);
   const [loadingFlash,    setLoadingFlash]    = useState(true);
@@ -1386,9 +1059,11 @@ export default function ONETTHomepage() {
 
   const refreshCartCount = useCallback(async () => {
     try {
-      const res = await cartApi.getCount();
-      const count = typeof res === "number" ? res : res?.count ?? res?.totalItems ?? 0;
-      setCartCount(count);
+      await cartApi.getCount();
+      // Trigger navbar badge refresh if it exposes a global hook
+      if (typeof (window as any).__refreshNotifBadge === "function") {
+        // no-op here; kept for future cart-badge hook parity
+      }
     } catch {
       // not logged in — silently ignore
     }
@@ -1440,7 +1115,7 @@ export default function ONETTHomepage() {
       <InjectCSS />
       <div style={{ background: "#F0EBE3", minHeight: "100vh" }}>
         <WelcomePopup />
-        <Navbar cartCount={cartCount} onCartUpdate={refreshCartCount} />
+        <Navbar />
 
         {/* ════ HERO ════ */}
         <section className="ont-hero-section">
