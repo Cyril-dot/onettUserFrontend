@@ -1,445 +1,609 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import {
-  ShoppingBag,
-  Mail,
-  Lock,
-  User,
-  Phone,
-  MapPin,
-  CheckSquare,
-  Square,
-  PenLine,
-  RotateCcw,
-  Eye,
-  EyeOff,
-} from "lucide-react";
-import savvyLogo from "@/assets/savvy-logo.png";
+import { motion } from "framer-motion";
 
-/* ─────────────────────────────────────────────
-   Signature Canvas
-───────────────────────────────────────────── */
-const SignatureCanvas = ({
-  onSign,
-  onClear,
-  signed,
-}: {
-  onSign: (dataUrl: string) => void;
-  onClear: () => void;
-  signed: boolean;
-}) => {
+// ─── INJECTED CSS ──────────────────────────────────────────────────────────────
+const REGISTER_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap');
+
+  .ont-reg-page {
+    min-height: 100dvh; display: flex; align-items: center; justify-content: center;
+    background: #F0EBE3; font-family: 'Plus Jakarta Sans', sans-serif;
+    padding: 32px 16px; position: relative; overflow: hidden;
+  }
+  .ont-reg-bg1 {
+    position: absolute; top: 33%; left: 25%; width: 280px; height: 280px;
+    border-radius: 50%; background: rgba(230,100,10,0.04); pointer-events: none;
+  }
+  .ont-reg-bg2 {
+    position: absolute; bottom: 33%; right: 25%; width: 200px; height: 200px;
+    border-radius: 50%; background: rgba(230,100,10,0.04); pointer-events: none;
+  }
+
+  .ont-reg-card {
+    width: 100%; max-width: 500px; position: relative; z-index: 1;
+    background: #FFFFFF; border: 1px solid rgba(0,0,0,0.09);
+    border-radius: 28px; padding: 36px 32px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.06);
+  }
+
+  /* Logo */
+  .ont-reg-logo {
+    display: inline-flex; align-items: center; gap: 9px;
+    text-decoration: none; margin-bottom: 6px;
+  }
+  .ont-reg-logo-box {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, #E6640A, #C4520A);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .ont-reg-logo-on  { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 900; font-size: 10px; color: #fff; line-height: 1; }
+  .ont-reg-logo-ett { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 7.5px; color: rgba(255,255,255,0.65); line-height: 1; }
+  .ont-reg-logo-name {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 18px; color: #1A1A1A; letter-spacing: -0.3px;
+  }
+  .ont-reg-logo-name em { color: #E6640A; font-style: normal; }
+
+  .ont-reg-heading {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 26px; font-weight: 800; color: #1A1A1A;
+    letter-spacing: -0.5px; margin: 18px 0 6px;
+  }
+  .ont-reg-subheading { font-size: 13.5px; color: #9A9A9A; margin-bottom: 20px; }
+
+  /* Role badge */
+  .ont-reg-role-badge {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(230,100,10,0.05); border: 1px solid rgba(230,100,10,0.15);
+    border-radius: 14px; padding: 12px 16px; margin-bottom: 24px;
+  }
+  .ont-reg-role-ico {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: rgba(230,100,10,0.1);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .ont-reg-role-title { font-size: 13px; font-weight: 700; color: #1A1A1A; }
+  .ont-reg-role-sub { font-size: 11px; color: #9A9A9A; margin-top: 2px; }
+
+  /* Field */
+  .ont-reg-field { margin-bottom: 14px; }
+  .ont-reg-label {
+    display: block; font-size: 10px; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; color: #9A9A9A; margin-bottom: 7px;
+  }
+  .ont-reg-label span { text-transform: none; font-weight: 500; color: #B0B0B0; }
+  .ont-reg-input-wrap { position: relative; }
+  .ont-reg-input-icon {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    color: #C0C0C0; pointer-events: none; display: flex; align-items: center;
+  }
+  .ont-reg-input {
+    width: 100%; height: 46px;
+    background: #FAFAF8; border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px; padding: 0 14px 0 40px;
+    font-size: 13.5px; color: #1A1A1A; outline: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .ont-reg-input:focus {
+    border-color: rgba(230,100,10,0.5); background: #fff;
+    box-shadow: 0 0 0 3px rgba(230,100,10,0.08);
+  }
+  .ont-reg-input::placeholder { color: #C0C0C0; }
+  .ont-reg-input-no-icon {
+    padding-left: 14px;
+  }
+  .ont-reg-input-with-right { padding-right: 44px; }
+  .ont-reg-input-right {
+    position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: #B0B0B0;
+    display: flex; align-items: center; padding: 0;
+    transition: color 0.15s;
+  }
+  .ont-reg-input-right:hover { color: #6A6A6A; }
+
+  /* Textarea */
+  .ont-reg-textarea {
+    width: 100%; min-height: 80px; resize: vertical;
+    background: #FAFAF8; border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px; padding: 12px 14px;
+    font-size: 13.5px; color: #1A1A1A; outline: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .ont-reg-textarea:focus {
+    border-color: rgba(230,100,10,0.5); background: #fff;
+    box-shadow: 0 0 0 3px rgba(230,100,10,0.08);
+  }
+  .ont-reg-textarea::placeholder { color: #C0C0C0; }
+
+  /* Two-column grid */
+  .ont-reg-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+
+  /* Phone prefix */
+  .ont-reg-phone-wrap { display: flex; }
+  .ont-reg-phone-prefix {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 12px; border-radius: 12px 0 0 12px;
+    border: 1px solid rgba(0,0,0,0.1); border-right: none;
+    background: #F3EDE6; color: #9A9A9A;
+    font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif;
+    flex-shrink: 0; white-space: nowrap;
+  }
+  .ont-reg-phone-input {
+    flex: 1; height: 46px; background: #FAFAF8;
+    border: 1px solid rgba(0,0,0,0.1); border-radius: 0 12px 12px 0;
+    padding: 0 14px; font-size: 13.5px; color: #1A1A1A; outline: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .ont-reg-phone-input:focus {
+    border-color: rgba(230,100,10,0.5); background: #fff;
+    box-shadow: 0 0 0 3px rgba(230,100,10,0.08);
+  }
+  .ont-reg-phone-input::placeholder { color: #C0C0C0; }
+
+  /* File input */
+  .ont-reg-file {
+    width: 100%; height: 46px;
+    background: #FAFAF8; border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px; padding: 0 14px;
+    font-size: 13px; color: #6A6A6A; outline: none;
+    font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer;
+  }
+  .ont-reg-file:focus { border-color: rgba(230,100,10,0.5); box-shadow: 0 0 0 3px rgba(230,100,10,0.08); }
+
+  /* Terms block */
+  .ont-reg-terms-box {
+    border-radius: 16px; border: 1px solid rgba(0,0,0,0.09);
+    background: #FAFAF8; padding: 16px; margin-bottom: 20px;
+  }
+  .ont-reg-terms-row {
+    display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;
+  }
+  .ont-reg-terms-checkbox {
+    width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0; cursor: pointer;
+    background: none; border: none; padding: 0; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    color: #E6640A;
+  }
+  .ont-reg-terms-text { font-size: 13px; color: #6A6A6A; line-height: 1.6; }
+  .ont-reg-terms-text a {
+    color: #E6640A; font-weight: 700; text-decoration: none;
+  }
+  .ont-reg-terms-text a:hover { text-decoration: underline; }
+  .ont-reg-terms-read-btn {
+    width: 100%; border: 1px solid rgba(230,100,10,0.25); border-radius: 11px;
+    background: none; padding: 10px; cursor: pointer; color: #E6640A;
+    font-size: 12px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: background 0.15s;
+  }
+  .ont-reg-terms-read-btn:hover { background: rgba(230,100,10,0.05); }
+  .ont-reg-terms-signed {
+    font-size: 12px; color: #16A34A; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* Submit button */
+  .ont-reg-submit {
+    width: 100%; height: 50px; border: none; border-radius: 14px;
+    background: #E6640A; color: #fff;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14.5px; font-weight: 800; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .ont-reg-submit:hover:not(:disabled) { background: #C4520A; transform: translateY(-1px); }
+  .ont-reg-submit:active:not(:disabled) { transform: translateY(0); }
+  .ont-reg-submit:disabled { background: #E0D8D0; color: #B0A898; cursor: not-allowed; }
+
+  .ont-reg-footer-text {
+    text-align: center; font-size: 13px; color: #9A9A9A; margin-top: 18px;
+  }
+  .ont-reg-footer-text a {
+    color: #E6640A; font-weight: 700; text-decoration: none;
+  }
+  .ont-reg-footer-text a:hover { text-decoration: underline; }
+
+  /* ── TERMS MODAL ── */
+  .ont-reg-modal-backdrop {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  .ont-reg-modal {
+    width: 100%; max-width: 640px;
+    background: #FFFFFF; border-radius: 24px;
+    border: 1px solid rgba(0,0,0,0.09);
+    display: flex; flex-direction: column; max-height: 92dvh;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+  }
+  .ont-reg-modal-header {
+    padding: 24px 28px 18px; border-bottom: 1px solid rgba(0,0,0,0.08);
+    flex-shrink: 0; text-align: center;
+  }
+  .ont-reg-modal-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(230,100,10,0.08); border: 1px solid rgba(230,100,10,0.2);
+    color: #C4520A; font-size: 10px; font-weight: 800; letter-spacing: 0.8px;
+    text-transform: uppercase; padding: 5px 12px; border-radius: 99px; margin-bottom: 12px;
+  }
+  .ont-reg-modal-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 22px; font-weight: 800; color: #1A1A1A;
+    letter-spacing: -0.4px; margin-bottom: 4px;
+  }
+  .ont-reg-modal-date { font-size: 12px; color: #B0B0B0; }
+  .ont-reg-modal-scroll-hint { font-size: 11px; color: #F59E0B; margin-top: 8px; }
+  .ont-reg-modal-body {
+    flex: 1; overflow-y: auto; padding: 24px 28px;
+    font-size: 13.5px; color: #3A3A3A; line-height: 1.75;
+  }
+  .ont-reg-modal-body h3 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 14px; font-weight: 800; color: #1A1A1A; margin: 20px 0 8px;
+  }
+  .ont-reg-modal-body p { margin-bottom: 12px; }
+  .ont-reg-modal-body hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0; }
+  .ont-reg-modal-body strong { font-weight: 700; color: #1A1A1A; }
+  .ont-reg-modal-warn {
+    background: #FFFBEB; border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 12px; padding: 12px 16px; margin: 16px 0;
+    font-size: 12.5px; color: #92400E; font-weight: 600;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .ont-reg-modal-warn-icon { font-size: 16px; flex-shrink: 0; }
+  .ont-reg-modal-contact {
+    padding-left: 16px; border-left: 3px solid rgba(230,100,10,0.25);
+    margin-top: 8px; line-height: 1.9; color: #6A6A6A;
+  }
+  /* Signature area */
+  .ont-reg-sig-label {
+    font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+    color: #9A9A9A; margin-bottom: 8px; display: block;
+  }
+  .ont-reg-sig-canvas-wrap {
+    border: 2px dashed rgba(0,0,0,0.15); border-radius: 14px;
+    background: #FAFAF8; overflow: hidden; position: relative;
+  }
+  .ont-reg-sig-canvas {
+    width: 100%; cursor: crosshair; touch-action: none; display: block;
+  }
+  .ont-reg-sig-placeholder {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    pointer-events: none; font-size: 12px; color: #C0C0C0; gap: 6px;
+  }
+  .ont-reg-sig-baseline {
+    position: absolute; bottom: 24px; left: 16px; right: 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.1); pointer-events: none;
+  }
+  .ont-reg-sig-ok { font-size: 12px; color: #16A34A; font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 5px; }
+  .ont-reg-sig-clear {
+    background: none; border: none; cursor: pointer; font-size: 11.5px; color: #9A9A9A;
+    font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 4px;
+    transition: color 0.15s;
+  }
+  .ont-reg-sig-clear:hover { color: #3A3A3A; }
+  .ont-reg-modal-footer {
+    padding: 16px 24px; border-top: 1px solid rgba(0,0,0,0.08); flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .ont-reg-modal-hint { text-align: center; font-size: 11.5px; color: #F59E0B; }
+  .ont-reg-modal-accept {
+    width: 100%; height: 48px; border: none; border-radius: 13px;
+    background: #E6640A; color: #fff;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 800;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+  }
+  .ont-reg-modal-accept:hover:not(:disabled) { background: #C4520A; transform: translateY(-1px); }
+  .ont-reg-modal-accept:disabled { background: #E0D8D0; color: #B0A898; cursor: not-allowed; transform: none; }
+  .ont-reg-modal-decline {
+    width: 100%; height: 44px; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px;
+    background: none; color: #9A9A9A; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .ont-reg-modal-decline:hover { background: rgba(0,0,0,0.04); color: #3A3A3A; }
+  .ont-reg-modal-date-row {
+    display: flex; justify-content: space-between; font-size: 12.5px; color: #9A9A9A;
+    margin-top: 12px;
+  }
+  .ont-reg-modal-date-row strong { color: #1A1A1A; }
+`;
+
+// ─── INLINE ICONS ─────────────────────────────────────────────────────────────
+const IcoCart = (p: any = {}) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+  </svg>
+);
+const IcoUser = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+const IcoMail = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2"/>
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+  </svg>
+);
+const IcoLock = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  </svg>
+);
+const IcoPhone = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.23a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.5h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.1a16 16 0 0 0 6 6l1.06-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </svg>
+);
+const IcoPin = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+  </svg>
+);
+const IcoEye = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+const IcoEyeOff = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </svg>
+);
+const IcoPen = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+  </svg>
+);
+const IcoRefresh = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+  </svg>
+);
+const IcoCheck = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+const IcoSquare = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+  </svg>
+);
+const IcoCheckSquare = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 11 12 14 22 4"/>
+    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+  </svg>
+);
+
+// ─── SIGNATURE CANVAS ─────────────────────────────────────────────────────────
+function SignatureCanvas({ onSign, onClear, signed }: { onSign: (d: string) => void; onClear: () => void; signed: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
 
   const getPos = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
-    if ("touches" in e) {
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
-      };
-    }
+    if ("touches" in e) return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
-  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const start = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current; if (!canvas) return;
     drawing.current = true;
     const ctx = canvas.getContext("2d")!;
     const { x, y } = getPos(e, canvas);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctx.beginPath(); ctx.moveTo(x, y);
   };
-
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     if (!drawing.current) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const canvas = canvasRef.current; if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#1A1A1A";
     const { x, y } = getPos(e, canvas);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+    ctx.lineTo(x, y); ctx.stroke();
   };
-
-  const endDraw = () => {
-    if (!drawing.current) return;
-    drawing.current = false;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const end = () => {
+    if (!drawing.current) return; drawing.current = false;
+    const canvas = canvasRef.current; if (!canvas) return;
     onSign(canvas.toDataURL());
   };
-
   const clear = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const canvas = canvasRef.current; if (!canvas) return;
+    canvas.getContext("2d")!.clearRect(0, 0, canvas.width, canvas.height);
     onClear();
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="font-inter text-xs text-muted-foreground">
-          Sign below to confirm your agreement
-        </p>
-        <button
-          type="button"
-          onClick={clear}
-          className="font-inter flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <RotateCcw className="h-3 w-3" /> Clear
-        </button>
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <span className="ont-reg-sig-label">Sign below to confirm your agreement</span>
+        <button type="button" onClick={clear} className="ont-reg-sig-clear"><IcoRefresh /> Clear</button>
       </div>
-      <div className="relative rounded-xl border-2 border-dashed border-border bg-white overflow-hidden">
+      <div className="ont-reg-sig-canvas-wrap">
         <canvas
-          ref={canvasRef}
-          width={560}
-          height={100}
-          className="w-full cursor-crosshair touch-none"
-          onMouseDown={startDraw}
-          onMouseMove={draw}
-          onMouseUp={endDraw}
-          onMouseLeave={endDraw}
-          onTouchStart={startDraw}
-          onTouchMove={draw}
-          onTouchEnd={endDraw}
+          ref={canvasRef} width={560} height={100}
+          className="ont-reg-sig-canvas"
+          onMouseDown={start} onMouseMove={draw} onMouseUp={end} onMouseLeave={end}
+          onTouchStart={start} onTouchMove={draw} onTouchEnd={end}
         />
         {!signed && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <p className="font-inter text-xs text-muted-foreground/50 flex items-center gap-1.5">
-              <PenLine className="h-3.5 w-3.5" /> Draw your signature here
-            </p>
+          <div className="ont-reg-sig-placeholder">
+            <IcoPen /> Draw your signature here
           </div>
         )}
-        {/* baseline */}
-        <div className="absolute bottom-6 left-6 right-6 border-b border-border/60 pointer-events-none" />
+        <div className="ont-reg-sig-baseline" />
       </div>
-      {signed && (
-        <p className="font-inter text-xs text-green-600 font-medium flex items-center gap-1">
-          <CheckSquare className="h-3 w-3" /> Signature captured
-        </p>
-      )}
+      {signed && <div className="ont-reg-sig-ok"><IcoCheck /> Signature captured</div>}
     </div>
   );
-};
+}
 
-/* ─────────────────────────────────────────────
-   Terms Modal — full legal document style
-───────────────────────────────────────────── */
-const TermsModal = ({
-  onAccept,
-  onDecline,
-}: {
-  onAccept: (sig: string) => void;
-  onDecline: () => void;
-}) => {
+// ─── TERMS MODAL ──────────────────────────────────────────────────────────────
+function TermsModal({ onAccept, onDecline }: { onAccept: (sig: string) => void; onDecline: () => void }) {
   const [scrolledToBottom, setScrolledToBottom] = useState(false);
   const [signature, setSignature] = useState("");
   const [signedName, setSignedName] = useState("");
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 60) {
-      setScrolledToBottom(true);
-    }
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 60) setScrolledToBottom(true);
   };
 
-  const today = new Date().toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
+  const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const canAccept = scrolledToBottom && signature && signedName.trim().length > 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl bg-background rounded-2xl border border-border shadow-2xl flex flex-col max-h-[92vh]">
+    <div className="ont-reg-modal-backdrop">
+      <div className="ont-reg-modal">
 
-        {/* Modal header */}
-        <div className="px-8 pt-6 pb-4 border-b border-border flex-shrink-0 text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <ShoppingBag className="h-4 w-4 text-primary" />
-            <span className="font-heading text-xs font-bold uppercase tracking-widest text-primary">
-              Onett Marketplace
-            </span>
-          </div>
-          <h2 className="font-heading text-2xl font-bold text-foreground">
-            Terms &amp; Conditions
-          </h2>
-          <p className="font-inter text-xs text-muted-foreground mt-1">
-            Effective Date: April 8, 2025 &nbsp;·&nbsp; Version 1.0
-          </p>
-          {!scrolledToBottom && (
-            <p className="font-inter text-[11px] text-amber-500 mt-2">
-              ↓ Please read the full document before signing
-            </p>
-          )}
+        <div className="ont-reg-modal-header">
+          <div className="ont-reg-modal-badge"><IcoCart style={{ width: 12, height: 12 }} /> ONETT Marketplace</div>
+          <div className="ont-reg-modal-title">Terms &amp; Conditions</div>
+          <div className="ont-reg-modal-date">Effective Date: April 8, 2025 · Version 1.0</div>
+          {!scrolledToBottom && <div className="ont-reg-modal-scroll-hint">↓ Please read the full document before signing</div>}
         </div>
 
-        {/* Document body */}
-        <div
-          className="flex-1 overflow-y-auto px-8 py-6"
-          onScroll={handleScroll}
-        >
-          <div className="font-inter text-sm text-foreground leading-relaxed space-y-5 max-w-none">
+        <div className="ont-reg-modal-body" onScroll={handleScroll}>
 
-            {/* Preamble */}
-            <p>
-              Welcome to Onett. These Terms and Conditions (<strong>"Terms"</strong>) constitute a legally binding agreement between you (<strong>"User"</strong>) and Onett (<strong>"Company"</strong>, <strong>"we"</strong>, <strong>"us"</strong>, or <strong>"our"</strong>), governing your access to and use of our website, mobile applications, and related services (collectively, the <strong>"Platform"</strong>). By accessing or using the Platform, you acknowledge that you have read, understood, and agree to be bound by these Terms in their entirety. If you do not agree to these Terms, you must immediately cease all use of the Platform.
-            </p>
+          <p>Welcome to Onett. These Terms and Conditions (<strong>"Terms"</strong>) constitute a legally binding agreement between you (<strong>"User"</strong>) and Onett (<strong>"Company"</strong>), governing your access to and use of our Platform. By accessing or using the Platform, you agree to be bound by these Terms in their entirety.</p>
 
-            <hr className="border-border" />
+          <hr />
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">1. Eligibility</h3>
-              <p>
-                By registering for and using this Platform, you represent and warrant that: (a) you are at least 18 years of age, or have obtained verifiable parental or legal guardian consent; (b) you possess the full legal capacity and authority to enter into binding contractual obligations; (c) your use of the Platform does not violate any applicable laws or regulations in your jurisdiction; and (d) all information you provide during registration and thereafter is accurate, current, and complete.
-              </p>
-            </section>
+          <h3>1. Eligibility</h3>
+          <p>By registering, you represent that: (a) you are at least 18 years of age, or have obtained verifiable parental consent; (b) you possess full legal capacity to enter binding obligations; (c) your use does not violate applicable laws; and (d) all information you provide is accurate and complete.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">2. User Accounts</h3>
-              <p>
-                To access certain features of the Platform, you may be required to register and maintain an active account. You are solely responsible for: (a) maintaining the strict confidentiality of your account credentials; (b) all activities that occur under your account; and (c) promptly notifying us of any unauthorised use or suspected breach of security. You agree to provide accurate, current, and complete information and to update such information as necessary. We reserve the right, at our sole discretion, to suspend, restrict, or permanently terminate any account found to be fraudulent, abusive, or in violation of these Terms, without prior notice and without liability.
-              </p>
-            </section>
+          <h3>2. User Accounts</h3>
+          <p>You are solely responsible for: (a) maintaining confidentiality of your account credentials; (b) all activities under your account; and (c) promptly notifying us of unauthorised use. We reserve the right to suspend or terminate accounts found to be fraudulent or in violation of these Terms without prior notice.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">3. Products and Services</h3>
-              <p>
-                All products and services listed on the Platform are subject to availability. We reserve the right, without notice, to: (a) modify, suspend, or discontinue any product, service, or feature; (b) impose limits on certain features or restrict access; and (c) update product descriptions, specifications, and pricing. Product images are for illustrative purposes only and may not exactly represent the final product. We do not warrant that product descriptions or other content on the Platform are accurate, complete, or error-free.
-              </p>
-            </section>
+          <h3>3. Products and Services</h3>
+          <p>All products and services listed are subject to availability. We reserve the right to modify, suspend, or discontinue any product or feature. Product images are for illustrative purposes only and may not exactly represent the final product.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">4. Orders and Payments</h3>
-              <p>
-                All orders placed through the Platform are subject to acceptance and availability confirmation. Prices are displayed in Ghanaian Cedis (GHS) and are inclusive of applicable taxes unless otherwise stated. Payment must be completed through our approved and verified payment methods. We reserve the right to cancel, refuse, or limit any order at our discretion, including but not limited to cases involving pricing errors or technical glitches, suspected fraudulent or unauthorised activity, product unavailability, or failure of payment authorisation. In the event of a cancellation, you will receive a full refund of any payments made.
-              </p>
-            </section>
+          <h3>4. Orders and Payments</h3>
+          <p>All orders are subject to acceptance and availability confirmation. Prices are displayed in Ghanaian Cedis (GHS) and include applicable taxes unless stated. We reserve the right to cancel orders involving pricing errors, suspected fraud, or failed payment authorisation. A full refund will be issued on cancellation.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">5. Pre-Orders</h3>
-              <p>
-                Certain products may be made available on a pre-order basis prior to general availability. By placing a pre-order, you acknowledge that: (a) pre-orders may require partial or full advance payment at the time of order placement; (b) estimated delivery dates are projections only and are not guaranteed; (c) delays may occur due to manufacturing, logistics, customs, or other factors beyond our reasonable control; and (d) we reserve the right to cancel pre-orders that cannot be fulfilled, with a full refund issued accordingly.
-              </p>
-            </section>
+          <h3>5. Pre-Orders</h3>
+          <p>By placing a pre-order you acknowledge that: (a) partial or full advance payment may be required; (b) estimated delivery dates are projections only; (c) delays may occur due to factors beyond our control; and (d) we reserve the right to cancel unfulfillable pre-orders with a full refund.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">6. Refund Policy</h3>
-              <p className="mb-3">
-                <strong>6.1 General Policy.</strong> All sales are considered final upon order confirmation unless expressly stated otherwise in these Terms or required by applicable law.
-              </p>
-              <p className="mb-3">
-                <strong>6.2 Pre-Order Refunds.</strong> For products purchased on a pre-order basis where a partial (50%) deposit has been made: refund requests must be formally submitted within seven (7) calendar days from the date of payment. Upon expiry of the seven (7) day period, all payments become strictly non-refundable and no exceptions will be made under any circumstances.
-              </p>
-              <p className="mb-3">
-                <strong>6.3 Non-Refundable Cases.</strong> Refunds will not be issued in the following circumstances: expiry of the applicable refund window; change of mind or buyer's remorse after purchase confirmation; orders incorrectly placed by the user; digital or downloadable products once accessed or delivered; products that have been used, damaged, or returned without original packaging.
-              </p>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-                <p className="text-amber-800 text-xs font-semibold flex items-start gap-2">
-                  <span className="text-base leading-none">⚠️</span>
-                  <span><strong>Pre-Order Refund Notice:</strong> Refund requests for partially paid pre-orders must be submitted within 7 days of payment. After this period, no refunds will be granted under any circumstances.</span>
-                </p>
-              </div>
-            </section>
+          <h3>6. Refund Policy</h3>
+          <p><strong>6.1 General.</strong> All sales are considered final upon order confirmation unless expressly stated otherwise.</p>
+          <p><strong>6.2 Pre-Order Refunds.</strong> For products purchased on a pre-order basis where a partial (50%) deposit has been made: refund requests must be formally submitted within seven (7) calendar days from the date of payment. Upon expiry of the seven-day period, all payments become strictly non-refundable.</p>
+          <p><strong>6.3 Non-Refundable Cases.</strong> Refunds will not be issued for: expiry of the refund window; change of mind; incorrectly placed orders; digital products once accessed; or used/damaged items.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">7. Delivery</h3>
-              <p>
-                Delivery timelines provided at checkout are estimates based on standard logistics conditions and do not constitute guaranteed delivery dates. We shall not be held liable for delays arising from circumstances beyond our reasonable control, including but not limited to carrier delays, adverse weather conditions, customs clearance, civil unrest, or force majeure events. Risk of loss or damage to products passes to you upon delivery to the shipping address provided.
-              </p>
-            </section>
+          <div className="ont-reg-modal-warn">
+            <span className="ont-reg-modal-warn-icon">⚠️</span>
+            <span><strong>Pre-Order Refund Notice:</strong> Refund requests for partially paid pre-orders must be submitted within 7 days of payment. After this period, no refunds will be granted under any circumstances.</span>
+          </div>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">8. Returns and Exchanges</h3>
-              <p>
-                Returns and exchanges are accepted exclusively for products that are defective upon receipt or materially differ from their description on the Platform. To initiate a return or exchange, you must: (a) contact our support team within 48 hours of delivery; (b) provide photographic or video evidence of the defect or discrepancy; and (c) return the item unused, in its original condition and packaging. We reserve the right to reject return requests that do not meet these conditions. Items returned without prior authorisation will not be accepted.
-              </p>
-            </section>
+          <h3>7. Delivery</h3>
+          <p>Delivery timelines are estimates and do not constitute guaranteed delivery dates. We shall not be liable for delays beyond our reasonable control. Risk of loss passes to you upon delivery.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">9. Intellectual Property</h3>
-              <p>
-                All content available on or through the Platform, including but not limited to text, graphics, logos, icons, images, audio clips, digital downloads, data compilations, and software, is the exclusive property of Onett or its content suppliers and is protected by applicable intellectual property laws. You are granted a limited, non-exclusive, non-transferable, revocable licence to access and use the Platform solely for personal, non-commercial purposes. Any unauthorised reproduction, distribution, modification, or commercial exploitation of Platform content is strictly prohibited.
-              </p>
-            </section>
+          <h3>8. Returns and Exchanges</h3>
+          <p>Returns are accepted only for products that are defective or materially differ from their description. Contact support within 48 hours of delivery with photographic evidence. Items returned without prior authorisation will not be accepted.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">10. Prohibited Conduct</h3>
-              <p>
-                You agree not to engage in any of the following prohibited activities: (a) using the Platform for any unlawful, fraudulent, or malicious purpose; (b) attempting to gain unauthorised access to any part of the Platform or its related systems; (c) transmitting any harmful, offensive, or disruptive content; (d) using automated tools, bots, or scrapers to access or collect data from the Platform without our express written consent; (e) impersonating any person or entity or misrepresenting your affiliation; (f) interfering with or disrupting the integrity or performance of the Platform.
-              </p>
-            </section>
+          <h3>9. Intellectual Property</h3>
+          <p>All content on the Platform is the exclusive property of Onett or its content suppliers and is protected by applicable intellectual property laws. You are granted a limited, non-exclusive, revocable licence to access the Platform for personal, non-commercial purposes only.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">11. Limitation of Liability</h3>
-              <p>
-                To the fullest extent permitted by applicable law, Onett, its directors, employees, agents, and partners shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, goodwill, or other intangible losses, arising from your use of or inability to use the Platform. In no event shall our aggregate liability to you for any claim arising out of or relating to these Terms or your use of the Platform exceed the total amount paid by you to us in the twelve (12) months preceding the claim.
-              </p>
-            </section>
+          <h3>10. Prohibited Conduct</h3>
+          <p>You agree not to use the Platform for unlawful purposes; attempt unauthorised access; transmit harmful content; use automated tools to scrape data; impersonate others; or interfere with Platform integrity.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">12. Privacy</h3>
-              <p>
-                Your use of the Platform is also governed by our Privacy Policy, which is incorporated into these Terms by reference. By using the Platform, you consent to the collection, use, and disclosure of your personal information as described in our Privacy Policy. We are committed to handling your personal data in accordance with applicable data protection laws.
-              </p>
-            </section>
+          <h3>11. Limitation of Liability</h3>
+          <p>To the fullest extent permitted by law, Onett shall not be liable for any indirect, incidental, special, or consequential damages. Our aggregate liability shall not exceed the total amount paid by you in the twelve months preceding the claim.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">13. Amendments to Terms</h3>
-              <p>
-                We reserve the right to revise, update, or replace any part of these Terms at any time at our sole discretion. We will notify you of material changes by posting the updated Terms on the Platform with a revised effective date. Your continued access to or use of the Platform following the posting of any changes constitutes your binding acceptance of the revised Terms. We encourage you to review these Terms periodically.
-              </p>
-            </section>
+          <h3>12. Privacy</h3>
+          <p>Your use is also governed by our Privacy Policy, incorporated into these Terms by reference. By using the Platform, you consent to collection and use of your personal information as described therein.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">14. Governing Law</h3>
-              <p>
-                These Terms shall be governed by and construed in accordance with the laws of the Republic of Ghana, without regard to its conflict of law provisions. Any disputes arising under or in connection with these Terms shall be subject to the exclusive jurisdiction of the courts of Ghana.
-              </p>
-            </section>
+          <h3>13. Amendments</h3>
+          <p>We reserve the right to revise these Terms at any time. Material changes will be posted on the Platform with a revised effective date. Continued use constitutes acceptance of revised Terms.</p>
 
-            <section>
-              <h3 className="font-heading font-bold text-base mb-2">15. Contact Information</h3>
-              <p>
-                If you have any questions, concerns, or complaints regarding these Terms or the Platform, please contact us at:
-              </p>
-              <div className="mt-2 pl-4 border-l-2 border-border space-y-0.5 text-muted-foreground">
-                <p><strong className="text-foreground">Onett Marketplace</strong></p>
-                <p>Email: support@onett.com</p>
-                <p>Phone: +233 XX XXX XXXX</p>
-                <p>Address: Accra, Ghana</p>
-              </div>
-            </section>
+          <h3>14. Governing Law</h3>
+          <p>These Terms shall be governed by the laws of the Republic of Ghana. Any disputes shall be subject to the exclusive jurisdiction of the courts of Ghana.</p>
 
-            <hr className="border-border" />
+          <h3>15. Contact</h3>
+          <p>For questions, contact us at:</p>
+          <div className="ont-reg-modal-contact">
+            <strong>Onett Marketplace</strong><br />
+            Email: support@onett.com<br />
+            Phone: +233 XX XXX XXXX<br />
+            Address: Accra, Ghana
+          </div>
 
-            {/* Signature block */}
-            <section className="space-y-4 pb-2">
-              <div>
-                <h3 className="font-heading font-bold text-base mb-1">
-                  Acknowledgement &amp; Signature
-                </h3>
-                <p className="text-muted-foreground text-xs">
-                  By signing below, you confirm that you have read, understood, and agree to be bound by these Terms and Conditions in their entirety, including the pre-order refund policy.
-                </p>
-              </div>
+          <hr />
 
-              {/* Printed name */}
-              <div className="space-y-1.5">
-                <Label className="font-heading text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Full Name (Print)
-                </Label>
-                <Input
-                  value={signedName}
-                  onChange={e => setSignedName(e.target.value)}
-                  placeholder="Type your full name"
-                  className="font-inter"
-                />
-              </div>
+          <h3>Acknowledgement &amp; Signature</h3>
+          <p style={{ color: "#9A9A9A", fontSize: 12.5 }}>By signing below, you confirm that you have read, understood, and agree to be bound by these Terms and Conditions in their entirety, including the pre-order refund policy.</p>
 
-              {/* Signature canvas */}
-              <SignatureCanvas
-                onSign={setSignature}
-                onClear={() => setSignature("")}
-                signed={!!signature}
-              />
+          {/* Printed name */}
+          <div style={{ marginTop: 16 }}>
+            <label className="ont-reg-sig-label">Full Name (Print)</label>
+            <input
+              value={signedName}
+              onChange={e => setSignedName(e.target.value)}
+              placeholder="Type your full name"
+              className="ont-reg-input ont-reg-input-no-icon"
+              style={{ marginBottom: 16 }}
+            />
+          </div>
 
-              {/* Date */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground font-inter">
-                <span>Date of Acceptance:</span>
-                <span className="font-semibold text-foreground">{today}</span>
-              </div>
-            </section>
+          <SignatureCanvas onSign={setSignature} onClear={() => setSignature("")} signed={!!signature} />
 
+          <div className="ont-reg-modal-date-row">
+            <span>Date of Acceptance:</span>
+            <strong>{today}</strong>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-border flex-shrink-0 flex flex-col gap-2">
-          {!scrolledToBottom && (
-            <p className="font-inter text-center text-xs text-amber-500">
-              Please scroll to the bottom and sign before accepting
-            </p>
-          )}
-          <Button
-            onClick={() => onAccept(signature)}
-            disabled={!canAccept}
-            className="font-heading w-full rounded-xl h-11 font-semibold text-sm"
-          >
+        <div className="ont-reg-modal-footer">
+          {!scrolledToBottom && <div className="ont-reg-modal-hint">Please scroll to the bottom and sign before accepting</div>}
+          <button className="ont-reg-modal-accept" onClick={() => onAccept(signature)} disabled={!canAccept}>
             Accept &amp; Sign Agreement
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={onDecline}
-            className="font-inter w-full rounded-xl h-10 text-sm text-muted-foreground hover:text-foreground"
-          >
-            Decline
-          </Button>
+          </button>
+          <button className="ont-reg-modal-decline" onClick={onDecline}>Decline</button>
         </div>
       </div>
     </div>
   );
-};
+}
 
-/* ─────────────────────────────────────────────
-   Register Page
-───────────────────────────────────────────── */
+// ─── REGISTER PAGE ────────────────────────────────────────────────────────────
 const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // 👁 password toggle
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    phoneNumber: "",
-    bio: "",
-    location: "",
+    fullName: "", email: "", password: "",
+    phoneNumber: "", bio: "", location: "",
   });
   const [profilePic, setProfilePic] = useState<File | null>(null);
 
-  const update = (key: string, val: string) =>
-    setForm(f => ({ ...f, [key]: val }));
+  const update = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!termsAccepted) {
-      toast.error("Please accept the Terms & Conditions to continue.");
-      return;
-    }
+    if (!termsAccepted) { toast.error("Please accept the Terms & Conditions to continue."); return; }
     setLoading(true);
     try {
       const formData = new FormData();
       const data = {
-        fullName: form.fullName,
-        email: form.email,
-        password: form.password,
-        phoneNumber: `+233${form.phoneNumber}`,
-        bio: form.bio,
-        location: form.location,
+        fullName: form.fullName, email: form.email, password: form.password,
+        phoneNumber: `+233${form.phoneNumber}`, bio: form.bio, location: form.location,
       };
-      formData.append(
-        "data",
-        new Blob([JSON.stringify(data)], { type: "application/json" })
-      );
+      formData.append("data", new Blob([JSON.stringify(data)], { type: "application/json" }));
       if (profilePic) formData.append("profilePic", profilePic);
       await register(formData, false);
       toast.success("Account created! Please sign in.");
@@ -451,278 +615,173 @@ const Register = () => {
     }
   };
 
+  const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
   return (
     <>
+      <style>{REGISTER_CSS}</style>
+
       {showTermsModal && (
         <TermsModal
-          onAccept={() => {
-            setTermsAccepted(true);
-            setShowTermsModal(false);
-            toast.success("Terms accepted and signed!");
-          }}
-          onDecline={() => {
-            setTermsAccepted(false);
-            setShowTermsModal(false);
-          }}
+          onAccept={() => { setTermsAccepted(true); setShowTermsModal(false); toast.success("Terms accepted and signed!"); }}
+          onDecline={() => { setTermsAccepted(false); setShowTermsModal(false); }}
         />
       )}
 
-      <div className="font-inter flex min-h-screen items-center justify-center bg-background px-4 py-8 relative overflow-hidden">
-        {/* Ambient background glows */}
-        <div className="absolute top-1/3 left-1/4 w-72 h-72 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+      <div className="ont-reg-page">
+        <div className="ont-reg-bg1" />
+        <div className="ont-reg-bg2" />
 
         <motion.div
+          style={{ width: "100%", maxWidth: 500, position: "relative", zIndex: 1 }}
           initial={{ opacity: 0, y: 24, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-md relative z-10"
         >
-          <div className="glass rounded-3xl border border-white/30 shadow-elevated p-8">
+          <div className="ont-reg-card">
 
-            {/* Header */}
-            <div className="text-center mb-7">
-              <Link to="/" className="inline-flex items-center gap-2.5 mb-6">
-                <img src={savvyLogo} alt="Onett" className="h-8 w-8" />
-                <span className="font-satoshi text-xl font-bold">
-                  On<span className="text-gradient">ett</span>
-                </span>
-              </Link>
-              <h1 className="font-satoshi text-2xl font-bold heading-umber">Create your account</h1>
-              <p className="font-inter text-sm text-muted-foreground mt-1">
-                Start shopping smarter with AI
-              </p>
-            </div>
+            {/* Logo */}
+            <Link to="/" className="ont-reg-logo">
+              <div className="ont-reg-logo-box">
+                <div className="ont-reg-logo-on">ON</div>
+                <div className="ont-reg-logo-ett">ETT</div>
+              </div>
+              <span className="ont-reg-logo-name">ONETT<em>.</em></span>
+            </Link>
+
+            <h1 className="ont-reg-heading">Create your account</h1>
+            <p className="ont-reg-subheading">Start shopping smarter with AI</p>
 
             {/* Role badge */}
-            <div className="flex items-center gap-3 rounded-xl border border-muted bg-muted/40 p-3 mb-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <ShoppingBag className="h-5 w-5 text-primary" />
-              </div>
+            <div className="ont-reg-role-badge">
+              <div className="ont-reg-role-ico"><IcoCart /></div>
               <div>
-                <p className="font-ui text-sm font-semibold">
-                  Creating a Buyer account
-                </p>
-                <p className="font-inter text-[11px] text-muted-foreground">
-                  Browse, shop, and discover products with AI
-                </p>
+                <div className="ont-reg-role-title">Creating a Buyer account</div>
+                <div className="ont-reg-role-sub">Browse, shop, and discover products with AI</div>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit}>
 
-            {/* Full Name */}
-            <div className="space-y-2">
-              <Label className="font-heading text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Full Name
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={form.fullName}
-                  onChange={e => update("fullName", e.target.value)}
-                  required
-                  placeholder="John Doe"
-                  className="font-inter pl-10"
-                />
-              </div>
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label className="font-heading text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Email
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="email"
-                  value={form.email}
-                  onChange={e => update("email", e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  className="font-inter pl-10"
-                />
-              </div>
-            </div>
-
-            {/* Password + Phone */}
-            <div className="grid grid-cols-2 gap-3">
-
-              {/* Password with show/hide toggle */}
-              <div className="space-y-2">
-                <Label className="font-heading text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
-                    onChange={e => update("password", e.target.value)}
-                    required
-                    minLength={8}
-                    placeholder="Min 8 chars"
-                    className="font-inter pl-10 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    tabIndex={-1}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword
-                      ? <EyeOff className="h-4 w-4" />
-                      : <Eye className="h-4 w-4" />}
-                  </button>
+              {/* Full Name */}
+              <div className="ont-reg-field">
+                <label className="ont-reg-label">Full Name</label>
+                <div className="ont-reg-input-wrap">
+                  <span className="ont-reg-input-icon"><IcoUser /></span>
+                  <input value={form.fullName} onChange={e => update("fullName", e.target.value)} required placeholder="John Doe" className="ont-reg-input" />
                 </div>
               </div>
 
-              {/* Phone with +233 prefix */}
-              <div className="space-y-2">
-                <Label className="font-heading text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Phone
-                </Label>
-                <div className="relative flex">
-                  {/* Prefix badge */}
-                  <div className="flex items-center gap-1.5 px-3 rounded-l-md border border-r-0 border-input bg-secondary/60 text-sm text-muted-foreground font-inter shrink-0">
-                    <Phone className="h-3.5 w-3.5" />
-                    <span>+233</span>
+              {/* Email */}
+              <div className="ont-reg-field">
+                <label className="ont-reg-label">Email</label>
+                <div className="ont-reg-input-wrap">
+                  <span className="ont-reg-input-icon"><IcoMail /></span>
+                  <input type="email" value={form.email} onChange={e => update("email", e.target.value)} required placeholder="you@example.com" className="ont-reg-input" />
+                </div>
+              </div>
+
+              {/* Password + Phone */}
+              <div className="ont-reg-grid-2">
+
+                <div className="ont-reg-field" style={{ marginBottom: 0 }}>
+                  <label className="ont-reg-label">Password</label>
+                  <div className="ont-reg-input-wrap">
+                    <span className="ont-reg-input-icon"><IcoLock /></span>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={form.password} onChange={e => update("password", e.target.value)}
+                      required minLength={8} placeholder="Min 8 chars"
+                      className="ont-reg-input ont-reg-input-with-right"
+                    />
+                    <button type="button" className="ont-reg-input-right" onClick={() => setShowPassword(v => !v)} tabIndex={-1} aria-label="Toggle password">
+                      {showPassword ? <IcoEyeOff /> : <IcoEye />}
+                    </button>
                   </div>
-                  <Input
-                    value={form.phoneNumber}
-                    onChange={e => {
-                      // strip leading 0 if user types it after +233
-                      const val = e.target.value.replace(/^0+/, "");
-                      update("phoneNumber", val);
-                    }}
-                    required
-                    placeholder="XX XXX XXXX"
-                    className="font-inter rounded-l-none"
-                    maxLength={9}
-                  />
+                </div>
+
+                <div className="ont-reg-field" style={{ marginBottom: 0 }}>
+                  <label className="ont-reg-label">Phone</label>
+                  <div className="ont-reg-phone-wrap">
+                    <div className="ont-reg-phone-prefix"><IcoPhone />+233</div>
+                    <input
+                      value={form.phoneNumber}
+                      onChange={e => update("phoneNumber", e.target.value.replace(/^0+/, ""))}
+                      required placeholder="XX XXX XXXX"
+                      className="ont-reg-phone-input"
+                      maxLength={9}
+                    />
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Location */}
+              <div className="ont-reg-field">
+                <label className="ont-reg-label">Location</label>
+                <div className="ont-reg-input-wrap">
+                  <span className="ont-reg-input-icon"><IcoPin /></span>
+                  <input value={form.location} onChange={e => update("location", e.target.value)} placeholder="Accra, Ghana" className="ont-reg-input" />
                 </div>
               </div>
 
-            </div>
-
-            {/* Location */}
-            <div className="space-y-2">
-              <Label className="font-heading text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Location
-              </Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={form.location}
-                  onChange={e => update("location", e.target.value)}
-                  placeholder="Accra, Ghana"
-                  className="font-inter pl-10"
+              {/* Bio */}
+              <div className="ont-reg-field">
+                <label className="ont-reg-label">Bio <span>(optional)</span></label>
+                <textarea
+                  value={form.bio} onChange={e => update("bio", e.target.value)}
+                  placeholder="Tell us a bit about yourself"
+                  className="ont-reg-textarea"
+                  rows={2}
                 />
               </div>
-            </div>
 
-            {/* Bio */}
-            <div className="space-y-2">
-              <Label className="font-heading text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Bio{" "}
-                <span className="normal-case font-normal text-muted-foreground">
-                  (optional)
-                </span>
-              </Label>
-              <Textarea
-                value={form.bio}
-                onChange={e => update("bio", e.target.value)}
-                rows={2}
-                placeholder="Tell us a bit about yourself"
-                className="font-inter"
-              />
-            </div>
-
-            {/* Profile Picture */}
-            <div className="space-y-2">
-              <Label className="font-heading text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Profile Picture{" "}
-                <span className="normal-case font-normal text-muted-foreground">
-                  (optional)
-                </span>
-              </Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={e => setProfilePic(e.target.files?.[0] || null)}
-                className="font-inter"
-              />
-            </div>
-
-            {/* Terms & Conditions */}
-            <div className="rounded-xl border border-border bg-secondary/20 p-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!termsAccepted) {
-                      setShowTermsModal(true);
-                    } else {
-                      setTermsAccepted(false);
-                    }
-                  }}
-                  className="mt-0.5 flex-shrink-0 text-primary"
-                >
-                  {termsAccepted
-                    ? <CheckSquare className="h-5 w-5" />
-                    : <Square className="h-5 w-5 text-muted-foreground" />}
-                </button>
-                <p className="font-inter text-sm text-muted-foreground leading-relaxed">
-                  I have read, signed, and agree to the{" "}
-                  <button
-                    type="button"
-                    onClick={() => setShowTermsModal(true)}
-                    className="text-primary font-semibold hover:underline"
-                  >
-                    Terms &amp; Conditions
-                  </button>{" "}
-                  of Onett Marketplace, including the strict pre-order refund policy.
-                </p>
+              {/* Profile Picture */}
+              <div className="ont-reg-field">
+                <label className="ont-reg-label">Profile Picture <span>(optional)</span></label>
+                <input type="file" accept="image/*" onChange={e => setProfilePic(e.target.files?.[0] || null)} className="ont-reg-file" />
               </div>
 
-              {!termsAccepted && (
-                <button
-                  type="button"
-                  onClick={() => setShowTermsModal(true)}
-                  className="font-heading w-full text-xs font-semibold text-primary border border-primary/30 rounded-lg py-2 hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <PenLine className="h-3.5 w-3.5" />
-                  Read &amp; Sign Agreement
-                </button>
-              )}
+              {/* Terms */}
+              <div className="ont-reg-terms-box">
+                <div className="ont-reg-terms-row">
+                  <button
+                    type="button"
+                    className="ont-reg-terms-checkbox"
+                    onClick={() => { if (!termsAccepted) { setShowTermsModal(true); } else { setTermsAccepted(false); } }}
+                  >
+                    {termsAccepted ? <IcoCheckSquare /> : <IcoSquare />}
+                  </button>
+                  <p className="ont-reg-terms-text">
+                    I have read, signed, and agree to the{" "}
+                    <a href="#" onClick={e => { e.preventDefault(); setShowTermsModal(true); }}>Terms &amp; Conditions</a>{" "}
+                    of ONETT Marketplace, including the strict pre-order refund policy.
+                  </p>
+                </div>
 
-              {termsAccepted && (
-                <p className="font-inter text-xs text-green-600 font-medium flex items-center gap-1.5">
-                  <CheckSquare className="h-3.5 w-3.5" />
-                  Agreement signed — {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-                </p>
-              )}
-            </div>
+                {!termsAccepted ? (
+                  <button type="button" className="ont-reg-terms-read-btn" onClick={() => setShowTermsModal(true)}>
+                    <IcoPen /> Read &amp; Sign Agreement
+                  </button>
+                ) : (
+                  <div className="ont-reg-terms-signed">
+                    <IcoCheck /> Agreement signed — {today}
+                  </div>
+                )}
+              </div>
 
-            <Button
-              type="submit"
-              className="font-heading w-full rounded-xl h-11 font-semibold"
-              disabled={loading || !termsAccepted}
-            >
-              {loading ? "Creating account..." : "Create Account"}
-            </Button>
-          </form>
+              <button type="submit" className="ont-reg-submit" disabled={loading || !termsAccepted}>
+                {loading ? "Creating account…" : "Create Account"}
+              </button>
 
-          <p className="font-inter text-center text-sm text-muted-foreground mt-6">
-            Already have an account?{" "}
-            <Link to="/login" className="text-primary hover:underline font-medium">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </motion.div>
+            </form>
+
+            <p className="ont-reg-footer-text">
+              Already have an account? <Link to="/login">Sign in</Link>
+            </p>
+
+          </div>
+        </motion.div>
       </div>
     </>
   );
