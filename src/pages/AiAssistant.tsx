@@ -31,12 +31,10 @@ const AiAssistant = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Show scroll-to-bottom button when user scrolls up
   useEffect(() => {
     const el = scrollAreaRef.current;
     if (!el) return;
@@ -79,10 +77,7 @@ const AiAssistant = () => {
     setLoading(true);
 
     try {
-      const res = apiCall
-        ? await apiCall()
-        : await aiApi.chat(messageText);
-
+      const res = apiCall ? await apiCall() : await aiApi.chat(messageText);
       const reply =
         res?.reply || res?.data?.reply || "I couldn't find a good answer.";
       const products = res?.products || res?.data?.products;
@@ -107,28 +102,29 @@ const AiAssistant = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
-      {/* Navbar — hidden on mobile to save space, or you can keep it */}
+    <div className="flex flex-col h-screen bg-white overflow-hidden">
+
+      {/* Navbar — hidden on mobile */}
       <div className="hidden sm:block">
         <Navbar />
       </div>
 
       {/* Mobile top bar */}
-      <div className="flex sm:hidden items-center justify-between px-4 py-3 border-b border-border/50 bg-background/95 backdrop-blur-sm shrink-0 z-10">
+      <div className="flex sm:hidden items-center justify-between px-4 py-3 border-b border-orange-100 bg-white shrink-0 z-10">
         <button
           onClick={() => window.history.back()}
-          className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+          className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-orange-50 transition-colors"
         >
-          <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+          <ArrowLeft className="h-4 w-4 text-orange-400" />
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary shadow">
-            <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-500 shadow">
+            <Sparkles className="h-3.5 w-3.5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-bold leading-none">Onett</p>
-            <p className="text-[10px] text-muted-foreground leading-none mt-0.5">
+            <p className="text-sm font-bold leading-none text-orange-600">Onett</p>
+            <p className="text-[10px] text-orange-400 leading-none mt-0.5">
               Shopping assistant
             </p>
           </div>
@@ -137,9 +133,9 @@ const AiAssistant = () => {
         {messages.length > 1 ? (
           <button
             onClick={clearConversation}
-            className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-muted transition-colors"
+            className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-orange-50 transition-colors"
           >
-            <Trash2 className="h-4 w-4 text-muted-foreground" />
+            <Trash2 className="h-4 w-4 text-orange-400" />
           </button>
         ) : (
           <div className="w-8" />
@@ -147,14 +143,14 @@ const AiAssistant = () => {
       </div>
 
       {/* Desktop header */}
-      <div className="hidden sm:flex items-center justify-between px-6 py-4 border-b border-border/50 bg-background/95 backdrop-blur-sm shrink-0 max-w-4xl w-full mx-auto">
+      <div className="hidden sm:flex items-center justify-between px-6 py-4 border-b border-orange-100 bg-white shrink-0 max-w-4xl w-full mx-auto">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary shadow-lg">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 shadow-lg">
+            <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold leading-tight">Onett</h1>
-            <p className="text-xs text-muted-foreground">
+            <h1 className="text-xl font-bold leading-tight text-orange-600">Onett</h1>
+            <p className="text-xs text-orange-400">
               Your personal shopping assistant
             </p>
           </div>
@@ -165,7 +161,7 @@ const AiAssistant = () => {
             variant="ghost"
             size="sm"
             onClick={clearConversation}
-            className="text-muted-foreground hover:text-foreground gap-1.5"
+            className="text-orange-400 hover:text-orange-600 hover:bg-orange-50 gap-1.5"
           >
             <Trash2 className="h-4 w-4" />
             Clear chat
@@ -173,16 +169,16 @@ const AiAssistant = () => {
         )}
       </div>
 
-      {/* Quick Actions — sticky below header */}
-      <div className="shrink-0 px-3 sm:px-6 py-2 border-b border-border/40 bg-background/90 backdrop-blur-sm max-w-4xl w-full mx-auto">
+      {/* Quick Actions */}
+      <div className="shrink-0 px-3 sm:px-6 py-2 border-b border-orange-100 bg-orange-50 max-w-4xl w-full mx-auto">
         <BuyerQuickActions
           onAction={(prompt) => sendMessage(undefined, prompt)}
           disabled={loading}
         />
       </div>
 
-      {/* Message list — scrollable middle area */}
-      <div className="flex-1 overflow-y-auto relative" ref={scrollAreaRef}>
+      {/* Message list */}
+      <div className="flex-1 overflow-y-auto relative bg-white" ref={scrollAreaRef}>
         <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 space-y-4 pb-6">
           {messages.map((msg, i) => (
             <AiMessageBubble key={i} message={msg} />
@@ -191,15 +187,15 @@ const AiAssistant = () => {
           {/* Typing indicator */}
           {loading && (
             <div className="flex gap-2.5 items-end">
-              <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
-                <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary animate-pulse" />
+              <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 border border-orange-200">
+                <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-500 animate-pulse" />
               </div>
-              <div className="rounded-2xl rounded-bl-sm bg-card border border-border/50 px-4 py-3">
+              <div className="rounded-2xl rounded-bl-sm bg-orange-50 border border-orange-100 px-4 py-3">
                 <div className="flex gap-1.5 items-center h-4">
                   {[0, 150, 300].map((delay) => (
                     <div
                       key={delay}
-                      className="h-2 w-2 rounded-full bg-primary/60 animate-bounce"
+                      className="h-2 w-2 rounded-full bg-orange-400 animate-bounce"
                       style={{ animationDelay: `${delay}ms` }}
                     />
                   ))}
@@ -215,24 +211,21 @@ const AiAssistant = () => {
         {showScrollBtn && (
           <button
             onClick={scrollToBottom}
-            className="fixed bottom-24 right-4 sm:right-8 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-primary shadow-md text-primary-foreground transition-all hover:scale-105 active:scale-95"
+            className="fixed bottom-24 right-4 sm:right-8 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 shadow-md text-white transition-all hover:bg-orange-600 hover:scale-105 active:scale-95"
           >
             <ChevronDown className="h-4 w-4" />
           </button>
         )}
       </div>
 
-      {/* Input bar — always pinned to bottom */}
-      <div className="shrink-0 border-t border-border/50 bg-background/95 backdrop-blur-sm px-3 sm:px-6 py-3 safe-area-pb max-w-4xl w-full mx-auto">
-        <form
-          onSubmit={sendMessage}
-          className="flex gap-2 sm:gap-3"
-        >
+      {/* Input bar */}
+      <div className="shrink-0 border-t border-orange-100 bg-white px-3 sm:px-6 py-3 safe-area-pb max-w-4xl w-full mx-auto">
+        <form onSubmit={sendMessage} className="flex gap-2 sm:gap-3">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask Onett anything..."
-            className="flex-1 h-11 sm:h-12 px-4 rounded-xl text-sm sm:text-base"
+            className="flex-1 h-11 sm:h-12 px-4 rounded-xl text-sm sm:text-base text-orange-900 bg-white border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-300 placeholder:text-orange-300"
             disabled={loading}
             autoComplete="off"
             autoCorrect="off"
@@ -241,12 +234,13 @@ const AiAssistant = () => {
             type="submit"
             size="icon"
             disabled={loading || !input.trim()}
-            className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl shrink-0"
+            className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl shrink-0 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white disabled:bg-orange-200 disabled:text-orange-100 border-0"
           >
             <Send className="h-4 w-4" />
           </Button>
         </form>
       </div>
+
     </div>
   );
 };
