@@ -25,72 +25,70 @@ interface Notification {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const TYPE_META: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
-  ORDER_CONFIRMED:           { icon: CheckCircle2,  bg: "#F0FDF4", color: "#16A34A" },
-  ORDER_CANCELLED:           { icon: XCircle,       bg: "#FEF2F2", color: "#DC2626" },
-  ORDER_STATUS_CHANGED:      { icon: RefreshCw,     bg: "#EFF6FF", color: "#2563EB" },
+const NOTIF_TYPE_META: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
+  ORDER_CONFIRMED:           { icon: CheckCircle2,  bg: "#FFF7ED", color: "#EA580C" },
+  ORDER_CANCELLED:           { icon: XCircle,       bg: "#FEF2F2", color: "#C2410C" },
+  ORDER_STATUS_CHANGED:      { icon: RefreshCw,     bg: "#FFF7ED", color: "#F97316" },
   ORDER_UPDATE:              { icon: Package,       bg: "#FFF7ED", color: "#EA580C" },
-  PAYMENT_FAILED:            { icon: CreditCard,    bg: "#FEF2F2", color: "#DC2626" },
-  NEW_MESSAGE:               { icon: MessageCircle, bg: "#EFF6FF", color: "#2563EB" },
-  CART_UPDATED:              { icon: ShoppingCart,  bg: "#FFF7ED", color: "#E6640A" },
-  PRODUCT_REQUEST_SUBMITTED: { icon: Star,          bg: "#FDF4FF", color: "#9333EA" },
-  PRODUCT_REQUEST_VIEWED:    { icon: Clock,         bg: "#F0F9FF", color: "#0284C7" },
+  PAYMENT_FAILED:            { icon: CreditCard,    bg: "#FEF2F2", color: "#C2410C" },
+  NEW_MESSAGE:               { icon: MessageCircle, bg: "#FFF7ED", color: "#F97316" },
+  CART_UPDATED:              { icon: ShoppingCart,  bg: "#FFF7ED", color: "#EA580C" },
+  PRODUCT_REQUEST_SUBMITTED: { icon: Star,          bg: "#FFF7ED", color: "#F97316" },
+  PRODUCT_REQUEST_VIEWED:    { icon: Clock,         bg: "#FFF7ED", color: "#EA580C" },
   PRODUCT_REQUEST_APPROVED:  { icon: CheckCircle2,  bg: "#F0FDF4", color: "#16A34A" },
-  PRODUCT_REQUEST_REJECTED:  { icon: AlertCircle,   bg: "#FEF2F2", color: "#DC2626" },
-  NEW_PRODUCT_ADDED:         { icon: ShoppingBag,   bg: "#FFF7ED", color: "#E6640A" },
-  DELIVERY_UPDATE:           { icon: Truck,         bg: "#EFF6FF", color: "#2563EB" },
-  DEFAULT:                   { icon: Bell,          bg: "#FFF7ED", color: "#E6640A" },
+  PRODUCT_REQUEST_REJECTED:  { icon: AlertCircle,   bg: "#FEF2F2", color: "#C2410C" },
+  NEW_PRODUCT_ADDED:         { icon: ShoppingBag,   bg: "#FFF7ED", color: "#EA580C" },
+  DELIVERY_UPDATE:           { icon: Truck,         bg: "#FFF7ED", color: "#F97316" },
+  DEFAULT:                   { icon: Bell,          bg: "#FFF7ED", color: "#F97316" },
 };
 
-function getMeta(type: string) {
-  return TYPE_META[type] ?? TYPE_META.DEFAULT;
+function getNotifMeta(type: string) {
+  return NOTIF_TYPE_META[type] ?? NOTIF_TYPE_META.DEFAULT;
 }
 
-function timeAgo(dateStr: string) {
+function notifTimeAgo(dateStr: string) {
   try { return formatDistanceToNow(new Date(dateStr), { addSuffix: true }); }
   catch { return ""; }
 }
 
-// ─── Notification Item ────────────────────────────────────────────────────────
+// ─── Notification Card ────────────────────────────────────────────────────────
 
-function NotifItem({ notif, onRead }: { notif: Notification; onRead: (id: string) => void }) {
-  const meta = getMeta(notif.type);
+function NotifCard({ notif, onRead }: { notif: Notification; onRead: (id: string) => void }) {
+  const meta = getNotifMeta(notif.type);
   const Icon = meta.icon;
 
   return (
     <div
       onClick={() => !notif.isRead && onRead(notif.id)}
-      className={`group relative flex gap-3.5 p-4 rounded-2xl cursor-pointer border transition-all duration-200 ${
+      className={`notif-card relative flex gap-3.5 p-4 rounded-2xl cursor-pointer border transition-all duration-200 ${
         notif.isRead
-          ? "bg-card border-border/50 hover:border-border hover:shadow-sm"
-          : "bg-orange-50/60 border-orange-200/60 hover:border-orange-300 hover:shadow-md"
+          ? "notif-card--read bg-white border-orange-100 hover:border-orange-200 hover:shadow-sm"
+          : "notif-card--unread bg-orange-50 border-orange-200 hover:border-orange-300 hover:shadow-md"
       }`}
     >
-      {/* Unread indicator */}
       {!notif.isRead && (
-        <span className="absolute top-4 right-4 h-2 w-2 rounded-full bg-primary shadow-sm shadow-orange-400/40" />
+        <span className="notif-card__dot absolute top-4 right-4 h-2 w-2 rounded-full bg-orange-500" />
       )}
 
-      {/* Icon */}
       <div
-        className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+        className="notif-card__icon-box h-10 w-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
         style={{ background: meta.bg }}
       >
-        <Icon className="h-4.5 w-4.5" style={{ color: meta.color, height: "1.1rem", width: "1.1rem" }} />
+        <Icon style={{ color: meta.color, height: "1.1rem", width: "1.1rem" }} />
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 pr-4">
-        <p
-          className={`text-sm leading-snug mb-0.5 ${notif.isRead ? "font-medium text-foreground" : "font-semibold text-foreground"} font-ui`}
-        >
+      <div className="notif-card__body flex-1 min-w-0 pr-4">
+        <p className={`notif-card__title text-sm leading-snug mb-0.5 ${notif.isRead ? "font-medium text-gray-700" : "font-semibold text-gray-900"}`}>
           {notif.title}
         </p>
-        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 font-inter">
+        <p className="notif-card__message text-xs text-gray-500 leading-relaxed line-clamp-2">
           {notif.message}
         </p>
-        <p className="text-[10px] mt-1.5 font-medium text-primary" style={{ opacity: notif.isRead ? 0.6 : 0.9 }}>
-          {timeAgo(notif.createdAt)}
+        <p
+          className="notif-card__time text-[10px] mt-1.5 font-medium text-orange-500"
+          style={{ opacity: notif.isRead ? 0.6 : 1 }}
+        >
+          {notifTimeAgo(notif.createdAt)}
         </p>
       </div>
     </div>
@@ -106,9 +104,9 @@ const NotificationsPage = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
-  const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [activeFilter, setActiveFilter] = useState<"all" | "unread">("all");
 
-  const fetchNotifications = useCallback(async () => {
+  const loadNotifications = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
       setLoading(true);
@@ -121,7 +119,7 @@ const NotificationsPage = () => {
     }
   }, [isAuthenticated]);
 
-  useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
+  useEffect(() => { loadNotifications(); }, [loadNotifications]);
 
   useEffect(() => {
     return () => { (window as any).__refreshNotifBadge?.(); };
@@ -145,34 +143,37 @@ const NotificationsPage = () => {
     }
   };
 
-  const displayed = filter === "unread" ? notifications.filter(n => !n.isRead) : notifications;
+  const visibleNotifs = activeFilter === "unread"
+    ? notifications.filter(n => !n.isRead)
+    : notifications;
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   if (!isAuthenticated) { navigate("/login"); return null; }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Standard app Navbar */}
+    <div className="notif-page min-h-screen bg-white">
       <Navbar />
 
-      {/* Page header — sticky below Navbar */}
-      <div className="sticky top-[57px] z-10 bg-background/95 backdrop-blur-md border-b border-border/60">
-        <div className="max-w-2xl mx-auto px-4 py-3">
-          {/* Title row */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
+      {/* Sticky header */}
+      <div className="notif-page__header sticky top-[57px] z-10 bg-white/95 backdrop-blur-md border-b border-orange-100">
+        <div className="notif-page__header-inner max-w-2xl mx-auto px-4 py-3">
+
+          <div className="notif-page__header-row flex items-center justify-between mb-3">
+            <div className="notif-page__header-left flex items-center gap-3">
               <button
                 onClick={() => navigate(-1)}
-                className="h-8 w-8 rounded-full flex items-center justify-center bg-muted hover:bg-muted/80 transition-colors"
+                className="notif-page__back-btn h-8 w-8 rounded-full flex items-center justify-center bg-orange-50 hover:bg-orange-100 transition-colors"
               >
-                <ChevronLeft className="h-4 w-4 text-foreground/70" />
+                <ChevronLeft className="h-4 w-4 text-orange-600" />
               </button>
               <div>
-                <h1 className="text-lg font-bold text-foreground leading-none font-satoshi">
+                <h1 className="notif-page__title text-lg font-bold text-gray-900 leading-none">
                   Notifications
                 </h1>
                 {unreadCount > 0 && (
-                  <p className="text-xs mt-0.5 text-primary font-medium">{unreadCount} unread</p>
+                  <p className="notif-page__unread-count text-xs mt-0.5 text-orange-500 font-medium">
+                    {unreadCount} unread
+                  </p>
                 )}
               </div>
             </div>
@@ -181,24 +182,26 @@ const NotificationsPage = () => {
               <button
                 onClick={markAllRead}
                 disabled={markingAll}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-orange-50 text-primary hover:bg-orange-100 transition-colors disabled:opacity-60 font-ui"
+                className="notif-page__mark-all-btn flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors disabled:opacity-60"
               >
-                {markingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCheck className="h-3 w-3" />}
+                {markingAll
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : <CheckCheck className="h-3 w-3" />}
                 Mark all read
               </button>
             )}
           </div>
 
-          {/* Filter tabs */}
-          <div className="flex gap-2">
+          {/* Filter pills */}
+          <div className="notif-page__filters flex gap-2">
             {(["all", "unread"] as const).map(tab => (
               <button
                 key={tab}
-                onClick={() => setFilter(tab)}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all font-ui ${
-                  filter === tab
-                    ? "bg-primary text-white shadow-sm"
-                    : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                onClick={() => setActiveFilter(tab)}
+                className={`notif-page__filter-pill px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  activeFilter === tab
+                    ? "bg-orange-500 text-white shadow-sm"
+                    : "bg-orange-50 text-orange-400 hover:text-orange-600 hover:bg-orange-100"
                 }`}
               >
                 {tab === "all" ? `All (${notifications.length})` : `Unread (${unreadCount})`}
@@ -209,38 +212,38 @@ const NotificationsPage = () => {
       </div>
 
       {/* Body */}
-      <div className="max-w-2xl mx-auto px-4 py-4 pb-24">
+      <div className="notif-page__body max-w-2xl mx-auto px-4 py-4 pb-24">
 
         {/* Loading */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <div className="notif-page__loading flex flex-col items-center justify-center py-24 gap-4">
             <div className="h-12 w-12 rounded-2xl flex items-center justify-center bg-orange-50 animate-pulse">
-              <Bell className="h-6 w-6 text-primary" />
+              <Bell className="h-6 w-6 text-orange-400" />
             </div>
-            <p className="text-sm text-muted-foreground font-inter">Loading notifications…</p>
+            <p className="text-sm text-gray-400">Loading notifications…</p>
           </div>
         )}
 
-        {/* Empty state */}
-        {!loading && displayed.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 gap-5">
-            <div className="h-20 w-20 rounded-3xl flex items-center justify-center bg-orange-50">
-              <Inbox className="h-9 w-9 text-primary/50" />
+        {/* Empty */}
+        {!loading && visibleNotifs.length === 0 && (
+          <div className="notif-page__empty flex flex-col items-center justify-center py-20 gap-5">
+            <div className="notif-page__empty-icon h-20 w-20 rounded-3xl flex items-center justify-center bg-orange-50">
+              <Inbox className="h-9 w-9 text-orange-300" />
             </div>
             <div className="text-center">
-              <p className="text-base font-semibold text-foreground font-satoshi">
-                {filter === "unread" ? "All caught up!" : "No notifications yet"}
+              <p className="text-base font-semibold text-gray-800">
+                {activeFilter === "unread" ? "All caught up!" : "No notifications yet"}
               </p>
-              <p className="text-sm text-muted-foreground mt-1 max-w-xs font-inter">
-                {filter === "unread"
+              <p className="text-sm text-gray-400 mt-1 max-w-xs">
+                {activeFilter === "unread"
                   ? "You've read everything — nice work."
                   : "We'll notify you about orders, messages, and updates."}
               </p>
             </div>
-            {filter === "unread" && (
+            {activeFilter === "unread" && (
               <button
-                onClick={() => setFilter("all")}
-                className="text-xs font-semibold px-4 py-2 rounded-full bg-orange-50 text-primary hover:bg-orange-100 transition-colors font-ui"
+                onClick={() => setActiveFilter("all")}
+                className="notif-page__view-all-btn text-xs font-semibold px-4 py-2 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
               >
                 View all notifications
               </button>
@@ -248,31 +251,29 @@ const NotificationsPage = () => {
           </div>
         )}
 
-        {/* Notification list */}
-        {!loading && displayed.length > 0 && (
-          <div className="flex flex-col gap-2">
-            {/* Unread group label */}
-            {filter === "all" && unreadCount > 0 && (
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1 pt-1 pb-0.5 font-ui">
+        {/* List */}
+        {!loading && visibleNotifs.length > 0 && (
+          <div className="notif-page__list flex flex-col gap-2">
+            {activeFilter === "all" && unreadCount > 0 && (
+              <p className="notif-page__section-label text-[10px] font-bold uppercase tracking-widest text-orange-400 px-1 pt-1 pb-0.5">
                 New
               </p>
             )}
-            {displayed
-              .filter(n => filter === "unread" || !n.isRead)
+            {visibleNotifs
+              .filter(n => activeFilter === "unread" || !n.isRead)
               .map(notif => (
-                <NotifItem key={notif.id} notif={notif} onRead={markOneRead} />
+                <NotifCard key={notif.id} notif={notif} onRead={markOneRead} />
               ))}
 
-            {/* Read group label */}
-            {filter === "all" && notifications.some(n => n.isRead) && (
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1 pt-3 pb-0.5 font-ui">
+            {activeFilter === "all" && notifications.some(n => n.isRead) && (
+              <p className="notif-page__section-label text-[10px] font-bold uppercase tracking-widest text-gray-400 px-1 pt-3 pb-0.5">
                 Earlier
               </p>
             )}
-            {filter === "all" && displayed
+            {activeFilter === "all" && visibleNotifs
               .filter(n => n.isRead)
               .map(notif => (
-                <NotifItem key={notif.id} notif={notif} onRead={markOneRead} />
+                <NotifCard key={notif.id} notif={notif} onRead={markOneRead} />
               ))}
           </div>
         )}
