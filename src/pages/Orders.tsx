@@ -17,7 +17,7 @@ const statusStyle: Record<string, string> = {
   DELIVERED:        "bg-green-100 text-green-700",
   CANCELLED:        "bg-red-100 text-red-700",
   SHIPPED:          "bg-blue-100 text-blue-700",
-  CONFIRMED:        "bg-primary/10 text-primary",
+  CONFIRMED:        "bg-orange-100 text-orange-700",
   PENDING:          "bg-yellow-100 text-yellow-700",
   AWAITING_PAYMENT: "bg-orange-100 text-orange-700",
   PAYMENT_FAILED:   "bg-red-100 text-red-600",
@@ -40,7 +40,7 @@ const preOrderStatusLabel: Record<string, string> = {
   CANCELLED:          "Cancelled",
 };
 
-// ── MoMo payment modal (inline, shown inside an order card) ──────────────────
+// ── MoMo payment modal ────────────────────────────────────────────────────────
 const MoMoPaymentForm = ({
   orderId,
   amount,
@@ -92,10 +92,10 @@ const MoMoPaymentForm = ({
   };
 
   return (
-    <div className="border-t border-border bg-orange-50/50 p-4 space-y-4">
+    <div className="border-t border-orange-100 bg-orange-50 p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold">Pay via Mobile Money</p>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+        <p className="text-sm font-semibold text-orange-900">Pay via Mobile Money</p>
+        <button onClick={onClose} className="text-orange-400 hover:text-orange-600">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -109,7 +109,7 @@ const MoMoPaymentForm = ({
 
       {/* Sender name */}
       <div className="space-y-1">
-        <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+        <label className="text-xs font-medium flex items-center gap-1.5 text-orange-500">
           <User className="h-3 w-3" /> Account name *
         </label>
         <input
@@ -117,13 +117,13 @@ const MoMoPaymentForm = ({
           value={senderName}
           onChange={e => setSenderName(e.target.value)}
           placeholder="Name on your MoMo account"
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="w-full rounded-lg border border-orange-200 bg-white px-3 py-2 text-sm text-orange-900 placeholder:text-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
         />
       </div>
 
       {/* Sender phone */}
       <div className="space-y-1">
-        <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+        <label className="text-xs font-medium flex items-center gap-1.5 text-orange-500">
           <Phone className="h-3 w-3" /> Phone number *
         </label>
         <input
@@ -131,19 +131,19 @@ const MoMoPaymentForm = ({
           value={senderPhone}
           onChange={e => setSenderPhone(e.target.value)}
           placeholder="e.g. 024 000 0000"
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="w-full rounded-lg border border-orange-200 bg-white px-3 py-2 text-sm text-orange-900 placeholder:text-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
         />
       </div>
 
       {/* Screenshot upload */}
       <div className="space-y-1">
-        <label className="text-xs font-medium text-muted-foreground">Payment screenshot *</label>
+        <label className="text-xs font-medium text-orange-500">Payment screenshot *</label>
         {preview ? (
-          <div className="relative rounded-xl overflow-hidden border border-border">
-            <img src={preview} alt="Screenshot preview" className="w-full max-h-48 object-contain bg-secondary/30" />
+          <div className="relative rounded-xl overflow-hidden border border-orange-200">
+            <img src={preview} alt="Screenshot preview" className="w-full max-h-48 object-contain bg-orange-50" />
             <button
               onClick={clearFile}
-              className="absolute top-2 right-2 rounded-full bg-background/90 border border-border p-1 hover:bg-destructive hover:text-white transition-colors"
+              className="absolute top-2 right-2 rounded-full bg-white border border-orange-200 p-1 hover:bg-red-500 hover:text-white transition-colors"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -154,7 +154,7 @@ const MoMoPaymentForm = ({
         ) : (
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors py-7 flex flex-col items-center gap-1.5 text-muted-foreground hover:text-primary"
+            className="w-full rounded-xl border-2 border-dashed border-orange-200 hover:border-orange-400 transition-colors py-7 flex flex-col items-center gap-1.5 text-orange-300 hover:text-orange-500"
           >
             <Upload className="h-6 w-6" />
             <span className="text-xs font-medium">Tap to upload screenshot</span>
@@ -166,7 +166,7 @@ const MoMoPaymentForm = ({
       <button
         onClick={handleSubmit}
         disabled={submitting}
-        className="w-full py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-orange-700 transition-colors disabled:opacity-60"
+        className="w-full py-2.5 rounded-lg bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 transition-colors disabled:opacity-60"
       >
         {submitting ? "Submitting…" : `Submit payment · GHS ${amount.toFixed(2)}`}
       </button>
@@ -200,22 +200,22 @@ const PreOrderCard = ({
   };
 
   return (
-    <div className="rounded-xl bg-card border border-purple-200 overflow-hidden">
+    <div className="rounded-xl bg-white border border-purple-200 overflow-hidden">
       <div className="bg-purple-50 px-4 py-2 flex items-center justify-between">
         <span className="text-xs font-semibold text-purple-700">Pre-order</span>
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${preOrderStatusStyle[record.status] ?? "bg-muted text-muted-foreground"}`}>
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${preOrderStatusStyle[record.status] ?? "bg-orange-100 text-orange-600"}`}>
           {record.status?.replace(/_/g, " ")}
         </span>
       </div>
 
       <div className="p-4 space-y-3">
         <div>
-          <p className="text-sm font-semibold">{record.productName}</p>
-          <p className="text-xs text-muted-foreground font-mono">
+          <p className="text-sm font-semibold text-orange-900">{record.productName}</p>
+          <p className="text-xs text-orange-400 font-mono">
             Order #{(record.orderId ?? "").toString().slice(0, 8).toUpperCase()}
           </p>
           {record.createdAt && (
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-orange-400 mt-0.5">
               Placed {new Date(record.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
             </p>
           )}
@@ -238,7 +238,7 @@ const PreOrderCard = ({
         </div>
 
         <div>
-          <div className="flex justify-between text-xs text-muted-foreground mb-1">
+          <div className="flex justify-between text-xs text-orange-400 mb-1">
             <span>{depositPct}% paid</span>
             <span>{100 - depositPct}% remaining</span>
           </div>
@@ -277,17 +277,17 @@ const PreOrderCard = ({
         )}
 
         {record.notifiedAt && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-orange-400">
             Notified: {new Date(record.notifiedAt).toLocaleDateString("en-GB")}
           </p>
         )}
         {record.deliveryRequestedAt && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-orange-400">
             Delivery requested: {new Date(record.deliveryRequestedAt).toLocaleDateString("en-GB")}
           </p>
         )}
         {record.adminNote && (
-          <p className="text-xs text-muted-foreground italic">Note from seller: {record.adminNote}</p>
+          <p className="text-xs text-orange-400 italic">Note from seller: {record.adminNote}</p>
         )}
 
         {canRequest && (
@@ -361,17 +361,17 @@ const OrderCard = ({
   };
 
   return (
-    <div className="rounded-xl bg-card border border-border overflow-hidden">
+    <div className="rounded-xl bg-white border border-orange-100 overflow-hidden">
       <div className="p-4 space-y-3">
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground font-mono">
+            <p className="text-xs text-orange-400 font-mono">
               #{orderId?.toString().slice(0, 8).toUpperCase()}
             </p>
             {formattedDate && (
-              <p className="text-xs text-muted-foreground mt-0.5">{formattedDate}</p>
+              <p className="text-xs text-orange-400 mt-0.5">{formattedDate}</p>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -385,7 +385,7 @@ const OrderCard = ({
                 {cancelling ? "…" : "Cancel"}
               </button>
             )}
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[status] ?? "bg-muted text-muted-foreground"}`}>
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusStyle[status] ?? "bg-orange-100 text-orange-600"}`}>
               {status.replace(/_/g, " ")}
             </span>
           </div>
@@ -393,7 +393,7 @@ const OrderCard = ({
 
         {/* Address */}
         {address && (
-          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+          <div className="flex items-start gap-1.5 text-xs text-orange-400">
             <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
             <span>{address}</span>
           </div>
@@ -406,20 +406,20 @@ const OrderCard = ({
               {items.slice(0, 3).map((item: any, i: number) => (
                 <div
                   key={item.id ?? i}
-                  className="h-10 w-10 rounded-lg border-2 border-background overflow-hidden bg-secondary/50 shrink-0"
+                  className="h-10 w-10 rounded-lg border-2 border-white overflow-hidden bg-orange-50 shrink-0"
                   style={{ zIndex: 3 - i }}
                 >
                   {item.primaryImageUrl ? (
                     <img src={item.primaryImageUrl} alt={item.productName ?? ""} className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center">
-                      <Package className="h-4 w-4 text-muted-foreground/40" />
+                      <Package className="h-4 w-4 text-orange-300" />
                     </div>
                   )}
                 </div>
               ))}
             </div>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-orange-400">
               {items.length} item{items.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -427,11 +427,11 @@ const OrderCard = ({
 
         {/* Total + expand */}
         <div className="flex items-center justify-between">
-          <span className="font-bold text-base">GHS {total.toFixed(2)}</span>
+          <span className="font-bold text-base text-orange-900">GHS {total.toFixed(2)}</span>
           {items.length > 0 && (
             <button
               onClick={() => setExpanded(p => !p)}
-              className="flex items-center gap-1 text-xs text-primary hover:underline"
+              className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 hover:underline"
             >
               {expanded ? "Hide" : "View"} items
               {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -439,7 +439,7 @@ const OrderCard = ({
           )}
         </div>
 
-        {/* Payment submission status message */}
+        {/* Payment status messages */}
         {status === "AWAITING_PAYMENT" && !showMoMo && (
           <div className="rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-xs text-orange-700 flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 shrink-0" />
@@ -457,7 +457,7 @@ const OrderCard = ({
         {needsPayment && !showMoMo && (
           <button
             onClick={() => setShowMoMo(true)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-orange-700 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 transition-colors"
           >
             <Phone className="h-4 w-4" />
             Pay via MoMo · GHS {total.toFixed(2)}
@@ -481,7 +481,7 @@ const OrderCard = ({
               value={deliveryAddress}
               onChange={e => setDeliveryAddress(e.target.value)}
               placeholder="Enter delivery address…"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full rounded-lg border border-orange-200 bg-white px-3 py-2 text-sm text-orange-900 placeholder:text-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
             <div className="flex gap-2">
               <button
@@ -493,7 +493,7 @@ const OrderCard = ({
               </button>
               <button
                 onClick={() => { setShowDeliveryInput(false); setDeliveryAddress(""); }}
-                className="px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:bg-secondary transition-colors"
+                className="px-4 py-2 rounded-lg border border-orange-200 text-sm text-orange-400 hover:bg-orange-50 transition-colors"
               >
                 Cancel
               </button>
@@ -502,14 +502,13 @@ const OrderCard = ({
         )}
       </div>
 
-      {/* MoMo payment form (inline, below card body) */}
+      {/* MoMo payment form */}
       {showMoMo && (
         <MoMoPaymentForm
           orderId={orderId}
           amount={total}
           onSuccess={() => {
             setShowMoMo(false);
-            // optimistically update status label while we wait for refresh
             toast.success("Payment submitted! Awaiting admin confirmation.");
           }}
           onClose={() => setShowMoMo(false)}
@@ -518,15 +517,15 @@ const OrderCard = ({
 
       {/* Expanded items list */}
       {expanded && items.length > 0 && (
-        <div className="border-t border-border divide-y divide-border">
+        <div className="border-t border-orange-100 divide-y divide-orange-100">
           {items.map((item: any) => (
             <div key={item.id} className="flex items-center gap-3 px-4 py-3">
-              <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-secondary/50 border border-border">
+              <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-orange-50 border border-orange-100">
                 {item.primaryImageUrl ? (
                   <img src={item.primaryImageUrl} alt={item.productName} className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center">
-                    <Package className="h-5 w-5 text-muted-foreground/30" />
+                    <Package className="h-5 w-5 text-orange-300" />
                   </div>
                 )}
               </div>
@@ -534,19 +533,19 @@ const OrderCard = ({
                 {item.productId ? (
                   <Link
                     to={`/products/${item.productId}`}
-                    className="text-sm font-medium hover:text-primary line-clamp-1 flex items-center gap-1"
+                    className="text-sm font-medium text-orange-900 hover:text-orange-500 line-clamp-1 flex items-center gap-1"
                   >
                     {item.productName}
                     <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
                   </Link>
                 ) : (
-                  <p className="text-sm font-medium line-clamp-1">{item.productName}</p>
+                  <p className="text-sm font-medium text-orange-900 line-clamp-1">{item.productName}</p>
                 )}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-orange-400">
                   GHS {Number(item.unitPrice).toFixed(2)} × {item.quantity}
                 </p>
               </div>
-              <p className="text-sm font-bold shrink-0">GHS {Number(item.subTotal).toFixed(2)}</p>
+              <p className="text-sm font-bold text-orange-900 shrink-0">GHS {Number(item.subTotal).toFixed(2)}</p>
             </div>
           ))}
         </div>
@@ -624,7 +623,7 @@ const Orders = () => {
       : orders.filter(o => o.orderStatus === tab);
 
   if (loading) return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <Navbar />
       <div className="container mx-auto px-4 py-6 max-w-3xl">
         <div className="skeleton-shimmer h-8 w-36 rounded-lg mb-4" />
@@ -637,10 +636,10 @@ const Orders = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <Navbar />
       <div className="container mx-auto px-4 py-6 max-w-3xl">
-        <h1 className="font-satoshi text-2xl font-bold mb-4">My Orders</h1>
+        <h1 className="font-satoshi text-2xl font-bold mb-4 text-orange-900">My Orders</h1>
 
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
@@ -665,8 +664,8 @@ const Orders = () => {
                 onClick={() => setTab(t.value)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   tab === t.value
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                    ? "bg-orange-500 text-white"
+                    : "bg-orange-50 text-orange-400 hover:text-orange-600 hover:bg-orange-100"
                 }`}
               >
                 {t.label}
@@ -674,7 +673,7 @@ const Orders = () => {
                   <span className={`ml-1 text-[10px] rounded-full px-1.5 ${
                     t.value === "pre-orders"
                       ? "bg-purple-600 text-white"
-                      : "bg-muted-foreground/20 text-muted-foreground"
+                      : "bg-orange-200 text-orange-600"
                   }`}>
                     {count}
                   </span>
@@ -688,8 +687,8 @@ const Orders = () => {
         {tab === "pre-orders" ? (
           preOrders.length === 0 ? (
             <div className="text-center py-16 space-y-2">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground/30" />
-              <p className="text-muted-foreground text-sm">No pre-orders yet</p>
+              <Package className="h-12 w-12 mx-auto text-orange-200" />
+              <p className="text-orange-400 text-sm">No pre-orders yet</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -700,12 +699,12 @@ const Orders = () => {
           )
         ) : visibleOrders.length === 0 ? (
           <div className="text-center py-16 space-y-4">
-            <Package className="h-16 w-16 mx-auto text-muted-foreground/30" />
-            <p className="text-muted-foreground">
+            <Package className="h-16 w-16 mx-auto text-orange-200" />
+            <p className="text-orange-400">
               {tab === "all" ? "No orders yet" : `No ${tab.toLowerCase()} orders`}
             </p>
             {tab === "all" && (
-              <Link to="/" className="text-sm text-primary hover:underline">Start Shopping</Link>
+              <Link to="/" className="text-sm text-orange-500 hover:text-orange-600 hover:underline">Start Shopping</Link>
             )}
           </div>
         ) : (
