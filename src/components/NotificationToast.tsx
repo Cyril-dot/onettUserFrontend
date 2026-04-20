@@ -15,16 +15,17 @@ export interface NotificationToastData {
   variant?: NotificationVariant;
   url?: string;
   durationMs?: number;
+  sentAt?: number; // Unix timestamp in ms
 }
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
-const VARIANT_CONFIG: Record<
+const VARIANT_CONFIG: Record
   NotificationVariant,
   { accent: string; glow: string; emoji: string; label: string }
 > = {
   default: {
-    accent: "#F97316",          // ONETT brand orange
+    accent: "#F97316",
     glow:   "rgba(249,115,22,0.18)",
     emoji:  "🔔",
     label:  "Notification",
@@ -52,6 +53,24 @@ const VARIANT_CONFIG: Record<
 const DEFAULT_DURATION = 5000;
 const MAX_QUEUE        = 5;
 
+// ─── Time formatter ───────────────────────────────────────────────────────────
+
+function formatSentTime(sentAt?: number): string {
+  if (!sentAt) return "";
+  const now = Date.now();
+  const diffMs = now - sentAt;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr  = Math.floor(diffMin / 60);
+
+  if (diffSec < 60)  return "Just now";
+  if (diffMin < 60)  return `${diffMin}m ago`;
+  if (diffHr  < 24)  return `${diffHr}h ago`;
+
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  return days[new Date(sentAt).getDay()];
+}
+
 // ─── Singleton event bus ──────────────────────────────────────────────────────
 
 type ToastListener = (toast: NotificationToastData) => void;
@@ -63,8 +82,33 @@ export function showNotificationToast(toast: Omit<NotificationToastData, "id">) 
     id:         crypto.randomUUID(),
     variant:    toast.variant ?? "default",
     durationMs: toast.durationMs ?? DEFAULT_DURATION,
+    sentAt:     toast.sentAt ?? Date.now(), // auto-stamp if not provided
   };
   listeners.forEach((fn) => fn(data));
+}
+
+// ─── Native Push helper (call from your service worker registration) ──────────
+
+export function sendNativePush(
+  title: string,
+  options: {
+    body?: string;
+    url?: string;
+    sentAt?: number;
+  } = {}
+) {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+  navigator.serviceWorker.ready.then((reg) => {
+    reg.showNotification(title, {
+      body:      options.body ?? "",
+      icon:      "/assets/onet logo.jpeg",   // shop logo
+      badge:     "/assets/onet logo.jpeg",   // small badge icon (top bar on Android)
+      timestamp: options.sentAt ?? Date.now(),
+      data:      { url: options.url ?? "/" },
+      vibrate:   [100, 50, 100],
+    });
+  });
 }
 
 // ─── Progress bar sub-component ───────────────────────────────────────────────
@@ -90,8 +134,8 @@ function ProgressBar({
     startedAt.current = performance.now();
     const remaining = durationMs - elapsed.current;
     animRef.current = animate(progress, 0, {
-      duration:  remaining / 1000,
-      ease:      "linear",
+      duration:   remaining / 1000,
+      ease:       "linear",
       onComplete: onExpire,
     });
   }, [durationMs, onExpire, progress]);
@@ -115,23 +159,23 @@ function ProgressBar({
   return (
     <div
       style={{
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: 3,
-        background: "rgba(0,0,0,0.06)",
+        position:     "absolute",
+        bottom:       0,
+        left:         0,
+        right:        0,
+        height:       3,
+        background:   "rgba(0,0,0,0.06)",
         borderRadius: "0 0 14px 14px",
-        overflow: "hidden",
+        overflow:     "hidden",
       }}
     >
       <motion.div
         style={{
-          height: "100%",
+          height:          "100%",
           width,
-          background: accent,
+          background:      accent,
           transformOrigin: "left",
-          borderRadius: "0 0 14px 0",
+          borderRadius:    "0 0 14px 0",
         }}
       />
     </div>
@@ -151,11 +195,14 @@ function ToastCard({
   const cfg = VARIANT_CONFIG[toast.variant ?? "default"];
 
   const handleClick = () => {
-    if (toast.url) {
-      window.location.href = toast.url;
-    }
+    if (toast.url) window.location.href = toast.url;
     onDismiss(toast.id);
   };
+
+  const timeLabel = formatSentTime(toast.sentAt);
+  const domain    = toast.url
+    ? (() => { try { return new URL(toast.url).hostname; } catch { return toast.url; } })()
+    : null;
 
   return (
     <motion.div
@@ -192,50 +239,47 @@ function ToastCard({
 
       {/* Body */}
       <div style={{ padding: "16px 16px 18px", display: "flex", gap: 12, alignItems: "flex-start" }}>
-        {/* Icon */}
+
+        {/* Icon — always tries shop logo first */}
         <div
           style={{
-            flexShrink: 0,
-            width:      40,
-            height:     40,
-            borderRadius: 10,
-            background: `${cfg.accent}18`,
-            border:     `1.5px solid ${cfg.accent}30`,
-            display:    "flex",
-            alignItems: "center",
+            flexShrink:     0,
+            width:          40,
+            height:         40,
+            borderRadius:   10,
+            background:     `${cfg.accent}18`,
+            border:         `1.5px solid ${cfg.accent}30`,
+            display:        "flex",
+            alignItems:     "center",
             justifyContent: "center",
-            overflow:   "hidden",
+            overflow:       "hidden",
           }}
         >
-          {toast.icon ? (
-            <img
-              src={toast.icon}
-              alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-                (e.currentTarget.parentElement as HTMLElement).innerText = cfg.emoji;
-              }}
-            />
-          ) : (
-            <span style={{ fontSize: 18 }}>{cfg.emoji}</span>
-          )}
+          <img
+            src={toast.icon ?? "/assets/onet logo.jpeg"}
+            alt="ONETT"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+              (e.currentTarget.parentElement as HTMLElement).innerText = cfg.emoji;
+            }}
+          />
         </div>
 
         {/* Text */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p
             style={{
-              margin:     0,
-              fontSize:   13,
-              fontWeight: 700,
-              lineHeight: 1.3,
-              color:      "#1A1410",
-              fontFamily: "'Bricolage Grotesque', sans-serif",
+              margin:        0,
+              fontSize:      13,
+              fontWeight:    700,
+              lineHeight:    1.3,
+              color:         "#1A1410",
+              fontFamily:    "'Bricolage Grotesque', sans-serif",
               letterSpacing: "-0.01em",
-              whiteSpace:  "nowrap",
-              overflow:    "hidden",
-              textOverflow: "ellipsis",
+              whiteSpace:    "nowrap",
+              overflow:      "hidden",
+              textOverflow:  "ellipsis",
             }}
           >
             {toast.title}
@@ -244,27 +288,48 @@ function ToastCard({
           {toast.body && (
             <p
               style={{
-                margin:     "3px 0 0",
-                fontSize:   12,
-                color:      "#6B6055",
-                lineHeight: 1.45,
-                display:    "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow:   "hidden",
+                margin:              "3px 0 0",
+                fontSize:            12,
+                color:               "#6B6055",
+                lineHeight:          1.45,
+                display:             "-webkit-box",
+                WebkitLineClamp:     2,
+                WebkitBoxOrient:     "vertical",
+                overflow:            "hidden",
               }}
             >
               {toast.body}
             </p>
           )}
 
+          {/* Timestamp + domain row */}
+          {(timeLabel || domain) && (
+            <p
+              style={{
+                margin:        "5px 0 0",
+                fontSize:      11,
+                color:         "#9E948C",
+                letterSpacing: "0.01em",
+                display:       "flex",
+                alignItems:    "center",
+                gap:           4,
+              }}
+            >
+              {timeLabel && <span>{timeLabel}</span>}
+              {timeLabel && domain && (
+                <span style={{ opacity: 0.5 }}>•</span>
+              )}
+              {domain && <span>{domain}</span>}
+            </p>
+          )}
+
           {toast.url && (
             <p
               style={{
-                margin:     "6px 0 0",
-                fontSize:   11,
-                fontWeight: 600,
-                color:      cfg.accent,
+                margin:        "5px 0 0",
+                fontSize:      11,
+                fontWeight:    600,
+                color:         cfg.accent,
                 letterSpacing: "0.02em",
               }}
             >
@@ -281,19 +346,19 @@ function ToastCard({
           }}
           aria-label="Dismiss notification"
           style={{
-            flexShrink:  0,
-            width:       24,
-            height:      24,
-            borderRadius: 6,
-            border:      "none",
-            background:  hovered ? "rgba(0,0,0,0.06)" : "transparent",
-            cursor:      "pointer",
-            display:     "flex",
-            alignItems:  "center",
+            flexShrink:     0,
+            width:          24,
+            height:         24,
+            borderRadius:   6,
+            border:         "none",
+            background:     hovered ? "rgba(0,0,0,0.06)" : "transparent",
+            cursor:         "pointer",
+            display:        "flex",
+            alignItems:     "center",
             justifyContent: "center",
-            padding:     0,
-            color:       "#9E948C",
-            transition:  "background 0.15s",
+            padding:        0,
+            color:          "#9E948C",
+            transition:     "background 0.15s",
           }}
         >
           <X size={13} strokeWidth={2.5} />
@@ -335,7 +400,7 @@ export function NotificationToastContainer() {
 
   return createPortal(
     <>
-      {/* Google Fonts — load once */}
+      {/* Google Fonts */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
       `}</style>
