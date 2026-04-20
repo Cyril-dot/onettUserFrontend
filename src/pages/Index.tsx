@@ -602,72 +602,191 @@ const GLOBAL_CSS = `
   @media (min-width: 640px) { .ont-footer-bottom { flex-direction: row; justify-content: space-between; } }
   .ont-footer-copy { font-size: 12px; color: #555; }
 
-  /* ── WELCOME POPUP ── */
+  /* ══════════════════════════════════════════════════════════════
+     ── WELCOME POPUP — REDESIGNED (v2) ──
+     Always centered modal on all screen sizes.
+     Big hero image visual at top, soft & friendly feel.
+  ══════════════════════════════════════════════════════════════ */
   .ont-wp-overlay {
     position: fixed; inset: 0; z-index: 9999;
-    background: rgba(0,0,0,0.5); backdrop-filter: blur(16px) saturate(0.6);
-    display: flex; align-items: flex-end; justify-content: center;
+    background: rgba(10,8,6,0.6);
+    backdrop-filter: blur(12px) saturate(0.7);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
   }
-  @media (min-width: 600px) { .ont-wp-overlay { align-items: center; } }
-  .ont-wp-sheet {
-    width: 100%; max-width: 460px; border-radius: 28px 28px 0 0;
-    background: #F0EBE3; border: 1px solid rgba(0,0,0,0.08);
-    border-bottom: none; max-height: 90dvh; overflow-y: auto;
-  }
-  @media (min-width: 600px) { .ont-wp-sheet { border-radius: 28px; border-bottom: 1px solid rgba(0,0,0,0.08); } }
-  .ont-wp-visual {
-    height: 210px; position: relative; display: flex; align-items: center; justify-content: center;
+
+  .ont-wp-modal {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 28px;
+    background: #FDFAF7;
+    border: 1px solid rgba(0,0,0,0.07);
     overflow: hidden;
-    background: radial-gradient(ellipse at 50% 130%, var(--sc,#E6640A) 0%, transparent 65%),
-                linear-gradient(180deg, #E8E1D8, #F0EBE3);
-    transition: background 0.4s;
+    box-shadow:
+      0 4px 6px rgba(0,0,0,0.04),
+      0 12px 40px rgba(0,0,0,0.14),
+      0 32px 64px rgba(0,0,0,0.10);
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  .ont-wp-orb {
-    width: 100px; height: 100px; border-radius: 28px;
-    border: 1.5px solid var(--sc,#E6640A); background: rgba(240,235,227,0.85);
-    display: flex; align-items: center; justify-content: center;
-    position: relative; z-index: 2; backdrop-filter: blur(12px);
+
+  /* ── Hero image area ── */
+  .ont-wp-hero {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    position: relative;
+    overflow: hidden;
+    background: #1A1A1A;
+    flex-shrink: 0;
   }
-  .ont-wp-orb::before {
-    content: ""; position: absolute; inset: -20%; border-radius: 50%;
-    background: var(--sc,#E6640A); opacity: 0.15; filter: blur(24px);
+  .ont-wp-hero-img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.22,1,0.36,1);
   }
-  .ont-wp-emoji { font-size: 48px; position: relative; z-index: 2; line-height: 1; }
-  .ont-wp-close {
-    position: absolute; top: 14px; right: 14px; z-index: 10;
-    width: 34px; height: 34px; border-radius: 50%;
-    background: rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.1);
-    color: rgba(0,0,0,0.4); cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s;
+  .ont-wp-hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.08) 0%,
+      rgba(0,0,0,0.05) 50%,
+      rgba(0,0,0,0.55) 100%
+    );
   }
-  .ont-wp-close:hover { background: rgba(0,0,0,0.1); }
-  .ont-wp-chip {
-    position: absolute; top: 14px; left: 14px; z-index: 10;
-    background: rgba(240,235,227,0.9); border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 8px; padding: 4px 10px;
+
+  /* Brand chip — top left of hero */
+  .ont-wp-brand-chip {
+    position: absolute; top: 14px; left: 14px; z-index: 4;
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px; padding: 6px 12px 6px 8px;
+    backdrop-filter: blur(8px);
+  }
+  .ont-wp-brand-logo {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: linear-gradient(135deg, #E6640A, #C4520A);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .ont-wp-brand-logo-on  { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 900; font-size: 7px; color: #fff; line-height: 1; letter-spacing: -0.2px; }
+  .ont-wp-brand-logo-ett { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 5px; color: rgba(255,255,255,0.7); line-height: 1; letter-spacing: 0.3px; }
+  .ont-wp-brand-name {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-weight: 800; font-size: 13px; color: #1A1A1A; letter-spacing: -0.3px;
+    font-weight: 800; font-size: 13px; color: #1A1A1A; letter-spacing: -0.3px; line-height: 1;
   }
-  .ont-wp-chip em { color: #E6640A; font-style: normal; }
-  .ont-wp-body { padding: 24px 24px 20px; }
-  .ont-wp-kicker { font-size: 10px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 7px; }
-  .ont-wp-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: clamp(22px,6vw,27px); font-weight: 800; color: #1A1A1A; line-height: 1.15; letter-spacing: -0.5px; margin: 0 0 10px; }
-  .ont-wp-desc { font-size: 13.5px; color: rgba(0,0,0,0.45); line-height: 1.7; margin: 0 0 22px; }
-  .ont-wp-dots { display: flex; gap: 7px; margin-bottom: 18px; }
-  .ont-wp-dot { height: 5px; border-radius: 99px; background: rgba(0,0,0,0.12); border: none; cursor: pointer; padding: 0; transition: width 0.25s, background 0.25s; width: 16px; }
-  .ont-wp-dot.on { width: 28px; }
+  .ont-wp-brand-name em { color: #E6640A; font-style: normal; }
+
+  /* Close button — top right of hero */
+  .ont-wp-close {
+    position: absolute; top: 12px; right: 12px; z-index: 4;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.88);
+    border: 1px solid rgba(0,0,0,0.1);
+    color: rgba(0,0,0,0.5); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+    transition: background 0.15s, color 0.15s;
+  }
+  .ont-wp-close:hover { background: rgba(255,255,255,1); color: rgba(0,0,0,0.8); }
+
+  /* Slide indicator dots — inside hero, bottom right */
+  .ont-wp-hero-dots {
+    position: absolute; bottom: 12px; right: 14px; z-index: 4;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .ont-wp-hero-dot {
+    height: 5px; border-radius: 99px;
+    border: none; padding: 0; cursor: pointer;
+    background: rgba(255,255,255,0.45);
+    transition: width 0.25s, background 0.25s;
+    width: 5px;
+  }
+  .ont-wp-hero-dot.on { width: 18px; background: #fff; }
+
+  /* Slide status badge — hero bottom left */
+  .ont-wp-slide-badge {
+    position: absolute; bottom: 12px; left: 14px; z-index: 4;
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 99px; padding: 4px 10px;
+    backdrop-filter: blur(6px);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 10px; font-weight: 700; color: #fff;
+    letter-spacing: 0.2px;
+  }
+
+  /* ── Modal body ── */
+  .ont-wp-body {
+    padding: 22px 22px 10px;
+  }
+  @media (min-width: 400px) {
+    .ont-wp-body { padding: 24px 26px 12px; }
+  }
+
+  .ont-wp-kicker {
+    font-size: 10px; font-weight: 800; letter-spacing: 0.9px;
+    text-transform: uppercase; margin-bottom: 7px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ont-wp-kicker-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  .ont-wp-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(20px, 5.5vw, 24px);
+    font-weight: 800; color: #1A1A1A;
+    line-height: 1.2; letter-spacing: -0.5px;
+    margin: 0 0 9px;
+  }
+
+  .ont-wp-desc {
+    font-size: 13.5px; color: rgba(0,0,0,0.48);
+    line-height: 1.7; margin: 0 0 20px;
+  }
+
+  /* Trust pills row */
+  .ont-wp-trust-row {
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .ont-wp-trust-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(230,100,10,0.07);
+    border: 1px solid rgba(230,100,10,0.18);
+    border-radius: 99px; padding: 4px 10px;
+    font-size: 10.5px; font-weight: 700; color: #C4520A;
+  }
+
+  /* CTA button */
   .ont-wp-cta {
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; border: none; border-radius: 15px; padding: 16px;
-    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 15px;
-    color: #fff; cursor: pointer; margin-bottom: 10px; text-decoration: none;
+    width: 100%; border: none; border-radius: 14px; padding: 15px 20px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800; font-size: 14.5px;
+    color: #fff; cursor: pointer; margin-bottom: 10px;
+    text-decoration: none;
     transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: -0.2px;
   }
-  .ont-wp-cta:hover { opacity: 0.9; transform: scale(0.99); }
-  .ont-wp-skip { display: block; width: 100%; text-align: center; font-size: 12px; color: rgba(0,0,0,0.2); background: transparent; border: none; cursor: pointer; padding: 6px 0; }
-  .ont-wp-skip:hover { color: rgba(0,0,0,0.4); }
-  .ont-wp-safe { height: env(safe-area-inset-bottom, 0); }
+  .ont-wp-cta:hover { opacity: 0.92; transform: scale(0.99); }
+  .ont-wp-cta:active { transform: scale(0.97); }
+
+  /* Skip link */
+  .ont-wp-skip {
+    display: block; width: 100%; text-align: center;
+    font-size: 12.5px; font-weight: 600; color: rgba(0,0,0,0.28);
+    background: transparent; border: none; cursor: pointer; padding: 8px 0 4px;
+    transition: color 0.15s;
+  }
+  .ont-wp-skip:hover { color: rgba(0,0,0,0.5); }
+
+  /* Safe area bottom spacing */
+  .ont-wp-safe { height: max(env(safe-area-inset-bottom, 0px), 12px); }
 
   /* ── EMPTY STATE ── */
   .ont-empty-state {
@@ -712,6 +831,7 @@ const Ico = {
   X:        (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
   Wa:       (p: any={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.508 5.836L.057 23.25a.75.75 0 00.916.943l5.638-1.479A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 01-4.962-1.355l-.356-.212-3.686.967.984-3.595-.232-.371A9.718 9.718 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>,
   Pkg:      (p: any={}) => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
+  Check:    (p: any={}) => <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}><polyline points="20 6 9 17 4 12"/></svg>,
 };
 
 // ─── COUNTDOWN HOOK ───────────────────────────────────────────────────────────
@@ -732,10 +852,6 @@ function useCountdown(id: string, days: number) {
 }
 
 // ─── DISCOUNT DETECTION HELPER ────────────────────────────────────────────────
-// Robustly resolves discount info regardless of whether the API returns
-// camelCase (discountPrice / isDiscounted / discountPercentage) or
-// snake_case (discount_price / is_discounted / discount_percentage) fields,
-// and whether the discount flag is a boolean or a truthy string/number.
 function resolveDiscount(product: any): {
   hasDiscount: boolean;
   displayPrice: number;
@@ -746,58 +862,18 @@ function resolveDiscount(product: any): {
   const originalPrice = Number(
     product.price ?? product.original_price ?? product.regularPrice ?? 0
   );
-
-  // Grab the discounted price — accept both naming conventions
   const discountPriceRaw =
-    product.discountPrice ??
-    product.discount_price ??
-    product.salePrice ??
-    product.sale_price ??
-    null;
-
-  const discountPrice = discountPriceRaw !== null && discountPriceRaw !== undefined
-    ? Number(discountPriceRaw)
-    : 0;
-
-  // A discount exists if:
-  // (a) there's an explicit boolean/truthy flag, OR
-  // (b) discountPrice is a positive number strictly less than the original price
-  const flagRaw =
-    product.isDiscounted ??
-    product.is_discounted ??
-    product.onSale ??
-    product.on_sale ??
-    null;
-
-  const flagSet = flagRaw !== null && flagRaw !== undefined
-    ? Boolean(flagRaw)
-    : false;
-
-  const priceBasedDiscount =
-    discountPrice > 0 && originalPrice > 0 && discountPrice < originalPrice;
-
+    product.discountPrice ?? product.discount_price ?? product.salePrice ?? product.sale_price ?? null;
+  const discountPrice = discountPriceRaw !== null && discountPriceRaw !== undefined ? Number(discountPriceRaw) : 0;
+  const flagRaw = product.isDiscounted ?? product.is_discounted ?? product.onSale ?? product.on_sale ?? null;
+  const flagSet = flagRaw !== null && flagRaw !== undefined ? Boolean(flagRaw) : false;
+  const priceBasedDiscount = discountPrice > 0 && originalPrice > 0 && discountPrice < originalPrice;
   const hasDiscount = flagSet || priceBasedDiscount;
-
   const displayPrice = hasDiscount && discountPrice > 0 ? discountPrice : originalPrice;
-
-  // Prefer the API-provided percentage; fall back to calculated value
   const discountPct =
-    Number(
-      product.discountPercentage ??
-      product.discount_percentage ??
-      product.discountPercent ??
-      product.discount_percent ??
-      0
-    ) ||
-    (hasDiscount && originalPrice > 0
-      ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
-      : 0);
-
-  const savingsAmount =
-    hasDiscount && originalPrice > 0 && displayPrice > 0
-      ? Math.round(originalPrice - displayPrice)
-      : 0;
-
+    Number(product.discountPercentage ?? product.discount_percentage ?? product.discountPercent ?? product.discount_percent ?? 0) ||
+    (hasDiscount && originalPrice > 0 ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0);
+  const savingsAmount = hasDiscount && originalPrice > 0 && displayPrice > 0 ? Math.round(originalPrice - displayPrice) : 0;
   return { hasDiscount, displayPrice, originalPrice, discountPct, savingsAmount };
 }
 
@@ -837,11 +913,7 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
   const inStock = (product.stock == null && product.stock_quantity == null) ||
                   Number(product.stock ?? product.stock_quantity ?? 1) > 0;
   const isNew = !product.stockStatus && !product.stock_status;
-
-  // ── FIXED: use robust helper instead of direct field access ──
-  const { hasDiscount, displayPrice, originalPrice, discountPct, savingsAmount } =
-    resolveDiscount(product);
-
+  const { hasDiscount, displayPrice, originalPrice, discountPct, savingsAmount } = resolveDiscount(product);
   const stockStatus = product.stockStatus ?? product.stock_status ?? null;
 
   const handleCart = async (e: React.MouseEvent) => {
@@ -876,23 +948,12 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
               ? <img src={img} alt={product.name} loading="lazy" />
               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#C0C0C0" }}><Ico.Pkg /></div>}
           </a>
-
-          {/* ── Discount % badge — top-left of image ── */}
-          {hasDiscount && discountPct > 0 && (
-            <div className="ont-pcard-disc">
-              -{discountPct}%
-            </div>
-          )}
-
-          {/* ── Savings strip — bottom of image ── */}
+          {hasDiscount && discountPct > 0 && <div className="ont-pcard-disc">-{discountPct}%</div>}
           {hasDiscount && savingsAmount > 0 && (
             <div className="ont-pcard-savings-strip">
-              <span className="ont-pcard-savings-text">
-                Save GHS {savingsAmount.toLocaleString()}
-              </span>
+              <span className="ont-pcard-savings-text">Save GHS {savingsAmount.toLocaleString()}</span>
             </div>
           )}
-
           {!inStock && (
             <div style={{ position: "absolute", inset: 0, background: "rgba(240,235,227,0.75)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ background: "#FFFFFF", color: "#8A8A8A", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)" }}>Out of Stock</span>
@@ -906,12 +967,9 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
             <Ico.Heart style={{ fill: wishlisted ? "currentColor" : "none" }} />
           </button>
         </div>
-
         <div className="ont-pcard-body">
-          {(product.brand) && <div className="ont-pcard-brand">{product.brand}</div>}
+          {product.brand && <div className="ont-pcard-brand">{product.brand}</div>}
           <a href={`/products/${product.id}`} className="ont-pcard-name">{product.name}</a>
-
-          {/* ── Status badge ── */}
           <div style={{ marginBottom: 8 }}>
             {hasDiscount
               ? <span className="ont-pcard-badge ont-badge-sale">Sale</span>
@@ -923,24 +981,15 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
               ? <span className="ont-pcard-badge ont-badge-new">New</span>
               : <span className="ont-pcard-badge ont-badge-stock">In Stock</span>}
           </div>
-
           <div className="ont-pcard-footer">
             <div className="ont-pcard-price-block">
-              {/* Discounted price in red; original struck through beneath it */}
               <div className={`ont-pcard-price${hasDiscount ? "" : " no-discount"}`}>
                 GHS {Number(displayPrice).toLocaleString()}
               </div>
-              {hasDiscount && (
-                <div className="ont-pcard-price-old">
-                  GHS {Number(originalPrice).toLocaleString()}
-                </div>
-              )}
-              {/* Green "save" chip — only for discounted items */}
+              {hasDiscount && <div className="ont-pcard-price-old">GHS {Number(originalPrice).toLocaleString()}</div>}
               {hasDiscount && savingsAmount > 0 && (
                 <div className="ont-pcard-save-row">
-                  <span className="ont-pcard-save-label">
-                    Save GHS {savingsAmount.toLocaleString()}
-                  </span>
+                  <span className="ont-pcard-save-label">Save GHS {savingsAmount.toLocaleString()}</span>
                 </div>
               )}
             </div>
@@ -1123,10 +1172,42 @@ const TRUST = [
   { Icon: Ico.Chat,     title: "24/7 Support",    desc: "Connect with sellers and get instant help any time" },
 ];
 
+// ─── WELCOME POPUP — SLIDE DATA ───────────────────────────────────────────────
+// Each slide has its own hero image, accent color, trust pills, and CTA config.
 const WP_SLIDES = [
-  { emoji: "✨", kicker: "Welcome to ONETT", title: "Ghana's Smartest Marketplace", desc: "Shop 10,000+ products with AI-powered recommendations tailored to your style and budget.", color: "#E6640A" },
-  { emoji: "🤖", kicker: "Meet Your AI Shopper", title: "Shop by Simply Chatting", desc: "Describe what you need in plain language — our AI finds the perfect match in seconds.", color: "#8B5CF6" },
-  { emoji: "🚀", kicker: "Deals Waiting for You", title: "Ready to Explore?", desc: "Exclusive flash sales, pre-orders, and new arrivals drop every day. Don't miss out.", color: "#22C55E" },
+  {
+    img: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&q=80",
+    badgeText: "Welcome to ONETT",
+    color: "#E6640A",
+    kicker: "Ghana's #1 marketplace",
+    title: "Shop Smarter with ONETT.",
+    desc: "Discover 10,000+ products with AI-powered recommendations built for your style and budget.",
+    trustPills: ["10K+ Products", "50K+ Buyers", "4.8★ Rating"],
+    ctaLabel: "Explore Now",
+    ctaHref: null,
+  },
+  {
+    img: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&q=80",
+    badgeText: "AI Shopping",
+    color: "#8B5CF6",
+    kicker: "Meet your AI shopper",
+    title: "Shop by Simply Chatting.",
+    desc: "Describe what you need in plain language — our AI finds the perfect match in seconds.",
+    trustPills: ["Instant Matches", "Budget-Aware", "Always Learning"],
+    ctaLabel: "Try AI Assistant",
+    ctaHref: "/ai-assistant",
+  },
+  {
+    img: "https://images.unsplash.com/photo-1607082349566-187342175e2f?w=800&q=80",
+    badgeText: "Daily Deals",
+    color: "#22C55E",
+    kicker: "Deals waiting for you",
+    title: "Flash Sales Every Day.",
+    desc: "Exclusive offers, pre-orders, and new arrivals drop daily. Don't miss your next favourite find.",
+    trustPills: ["Fast Delivery", "Secure Pay", "Easy Returns"],
+    ctaLabel: "Start Shopping",
+    ctaHref: "/search?keyword=",
+  },
 ];
 
 // ─── WELCOME POPUP ────────────────────────────────────────────────────────────
@@ -1136,9 +1217,7 @@ function WelcomePopup() {
 
   useEffect(() => {
     const seen = sessionStorage.getItem("onett-welcome-seen");
-    if (!seen) {
-      setTimeout(() => setVisible(true), 900);
-    }
+    if (!seen) setTimeout(() => setVisible(true), 900);
   }, []);
 
   const close = useCallback(() => {
@@ -1152,38 +1231,147 @@ function WelcomePopup() {
   }, [visible]);
 
   if (!visible) return null;
+
   const s = WP_SLIDES[step];
   const isLast = step === WP_SLIDES.length - 1;
 
   return (
     <AnimatePresence>
-      <motion.div className="ont-wp-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close}>
-        <motion.div className="ont-wp-sheet" initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }} onClick={e => e.stopPropagation()}>
-          <div className="ont-wp-visual" style={{ "--sc": s.color } as any}>
-            <motion.div className="ont-wp-orb" key={step} initial={{ scale: 0.65, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.65, opacity: 0 }} transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}>
-              <span className="ont-wp-emoji">{s.emoji}</span>
-            </motion.div>
-            <button className="ont-wp-close" onClick={close}><Ico.X /></button>
-            <div className="ont-wp-chip">ON<em>ETT.</em></div>
-          </div>
-          <div className="ont-wp-body">
+      <motion.div
+        className="ont-wp-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.22 }}
+        onClick={close}
+      >
+        <motion.div
+          className="ont-wp-modal"
+          initial={{ opacity: 0, scale: 0.93, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 12 }}
+          transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+          onClick={e => e.stopPropagation()}
+        >
+
+          {/* ── Hero image area ── */}
+          <div className="ont-wp-hero">
             <AnimatePresence mode="wait">
-              <motion.div key={step} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.28 }}>
-                <div className="ont-wp-kicker" style={{ color: s.color }}>{s.kicker}</div>
-                <h2 className="ont-wp-title">{s.title}</h2>
-                <p className="ont-wp-desc">{s.desc}</p>
+              <motion.img
+                key={s.img}
+                src={s.img}
+                alt=""
+                className="ont-wp-hero-img"
+                initial={{ opacity: 0, scale: 1.04 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </AnimatePresence>
+            <div className="ont-wp-hero-overlay" />
+
+            {/* Brand chip */}
+            <div className="ont-wp-brand-chip">
+              <div className="ont-wp-brand-logo">
+                <div className="ont-wp-brand-logo-on">ON</div>
+                <div className="ont-wp-brand-logo-ett">ETT</div>
+              </div>
+              <span className="ont-wp-brand-name">ONETT<em>.</em></span>
+            </div>
+
+            {/* Close */}
+            <button className="ont-wp-close" onClick={close} aria-label="Close">
+              <Ico.X />
+            </button>
+
+            {/* Slide badge — bottom left */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={s.badgeText}
+                className="ont-wp-slide-badge"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.25 }}
+              >
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: s.color, display: "inline-block", flexShrink: 0
+                }} />
+                {s.badgeText}
               </motion.div>
             </AnimatePresence>
-            <div className="ont-wp-dots">
+
+            {/* Dots — bottom right */}
+            <div className="ont-wp-hero-dots">
               {WP_SLIDES.map((_, i) => (
-                <button key={i} className={`ont-wp-dot${i === step ? " on" : ""}`} style={i === step ? { background: s.color } : {}} onClick={() => setStep(i)} />
+                <button
+                  key={i}
+                  className={`ont-wp-hero-dot${i === step ? " on" : ""}`}
+                  onClick={e => { e.stopPropagation(); setStep(i); }}
+                  aria-label={`Slide ${i + 1}`}
+                />
               ))}
             </div>
-            {isLast
-              ? <a href="/search?keyword=" onClick={close} className="ont-wp-cta" style={{ background: s.color }}>Start Shopping <Ico.Arrow /></a>
-              : <button className="ont-wp-cta" style={{ background: s.color }} onClick={() => setStep(p => p + 1)}>Next <Ico.Arrow /></button>}
-            <button onClick={close} className="ont-wp-skip">Skip intro</button>
           </div>
+
+          {/* ── Body ── */}
+          <div className="ont-wp-body">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="ont-wp-kicker" style={{ color: s.color }}>
+                  <span className="ont-wp-kicker-dot" style={{ background: s.color }} />
+                  {s.kicker}
+                </div>
+                <h2 className="ont-wp-title">{s.title}</h2>
+                <p className="ont-wp-desc">{s.desc}</p>
+
+                {/* Trust pills */}
+                <div className="ont-wp-trust-row">
+                  {s.trustPills.map(pill => (
+                    <span key={pill} className="ont-wp-trust-pill" style={{
+                      background: `${s.color}0f`,
+                      border: `1px solid ${s.color}28`,
+                      color: s.color === "#22C55E" ? "#16A34A" : s.color === "#8B5CF6" ? "#7C3AED" : "#C4520A"
+                    }}>
+                      <Ico.Check style={{ width: 9, height: 9 }} />
+                      {pill}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* CTA */}
+            {isLast
+              ? <a
+                  href={s.ctaHref ?? "/search?keyword="}
+                  onClick={close}
+                  className="ont-wp-cta"
+                  style={{ background: s.color }}
+                >
+                  {s.ctaLabel} <Ico.Arrow />
+                </a>
+              : <button
+                  className="ont-wp-cta"
+                  style={{ background: s.color }}
+                  onClick={() => setStep(p => p + 1)}
+                >
+                  {s.ctaLabel} <Ico.Arrow />
+                </button>
+            }
+
+            <button onClick={close} className="ont-wp-skip">
+              Skip intro
+            </button>
+          </div>
+
           <div className="ont-wp-safe" />
         </motion.div>
       </motion.div>
@@ -1210,9 +1398,6 @@ export default function ONETTHomepage() {
   const refreshCartCount = useCallback(async () => {
     try {
       await cartApi.getCount();
-      if (typeof (window as any).__refreshNotifBadge === "function") {
-        // no-op here; kept for future cart-badge hook parity
-      }
     } catch {
       // not logged in — silently ignore
     }
