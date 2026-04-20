@@ -101,13 +101,31 @@ const GLOBAL_CSS = `
   }
   .ont-pcard:hover .ont-pcard-img img { transform: scale(1.07); }
 
+  /* ── DISCOUNT BADGE (image overlay) ── */
   .ont-pcard-disc {
     position: absolute; top: 10px; left: 10px; z-index: 2;
     background: #EF4444; color: #fff;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 9px; font-weight: 800; letter-spacing: 0.3px;
-    padding: 3px 8px; border-radius: 99px;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 11px; font-weight: 800; letter-spacing: -0.2px;
+    padding: 4px 10px; border-radius: 99px;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.35);
+    display: flex; align-items: center; gap: 2px;
+    line-height: 1;
   }
+
+  /* ── SAVINGS STRIP — shown at bottom of image for discounted items ── */
+  .ont-pcard-savings-strip {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+    background: linear-gradient(to top, rgba(239,68,68,0.92), rgba(239,68,68,0.7));
+    padding: 5px 10px 6px;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .ont-pcard-savings-text {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 10px; font-weight: 800; color: #fff;
+    letter-spacing: 0.2px; white-space: nowrap;
+  }
+  @media (min-width: 480px)  { .ont-pcard-savings-text { font-size: 10.5px; } }
 
   .ont-pcard-wish {
     position: absolute; top: 10px; right: 10px; z-index: 2;
@@ -165,17 +183,34 @@ const GLOBAL_CSS = `
     margin-top: auto;
   }
 
+  /* ── DISCOUNT PRICE BLOCK ── */
+  .ont-pcard-price-block { display: flex; flex-direction: column; gap: 1px; }
+
   .ont-pcard-price {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 15px; font-weight: 800; color: #1A1A1A;
+    font-size: 15px; font-weight: 800; color: #EF4444;
     letter-spacing: -0.4px; line-height: 1;
   }
+  .ont-pcard-price.no-discount { color: #1A1A1A; }
   @media (min-width: 480px)  { .ont-pcard-price { font-size: 16px; } }
   @media (min-width: 1024px) { .ont-pcard-price { font-size: 17px; } }
 
   .ont-pcard-price-old {
     font-size: 10px; color: #B0B0B0;
     text-decoration: line-through; margin-top: 2px; line-height: 1;
+  }
+
+  /* ── SAVING AMOUNT ROW ── */
+  .ont-pcard-save-row {
+    display: flex; align-items: center; gap: 3px;
+    margin-top: 3px;
+  }
+  .ont-pcard-save-label {
+    font-size: 9px; font-weight: 800; color: #16A34A;
+    letter-spacing: 0.2px; background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.2);
+    padding: 2px 6px; border-radius: 5px;
+    white-space: nowrap;
   }
 
   .ont-pcard-cart {
@@ -734,6 +769,11 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
   const inStock = product.stock == null || product.stock > 0;
   const isNew = !product.isDiscounted && !product.stockStatus;
 
+  // Calculate savings amount for display
+  const savingsAmount = hasDiscount
+    ? Math.round(Number(product.price) - Number(product.discountPrice))
+    : 0;
+
   const handleCart = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
     if (addingCart || !inStock) return;
@@ -766,7 +806,23 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
               ? <img src={img} alt={product.name} loading="lazy" />
               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#C0C0C0" }}><Ico.Pkg /></div>}
           </a>
-          {hasDiscount && <div className="ont-pcard-disc">-{product.discountPercentage}%</div>}
+
+          {/* Discount % badge — top-left of image */}
+          {hasDiscount && (
+            <div className="ont-pcard-disc">
+              -{product.discountPercentage}%
+            </div>
+          )}
+
+          {/* Savings strip — bottom of image, only for discounted items */}
+          {hasDiscount && savingsAmount > 0 && (
+            <div className="ont-pcard-savings-strip">
+              <span className="ont-pcard-savings-text">
+                Save GHS {savingsAmount.toLocaleString()}
+              </span>
+            </div>
+          )}
+
           {!inStock && (
             <div style={{ position: "absolute", inset: 0, background: "rgba(240,235,227,0.75)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ background: "#FFFFFF", color: "#8A8A8A", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)" }}>Out of Stock</span>
@@ -791,9 +847,24 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
               : <span className="ont-pcard-badge ont-badge-stock">In Stock</span>}
           </div>
           <div className="ont-pcard-footer">
-            <div>
-              <div className="ont-pcard-price">GHS {Number(displayPrice).toLocaleString()}</div>
-              {hasDiscount && <div className="ont-pcard-price-old">GHS {Number(product.price).toLocaleString()}</div>}
+            <div className="ont-pcard-price-block">
+              {/* Discounted price in red, original struck through below it */}
+              <div className={`ont-pcard-price${hasDiscount ? "" : " no-discount"}`}>
+                GHS {Number(displayPrice).toLocaleString()}
+              </div>
+              {hasDiscount && (
+                <div className="ont-pcard-price-old">
+                  GHS {Number(product.price).toLocaleString()}
+                </div>
+              )}
+              {/* Green "save" chip below price, only when discounted */}
+              {hasDiscount && savingsAmount > 0 && (
+                <div className="ont-pcard-save-row">
+                  <span className="ont-pcard-save-label">
+                    Save GHS {savingsAmount.toLocaleString()}
+                  </span>
+                </div>
+              )}
             </div>
             <button
               className="ont-pcard-cart"
