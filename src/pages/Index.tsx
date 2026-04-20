@@ -731,6 +731,76 @@ function useCountdown(id: string, days: number) {
   return t;
 }
 
+// ─── DISCOUNT DETECTION HELPER ────────────────────────────────────────────────
+// Robustly resolves discount info regardless of whether the API returns
+// camelCase (discountPrice / isDiscounted / discountPercentage) or
+// snake_case (discount_price / is_discounted / discount_percentage) fields,
+// and whether the discount flag is a boolean or a truthy string/number.
+function resolveDiscount(product: any): {
+  hasDiscount: boolean;
+  displayPrice: number;
+  originalPrice: number;
+  discountPct: number;
+  savingsAmount: number;
+} {
+  const originalPrice = Number(
+    product.price ?? product.original_price ?? product.regularPrice ?? 0
+  );
+
+  // Grab the discounted price — accept both naming conventions
+  const discountPriceRaw =
+    product.discountPrice ??
+    product.discount_price ??
+    product.salePrice ??
+    product.sale_price ??
+    null;
+
+  const discountPrice = discountPriceRaw !== null && discountPriceRaw !== undefined
+    ? Number(discountPriceRaw)
+    : 0;
+
+  // A discount exists if:
+  // (a) there's an explicit boolean/truthy flag, OR
+  // (b) discountPrice is a positive number strictly less than the original price
+  const flagRaw =
+    product.isDiscounted ??
+    product.is_discounted ??
+    product.onSale ??
+    product.on_sale ??
+    null;
+
+  const flagSet = flagRaw !== null && flagRaw !== undefined
+    ? Boolean(flagRaw)
+    : false;
+
+  const priceBasedDiscount =
+    discountPrice > 0 && originalPrice > 0 && discountPrice < originalPrice;
+
+  const hasDiscount = flagSet || priceBasedDiscount;
+
+  const displayPrice = hasDiscount && discountPrice > 0 ? discountPrice : originalPrice;
+
+  // Prefer the API-provided percentage; fall back to calculated value
+  const discountPct =
+    Number(
+      product.discountPercentage ??
+      product.discount_percentage ??
+      product.discountPercent ??
+      product.discount_percent ??
+      0
+    ) ||
+    (hasDiscount && originalPrice > 0
+      ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
+      : 0);
+
+  const savingsAmount =
+    hasDiscount && originalPrice > 0 && displayPrice > 0
+      ? Math.round(originalPrice - displayPrice)
+      : 0;
+
+  return { hasDiscount, displayPrice, originalPrice, discountPct, savingsAmount };
+}
+
 // ─── SKELETON CARDS ───────────────────────────────────────────────────────────
 function SkeletonProductCard() {
   return (
@@ -763,16 +833,16 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
-  const img = product.primaryImageUrl || null;
-  const hasDiscount = product.isDiscounted && product.discountPrice;
-  const displayPrice = hasDiscount ? product.discountPrice : product.price;
-  const inStock = product.stock == null || product.stock > 0;
-  const isNew = !product.isDiscounted && !product.stockStatus;
+  const img = product.primaryImageUrl ?? product.primary_image_url ?? product.imageUrl ?? product.image_url ?? null;
+  const inStock = (product.stock == null && product.stock_quantity == null) ||
+                  Number(product.stock ?? product.stock_quantity ?? 1) > 0;
+  const isNew = !product.stockStatus && !product.stock_status;
 
-  // Calculate savings amount for display
-  const savingsAmount = hasDiscount
-    ? Math.round(Number(product.price) - Number(product.discountPrice))
-    : 0;
+  // ── FIXED: use robust helper instead of direct field access ──
+  const { hasDiscount, displayPrice, originalPrice, discountPct, savingsAmount } =
+    resolveDiscount(product);
+
+  const stockStatus = product.stockStatus ?? product.stock_status ?? null;
 
   const handleCart = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
@@ -807,14 +877,14 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#C0C0C0" }}><Ico.Pkg /></div>}
           </a>
 
-          {/* Discount % badge — top-left of image */}
-          {hasDiscount && (
+          {/* ── Discount % badge — top-left of image ── */}
+          {hasDiscount && discountPct > 0 && (
             <div className="ont-pcard-disc">
-              -{product.discountPercentage}%
+              -{discountPct}%
             </div>
           )}
 
-          {/* Savings strip — bottom of image, only for discounted items */}
+          {/* ── Savings strip — bottom of image ── */}
           {hasDiscount && savingsAmount > 0 && (
             <div className="ont-pcard-savings-strip">
               <span className="ont-pcard-savings-text">
@@ -828,36 +898,44 @@ function ProductCard({ product, index = 0, onCartUpdate }: { product: any; index
               <span style={{ background: "#FFFFFF", color: "#8A8A8A", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)" }}>Out of Stock</span>
             </div>
           )}
-          <button className={`ont-pcard-wish${wishlisted ? " active" : ""}`} onClick={e => { e.preventDefault(); e.stopPropagation(); setWishlisted(w => !w); }} aria-label="Add to wishlist">
+          <button
+            className={`ont-pcard-wish${wishlisted ? " active" : ""}`}
+            onClick={e => { e.preventDefault(); e.stopPropagation(); setWishlisted(w => !w); }}
+            aria-label="Add to wishlist"
+          >
             <Ico.Heart style={{ fill: wishlisted ? "currentColor" : "none" }} />
           </button>
         </div>
+
         <div className="ont-pcard-body">
-          {product.brand && <div className="ont-pcard-brand">{product.brand}</div>}
+          {(product.brand) && <div className="ont-pcard-brand">{product.brand}</div>}
           <a href={`/products/${product.id}`} className="ont-pcard-name">{product.name}</a>
+
+          {/* ── Status badge ── */}
           <div style={{ marginBottom: 8 }}>
             {hasDiscount
               ? <span className="ont-pcard-badge ont-badge-sale">Sale</span>
-              : product.stockStatus === "PRE_ORDER"
+              : stockStatus === "PRE_ORDER"
               ? <span className="ont-pcard-badge ont-badge-pre">Pre-order</span>
-              : product.stockStatus === "COMING_SOON"
+              : stockStatus === "COMING_SOON"
               ? <span className="ont-pcard-badge ont-badge-soon">Coming Soon</span>
               : isNew
               ? <span className="ont-pcard-badge ont-badge-new">New</span>
               : <span className="ont-pcard-badge ont-badge-stock">In Stock</span>}
           </div>
+
           <div className="ont-pcard-footer">
             <div className="ont-pcard-price-block">
-              {/* Discounted price in red, original struck through below it */}
+              {/* Discounted price in red; original struck through beneath it */}
               <div className={`ont-pcard-price${hasDiscount ? "" : " no-discount"}`}>
                 GHS {Number(displayPrice).toLocaleString()}
               </div>
               {hasDiscount && (
                 <div className="ont-pcard-price-old">
-                  GHS {Number(product.price).toLocaleString()}
+                  GHS {Number(originalPrice).toLocaleString()}
                 </div>
               )}
-              {/* Green "save" chip below price, only when discounted */}
+              {/* Green "save" chip — only for discounted items */}
               {hasDiscount && savingsAmount > 0 && (
                 <div className="ont-pcard-save-row">
                   <span className="ont-pcard-save-label">
@@ -929,8 +1007,9 @@ function ProductSection({ title, sub, accent, Icon, items, loading, seeAllHref, 
 
 // ─── UPCOMING CARD ────────────────────────────────────────────────────────────
 function UpcomingCard({ product, index = 0, onCartUpdate }: { product: any; index?: number; onCartUpdate?: () => void }) {
-  const { days, hours, minutes, seconds } = useCountdown(product.id, product.availableInDays || 7);
-  const isPre = product.stockStatus === "PRE_ORDER";
+  const { days, hours, minutes, seconds } = useCountdown(product.id, product.availableInDays || product.available_in_days || 7);
+  const stockStatus = product.stockStatus ?? product.stock_status ?? null;
+  const isPre = stockStatus === "PRE_ORDER";
   const [addingCart, setAddingCart] = useState(false);
   const [cartAdded, setCartAdded] = useState(false);
   const ref = useRef(null);
@@ -963,8 +1042,8 @@ function UpcomingCard({ product, index = 0, onCartUpdate }: { product: any; inde
     >
       <a href={`/products/${product.id}`} className="ont-hs-card">
         <div className="ont-hs-img">
-          {product.primaryImageUrl
-            ? <img src={product.primaryImageUrl} alt={product.name} loading="lazy" />
+          {(product.primaryImageUrl ?? product.primary_image_url)
+            ? <img src={product.primaryImageUrl ?? product.primary_image_url} alt={product.name} loading="lazy" />
             : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#C0C0C0" }}><Ico.Pkg /></div>}
           <div className={`ont-hs-timer ${isPre ? "ont-timer-amber" : "ont-timer-purple"}`}>
             {[{ v: days, l: "d" }, null, { v: hours, l: "h" }, null, { v: minutes, l: "m" }, null, { v: seconds, l: "s" }].map((u: any, i) =>
@@ -981,7 +1060,7 @@ function UpcomingCard({ product, index = 0, onCartUpdate }: { product: any; inde
           {product.brand && <div className="ont-hs-brand">{product.brand}</div>}
           <div className="ont-hs-name">{product.name}</div>
           <div className="ont-hs-price-row">
-            <span className="ont-hs-price">GHS {product.price?.toLocaleString()}</span>
+            <span className="ont-hs-price">GHS {Number(product.price ?? 0).toLocaleString()}</span>
           </div>
           <button
             className="ont-hs-btn"
@@ -1131,7 +1210,6 @@ export default function ONETTHomepage() {
   const refreshCartCount = useCallback(async () => {
     try {
       await cartApi.getCount();
-      // Trigger navbar badge refresh if it exposes a global hook
       if (typeof (window as any).__refreshNotifBadge === "function") {
         // no-op here; kept for future cart-badge hook parity
       }
