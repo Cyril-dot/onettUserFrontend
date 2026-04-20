@@ -20,7 +20,7 @@ export interface NotificationToastData {
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
-const VARIANT_CONFIG: Record
+const VARIANT_CONFIG: Record<
   NotificationVariant,
   { accent: string; glow: string; emoji: string; label: string }
 > = {
