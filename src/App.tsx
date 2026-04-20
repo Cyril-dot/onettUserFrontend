@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useFCM } from "@/hooks/useFCM";
 import LoadingScreen from "@/components/LoadingScreen";
+import { NotificationToastContainer } from "@/components/NotificationToast";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -53,33 +54,37 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
+
+          {/* In-app FCM toast overlay — portal renders into document.body */}
+          <NotificationToastContainer />
+
           <BrowserRouter>
             <AuthProvider>
               <FCMInitializer />
               <AnimatePresence mode="wait">
                 <Routes>
-                  <Route path="/"                    element={<Index />} />
-                  <Route path="/login"               element={<Login />} />
-                  <Route path="/register"            element={<Register />} />
-                  <Route path="/products/:id"        element={<ProductDetails />} />
-                  <Route path="/notifications"       element={<NotificationsPage />} />
-                  <Route path="/cart"                element={<Cart />} />
-                  <Route path="/search"              element={<Search />} />
-                  <Route path="/categories"          element={<Categories />} />
-                  <Route path="/categories/:slug"    element={<CategoryProducts />} />
-                  <Route path="/store/:sellerId"     element={<SellerStore />} />
-                  <Route path="/orders"              element={<Orders />} />
-                  <Route path="/ai-assistant"        element={<AiAssistant />} />
-                  <Route path="/messages"            element={<Messages />} />
-                  <Route path="/profile"             element={<Profile />} />
-                  <Route path="/payment/callback"    element={<PaymentCallback />} />
-                  <Route path="/seller/dashboard"    element={<SellerDashboardPage />} />
-                  <Route path="/seller/products"     element={<SellerProductsPage />} />
+                  <Route path="/"                   element={<Index />} />
+                  <Route path="/login"              element={<Login />} />
+                  <Route path="/register"           element={<Register />} />
+                  <Route path="/products/:id"       element={<ProductDetails />} />
+                  <Route path="/notifications"      element={<NotificationsPage />} />
+                  <Route path="/cart"               element={<Cart />} />
+                  <Route path="/search"             element={<Search />} />
+                  <Route path="/categories"         element={<Categories />} />
+                  <Route path="/categories/:slug"   element={<CategoryProducts />} />
+                  <Route path="/store/:sellerId"    element={<SellerStore />} />
+                  <Route path="/orders"             element={<Orders />} />
+                  <Route path="/ai-assistant"       element={<AiAssistant />} />
+                  <Route path="/messages"           element={<Messages />} />
+                  <Route path="/profile"            element={<Profile />} />
+                  <Route path="/payment/callback"   element={<PaymentCallback />} />
+                  <Route path="/seller/dashboard"   element={<SellerDashboardPage />} />
+                  <Route path="/seller/products"    element={<SellerProductsPage />} />
                   <Route path="/seller/categories"  element={<SellerCategoriesPage />} />
-                  <Route path="/seller/orders"       element={<SellerOrdersPage />} />
-                  <Route path="/seller/messages"     element={<SellerMessagesPage />} />
-                  <Route path="/seller/ai-tools"     element={<SellerAiToolsPage />} />
-                  <Route path="*"                    element={<NotFound />} />
+                  <Route path="/seller/orders"      element={<SellerOrdersPage />} />
+                  <Route path="/seller/messages"    element={<SellerMessagesPage />} />
+                  <Route path="/seller/ai-tools"    element={<SellerAiToolsPage />} />
+                  <Route path="*"                   element={<NotFound />} />
                 </Routes>
               </AnimatePresence>
             </AuthProvider>
